@@ -9,7 +9,486 @@
   <title>Efetivo de Obra</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚒</text></svg>">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/main.css">
+  <style>
+/* ═══════════════════════════════════════════
+   EFETIVO DE OBRA — main.css  v2.1
+   Mobile-first + Desktop sidebar
+═══════════════════════════════════════════ */
+
+:root {
+  --bg:          #0b0d13;
+  --surface:     #111420;
+  --surface2:    #171b28;
+  --surface3:    #1c2133;
+  --border:      #1f2540;
+  --border2:     #2a3060;
+  --accent:      #f0a500;
+  --accent-h:    #d99400;
+  --accent-dim:  rgba(240,165,0,.12);
+  --green:       #22c55e;
+  --green-dim:   rgba(34,197,94,.12);
+  --red:         #ef4444;
+  --red-dim:     rgba(239,68,68,.12);
+  --blue:        #3b82f6;
+  --text:        #e2e6f3;
+  --text2:       #8b93b5;
+  --text3:       #454d6a;
+  --radius:      12px;
+  --radius-sm:   8px;
+  --topbar-h:    54px;
+  --bnav-h:      62px;
+  --sidebar-w:   224px;
+}
+
+/* ── BASE ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:14px;-webkit-text-size-adjust:100%;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;}
+
+/* ════════════════════════════════════════
+   SIDEBAR DESKTOP
+════════════════════════════════════════ */
+.sidebar-desktop{display:none;}
+
+@media(min-width:768px){
+  .sidebar-desktop{
+    display:flex;flex-direction:column;
+    width:var(--sidebar-w);
+    background:var(--surface);
+    border-right:1px solid var(--border);
+    height:100vh;
+    position:fixed;left:0;top:0;
+    z-index:200;
+  }
+}
+
+.sidebar-logo-d{
+  display:flex;align-items:center;gap:10px;
+  padding:18px 16px 14px;
+  border-bottom:1px solid var(--border);
+}
+.logo-tag-d{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--accent);line-height:1;}
+.logo-sub-d{font-size:9px;color:var(--text3);letter-spacing:1.5px;margin-top:1px;}
+
+.obra-selector-d{padding:10px 14px;border-bottom:1px solid var(--border);}
+.obra-selector-d label{display:block;font-size:9px;letter-spacing:1.5px;color:var(--text3);margin-bottom:4px;}
+.obra-selector-d select{
+  width:100%;background:var(--surface2);border:1px solid var(--border2);
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;
+  padding:7px 10px;border-radius:6px;outline:none;cursor:pointer;
+}
+
+.nav-d{flex:1;padding:8px 0;overflow-y:auto;}
+.nav-section-d{padding:10px 16px 3px;font-size:9px;letter-spacing:1.8px;color:var(--text3);}
+.nav-item-d{
+  display:flex;align-items:center;gap:9px;
+  padding:9px 16px;cursor:pointer;
+  font-size:13px;color:var(--text2);
+  border-left:2px solid transparent;
+  transition:all .13s;
+}
+.nav-item-d:hover{background:var(--surface2);color:var(--text);}
+.nav-item-d.active{background:var(--accent-dim);color:var(--accent);border-left-color:var(--accent);font-weight:500;}
+.nav-item-d span{flex:1;}
+.nav-badge-d{background:var(--accent);color:#000;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;min-width:18px;text-align:center;}
+.nav-badge-d.sec{background:var(--surface3);color:var(--text2);}
+.sidebar-footer-d{padding:10px 16px;border-top:1px solid var(--border);display:flex;justify-content:space-between;font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;}
+
+/* ════════════════════════════════════════
+   TOPBAR
+════════════════════════════════════════ */
+.topbar{
+  position:fixed;top:0;left:0;right:0;
+  height:var(--topbar-h);
+  background:var(--surface);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 16px;gap:12px;
+  z-index:300;
+}
+
+@media(min-width:768px){.topbar{left:var(--sidebar-w);}}
+
+.topbar-left{display:flex;align-items:center;gap:8px;}
+.topbar-name{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:var(--accent);line-height:1;}
+.topbar-divider{color:var(--border2);font-size:16px;}
+.topbar-title{font-size:13px;font-weight:600;color:var(--text2);white-space:nowrap;}
+.topbar-right{display:flex;align-items:center;gap:8px;}
+.topbar-chip{display:flex;align-items:center;gap:5px;background:var(--surface2);border:1px solid var(--border2);padding:4px 10px;border-radius:20px;font-size:12px;color:var(--text2);}
+.topbar-chip strong{color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:14px;}
+.obra-pill{background:var(--accent-dim);border:1px solid rgba(240,165,0,.3);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;max-width:130px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* ════════════════════════════════════════
+   PAGE AREA
+════════════════════════════════════════ */
+.page-area{
+  padding-top:calc(var(--topbar-h) + 14px);
+  padding-bottom:calc(var(--bnav-h) + env(safe-area-inset-bottom,0px) + 16px);
+  padding-left:14px;padding-right:14px;
+  min-height:100dvh;
+}
+
+@media(min-width:768px){
+  .page-area{
+    margin-left:var(--sidebar-w);
+    padding:calc(var(--topbar-h) + 22px) 26px 26px;
+    padding-bottom:26px;
+    height:100vh;overflow-y:auto;
+  }
+}
+
+.page{display:none;}
+.page.active{display:block;}
+
+/* ════════════════════════════════════════
+   BOTTOM NAV (mobile only)
+════════════════════════════════════════ */
+.bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  height:calc(var(--bnav-h) + env(safe-area-inset-bottom,0px));
+  background:var(--surface);
+  border-top:1px solid var(--border);
+  display:flex;align-items:flex-start;
+  padding-top:6px;
+  z-index:300;
+}
+@media(min-width:768px){.bottom-nav{display:none!important;}}
+
+.bnav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:4px 2px;cursor:pointer;color:var(--text3);
+  transition:color .15s;position:relative;
+  -webkit-tap-highlight-color:transparent;
+}
+.bnav-item span:not(.bnav-badge){font-size:10px;font-weight:500;}
+.bnav-item.active{color:var(--accent);}
+.bnav-item.active::before{
+  content:'';position:absolute;top:-6px;left:50%;transform:translateX(-50%);
+  width:28px;height:2px;background:var(--accent);border-radius:0 0 2px 2px;
+}
+.bnav-badge{
+  position:absolute;top:0;right:calc(50% - 20px);
+  background:var(--accent);color:#000;
+  font-size:8px;font-weight:800;font-family:'JetBrains Mono',monospace;
+  padding:1px 4px;border-radius:8px;min-width:14px;text-align:center;
+}
+
+/* ════════════════════════════════════════
+   DRAWER
+════════════════════════════════════════ */
+.drawer-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:400;display:none;opacity:0;transition:opacity .2s;}
+.drawer-backdrop.open{display:block;opacity:1;}
+.drawer{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border2);border-radius:20px 20px 0 0;z-index:401;transform:translateY(100%);transition:transform .25s ease;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 8px);}
+.drawer.open{transform:translateY(0);}
+.drawer-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:12px auto 14px;}
+.drawer-title{font-size:9px;letter-spacing:1.8px;color:var(--text3);padding:0 20px 8px;}
+.drawer-item{display:flex;align-items:center;gap:14px;padding:14px 20px;cursor:pointer;color:var(--text2);font-size:14px;font-weight:500;transition:background .1s;-webkit-tap-highlight-color:transparent;}
+.drawer-item:hover{background:var(--surface2);}
+.drawer-item span{flex:1;}
+
+/* ════════════════════════════════════════
+   DATE BAR
+════════════════════════════════════════ */
+.date-bar{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:16px;}
+.date-bar-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+.date-bar-row label{font-size:9px;letter-spacing:1.5px;color:var(--text3);white-space:nowrap;}
+
+input[type=date]{
+  background:var(--surface2);border:1px solid var(--border2);color:var(--text);
+  font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;
+  padding:7px 12px;border-radius:var(--radius-sm);outline:none;
+  -webkit-appearance:none;cursor:pointer;
+}
+input[type=date]:focus{border-color:var(--accent);}
+
+.weekday-label{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;color:var(--accent);}
+.pills-row{display:flex;gap:6px;flex-wrap:wrap;}
+.pill{padding:5px 13px;border-radius:20px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;text-align:center;}
+.pill.green {background:var(--green-dim);color:var(--green);}
+.pill.red   {background:var(--red-dim);  color:var(--red);  }
+.pill.orange{background:var(--accent-dim);color:var(--accent);}
+
+/* ════════════════════════════════════════
+   SECTION HEADER
+════════════════════════════════════════ */
+.section-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:14px;gap:10px;flex-wrap:wrap;}
+.section-title{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1px;line-height:1;}
+.section-sub{font-size:11px;color:var(--text3);margin-top:3px;}
+
+/* ════════════════════════════════════════
+   TEAM FILTERS
+════════════════════════════════════════ */
+.team-filter-scroll{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.team-filter-scroll::-webkit-scrollbar{display:none;}
+.filter-chip{padding:5px 13px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;border:1px solid var(--border2);background:var(--surface2);color:var(--text2);transition:all .13s;flex-shrink:0;-webkit-tap-highlight-color:transparent;}
+.filter-chip:hover{color:var(--text);border-color:var(--text3);}
+.filter-chip.active{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);}
+
+/* ════════════════════════════════════════
+   DESKTOP TABLE
+════════════════════════════════════════ */
+.worker-table-wrap{display:none;overflow:hidden;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:16px;}
+@media(min-width:768px){.worker-table-wrap{display:block;}}
+
+.data-table{width:100%;border-collapse:collapse;}
+.data-table thead tr{background:var(--surface2);border-bottom:1px solid var(--border);}
+.data-table th{padding:11px 14px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--text3);font-weight:600;white-space:nowrap;}
+.data-table td{padding:10px 14px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.data-table tbody tr:last-child td{border-bottom:none;}
+.data-table tbody tr{transition:background .1s;}
+.data-table tbody tr:hover{background:rgba(255,255,255,.02);}
+.data-table tbody tr.absent .worker-name{text-decoration:line-through;opacity:.5;}
+
+/* Sort headers */
+.th-sort{cursor:pointer;user-select:none;transition:color .15s;}
+.th-sort:hover{color:var(--text2)!important;}
+.sort-arrow{font-size:10px;color:var(--text3);margin-left:2px;}
+.th-sort.sorted{color:var(--accent)!important;}
+.th-sort.sorted .sort-arrow{color:var(--accent);}
+
+/* ════════════════════════════════════════
+   MOBILE WORKER CARDS
+════════════════════════════════════════ */
+.worker-list{display:flex;flex-direction:column;gap:8px;margin-bottom:80px;}
+@media(min-width:768px){.worker-list{display:none!important;}}
+
+.worker-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:border-color .15s;}
+.worker-card.absent{opacity:.55;border-style:dashed;}
+.worker-card-top{display:flex;align-items:center;gap:10px;padding:12px 14px;}
+.worker-info{flex:1;min-width:0;}
+.worker-name{font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.worker-role{font-size:11px;color:var(--text3);margin-top:1px;}
+.worker-card-actions{display:flex;gap:5px;flex-shrink:0;}
+.worker-card-body{padding:10px 14px 12px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:8px;}
+.worker-card-body.hidden{display:none;}
+
+/* ════════════════════════════════════════
+   PRESENCE TOGGLE
+════════════════════════════════════════ */
+.presence-toggle{position:relative;width:44px;height:24px;cursor:pointer;flex-shrink:0;display:block;}
+.presence-toggle input{opacity:0;width:0;height:0;position:absolute;}
+.presence-slider{position:absolute;inset:0;background:var(--red-dim);border:1.5px solid rgba(239,68,68,.4);border-radius:24px;transition:all .2s;}
+.presence-slider::before{content:'';position:absolute;width:16px;height:16px;background:var(--red);border-radius:50%;top:3px;left:3px;transition:all .2s;}
+.presence-toggle input:checked + .presence-slider{background:var(--green-dim);border-color:rgba(34,197,94,.4);}
+.presence-toggle input:checked + .presence-slider::before{background:var(--green);left:21px;}
+
+/* ════════════════════════════════════════
+   TEAM BADGE
+════════════════════════════════════════ */
+.team-badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap;flex-shrink:0;}
+
+/* ════════════════════════════════════════
+   INLINE SELECTS + ACTIVITY TAGS
+════════════════════════════════════════ */
+.inline-select{width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:12px;padding:7px 10px;border-radius:var(--radius-sm);outline:none;cursor:pointer;-webkit-appearance:none;transition:border-color .13s;}
+.inline-select:focus{border-color:var(--accent);}
+.inline-select:disabled{opacity:.3;cursor:not-allowed;}
+.field-label{font-size:9px;letter-spacing:1.2px;color:var(--text3);text-transform:uppercase;margin-bottom:4px;}
+.activity-tags{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:5px;}
+.activity-tag{background:var(--surface3);border:1px solid var(--border2);color:var(--text2);font-size:11px;padding:3px 9px;border-radius:20px;display:inline-flex;align-items:center;gap:4px;}
+.activity-tag button{background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px;padding:0;line-height:1;-webkit-tap-highlight-color:transparent;}
+.activity-tag button:hover{color:var(--red);}
+.add-activity-row{display:flex;gap:5px;}
+.add-activity-row .inline-select{flex:1;}
+.add-btn{width:36px;height:36px;background:var(--accent-dim);border:1px solid rgba(240,165,0,.4);color:var(--accent);border-radius:var(--radius-sm);font-size:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:all .13s;}
+.add-btn:active{background:var(--accent);color:#000;}
+
+/* ════════════════════════════════════════
+   ICON BUTTONS + BUTTONS
+════════════════════════════════════════ */
+.icon-btn{width:30px;height:30px;border-radius:6px;border:1px solid var(--border2);background:var(--surface2);color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .13s;-webkit-tap-highlight-color:transparent;}
+.icon-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-dim);}
+.icon-btn.danger:hover{border-color:var(--red);color:var(--red);background:var(--red-dim);}
+
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .13s;white-space:nowrap;-webkit-tap-highlight-color:transparent;}
+.btn:active{transform:scale(.97);}
+.btn-ghost{background:var(--surface2);color:var(--text2);border:1px solid var(--border2);}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+.btn-accent{background:var(--accent);color:#000;font-weight:700;}
+.btn-accent:hover{background:var(--accent-h);}
+.btn-danger{background:var(--red-dim);color:var(--red);border:1px solid rgba(239,68,68,.3);}
+
+/* ════════════════════════════════════════
+   ACTION BAR
+════════════════════════════════════════ */
+.action-bar{
+  display:flex;gap:8px;padding:12px 0 0;
+  flex-wrap:wrap;
+}
+@media(max-width:767px){
+  .action-bar{
+    position:fixed;bottom:var(--bnav-h);left:0;right:0;
+    background:var(--surface);border-top:1px solid var(--border);
+    padding:10px 14px;z-index:200;
+  }
+  .action-bar .btn{flex:1;justify-content:center;}
+  .worker-list{margin-bottom:calc(var(--bnav-h) + 60px);}
+}
+
+/* ════════════════════════════════════════
+   CARD
+════════════════════════════════════════ */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;}
+
+/* ════════════════════════════════════════
+   MODALS
+════════════════════════════════════════ */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:500;display:none;align-items:flex-end;justify-content:center;}
+.modal-backdrop.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border2);border-radius:20px 20px 0 0;padding:6px 20px calc(20px + env(safe-area-inset-bottom,0px));width:100%;max-height:92dvh;overflow-y:auto;animation:sheetUp .2s ease;}
+.modal-large{max-height:94dvh;}
+@media(min-width:600px){
+  .modal{border-radius:16px;max-width:520px;margin:auto;padding:20px 24px;align-self:center;}
+  .modal-large{max-width:680px;}
+  .modal-handle{display:none;}
+}
+@keyframes sheetUp{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:none;}}
+.modal-handle{width:36px;height:4px;background:var(--border2);border-radius:2px;margin:10px auto 14px;}
+.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;color:var(--accent);}
+.modal-close{background:var(--surface2);border:1px solid var(--border2);color:var(--text2);cursor:pointer;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;}
+.modal-close:hover{color:var(--red);}
+.modal-footer{display:flex;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid var(--border);}
+.modal-footer .btn{flex:1;justify-content:center;}
+
+/* ════════════════════════════════════════
+   FORMS
+════════════════════════════════════════ */
+.form-group{margin-bottom:12px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.form-group label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--text3);margin-bottom:5px;}
+.form-input{width:100%;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:10px 12px;border-radius:var(--radius-sm);outline:none;-webkit-appearance:none;transition:border-color .13s;}
+.form-input:focus{border-color:var(--accent);}
+textarea.form-input{resize:vertical;min-height:80px;font-family:'DM Sans',sans-serif;}
+select.form-input{cursor:pointer;}
+
+/* ════════════════════════════════════════
+   REPORT PREVIEW
+════════════════════════════════════════ */
+.report-preview{background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:14px;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.9;color:var(--text);white-space:pre-wrap;max-height:55dvh;overflow-y:auto;}
+
+/* ════════════════════════════════════════
+   STATS GRID
+════════════════════════════════════════ */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+@media(min-width:768px){.stats-grid{grid-template-columns:repeat(4,1fr);}}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;}
+.stat-label{font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:var(--text3);margin-bottom:5px;}
+.stat-value{font-family:'Bebas Neue',sans-serif;font-size:34px;line-height:1;color:var(--accent);}
+.stat-desc{font-size:10px;color:var(--text3);margin-top:3px;}
+
+/* ════════════════════════════════════════
+   FUNC LIST / ATT / HIST
+════════════════════════════════════════ */
+.search-bar{display:flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:10px 13px;margin-bottom:12px;}
+.search-bar input{flex:1;background:none;border:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;}
+.search-bar input::placeholder{color:var(--text3);}
+.search-bar svg{color:var(--text3);flex-shrink:0;}
+
+.func-list,.att-list,.hist-list{display:flex;flex-direction:column;gap:6px;}
+.func-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;display:flex;align-items:center;gap:10px;}
+.func-info{flex:1;min-width:0;}
+.func-name{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.func-meta{font-size:11px;color:var(--text3);margin-top:3px;}
+.func-actions{display:flex;gap:5px;flex-shrink:0;}
+
+.att-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;}
+.att-top{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.att-info{flex:1;min-width:0;}
+.att-name{font-weight:600;font-size:13px;}
+.att-role{font-size:11px;color:var(--text3);}
+.att-pct{font-family:'Bebas Neue',sans-serif;font-size:26px;line-height:1;flex-shrink:0;}
+.bar-wrap{display:flex;align-items:center;gap:8px;}
+.bar-bg{flex:1;height:5px;background:var(--surface3);border-radius:3px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:3px;transition:width .5s;}
+.bar-fill.good{background:var(--green);}
+.bar-fill.warn{background:var(--accent);}
+.bar-fill.danger{background:var(--red);}
+.bar-label{font-size:10px;color:var(--text3);font-family:'JetBrains Mono',monospace;flex-shrink:0;}
+
+.hist-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;cursor:pointer;transition:border-color .15s;display:flex;align-items:center;gap:12px;-webkit-tap-highlight-color:transparent;}
+.hist-card:hover,.hist-card:active{border-color:var(--accent);}
+.hist-day{font-family:'Bebas Neue',sans-serif;font-size:32px;color:var(--accent);line-height:1;}
+.hist-month{font-size:10px;color:var(--text3);letter-spacing:1px;}
+.hist-info{flex:1;min-width:0;}
+.hist-obra{font-size:12px;font-weight:600;}
+.hist-weekday{font-size:11px;color:var(--text3);}
+.hist-total{font-size:12px;color:var(--text2);font-family:'JetBrains Mono',monospace;margin-top:4px;}
+.hist-arrow{color:var(--text3);font-size:20px;}
+
+/* ════════════════════════════════════════
+   SETTINGS
+════════════════════════════════════════ */
+.settings-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;}
+.settings-section-header{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;}
+.settings-section-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;color:var(--accent);}
+.settings-section-body{padding:0 16px 14px;}
+.settings-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12.5px;}
+.settings-item:last-of-type{border-bottom:none;}
+.add-item-row{display:flex;gap:6px;margin-top:10px;}
+.add-item-row input{flex:1;background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;padding:9px 12px;border-radius:var(--radius-sm);outline:none;}
+.add-item-row input:focus{border-color:var(--accent);}
+.add-item-row input[type=color]{width:40px;flex:none;padding:4px;cursor:pointer;border-radius:var(--radius-sm);}
+.color-dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0;}
+
+/* ════════════════════════════════════════
+   PRODUCAO
+════════════════════════════════════════ */
+.prod-section{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;}
+.prod-section-title{font-family:'Bebas Neue',sans-serif;font-size:15px;letter-spacing:.8px;color:var(--text2);margin-bottom:12px;}
+.prod-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:480px){.prod-grid{grid-template-columns:1fr;}}
+
+/* ════════════════════════════════════════
+   INTEGRACAO
+════════════════════════════════════════ */
+.int-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:10px;}
+.int-card-title{font-family:'Bebas Neue',sans-serif;font-size:16px;letter-spacing:1px;color:var(--accent);margin-bottom:12px;}
+.steps-list{list-style:none;counter-reset:step;}
+.steps-list li{counter-increment:step;display:flex;gap:10px;margin-bottom:10px;font-size:12.5px;color:var(--text2);line-height:1.6;}
+.steps-list li::before{content:counter(step);background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.steps-list a{color:var(--accent);}
+
+/* ════════════════════════════════════════
+   OBRA OPTIONS (modal)
+════════════════════════════════════════ */
+.obra-option{display:flex;align-items:center;gap:10px;padding:13px;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:7px;cursor:pointer;font-size:14px;font-weight:500;transition:border-color .13s;-webkit-tap-highlight-color:transparent;}
+.obra-option:hover,.obra-option.selected{border-color:var(--accent);background:var(--accent-dim);color:var(--accent);}
+
+/* ════════════════════════════════════════
+   TOAST
+════════════════════════════════════════ */
+.toast-container{position:fixed;top:calc(var(--topbar-h) + 8px);left:12px;right:12px;z-index:999;display:flex;flex-direction:column;gap:6px;pointer-events:none;}
+.toast{background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:11px 14px;font-size:13px;color:var(--text);display:flex;align-items:center;gap:9px;box-shadow:0 8px 32px rgba(0,0,0,.4);animation:toastIn .2s ease,toastOut .3s ease 2.7s forwards;}
+.toast.success{border-left:3px solid var(--green);}
+.toast.error  {border-left:3px solid var(--red);}
+.toast.info   {border-left:3px solid var(--blue);}
+.toast.warn   {border-left:3px solid var(--accent);}
+@keyframes toastIn {from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:none;}}
+@keyframes toastOut{from{opacity:1;}to{opacity:0;}}
+
+/* ════════════════════════════════════════
+   EMPTY STATE
+════════════════════════════════════════ */
+.empty-state{text-align:center;padding:48px 20px;color:var(--text3);font-size:13px;display:flex;flex-direction:column;align-items:center;gap:10px;}
+.empty-state svg{opacity:.2;}
+
+/* ════════════════════════════════════════
+   GS INDICATOR
+════════════════════════════════════════ */
+.gs-indicator{width:7px;height:7px;border-radius:50%;background:var(--text3);flex-shrink:0;}
+.gs-indicator.connected{background:var(--green);box-shadow:0 0 6px var(--green);}
+
+/* ════════════════════════════════════════
+   SCROLLBAR
+════════════════════════════════════════ */
+::-webkit-scrollbar{width:3px;height:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+code{font-family:'JetBrains Mono',monospace;font-size:.9em;}
+
+</style>
 </head>
 <body>
 
@@ -403,13 +882,1524 @@
 <!-- ════════════════════════════════════════
      SCRIPTS
 ════════════════════════════════════════ -->
-<script src="js/utils.js"></script>
-<script src="js/state.js"></script>
-<script src="js/sheets.js"></script>
-<script src="js/pages/efetivo.js"></script>
-<script src="js/pages/funcionarios.js"></script>
-<script src="js/pages/configuracoes.js"></script>
-<script src="js/modals.js"></script>
-<script src="js/app.js"></script>
+<script>
+/* ═══════════════════════════════════════════
+   utils.js – Funções utilitárias
+   ═══════════════════════════════════════════ */
+
+const Utils = (() => {
+  const WEEKDAYS = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+  const MONTHS   = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
+
+  function todayStr() {
+    return new Date().toISOString().split('T')[0];
+  }
+
+  function dateFromStr(str) {
+    return new Date(str + 'T12:00:00');
+  }
+
+  function formatPT(dateOrStr) {
+    const d = typeof dateOrStr === 'string' ? dateFromStr(dateOrStr) : dateOrStr;
+    return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`;
+  }
+
+  function formatLong(dateOrStr) {
+    const d = typeof dateOrStr === 'string' ? dateFromStr(dateOrStr) : dateOrStr;
+    return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} – ${WEEKDAYS[d.getDay()]}`;
+  }
+
+  function weekdayOf(dateOrStr) {
+    const d = typeof dateOrStr === 'string' ? dateFromStr(dateOrStr) : dateOrStr;
+    return WEEKDAYS[d.getDay()];
+  }
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function timeNow() {
+    const d = new Date();
+    return `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  }
+
+  function uid() { return 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7); }
+
+  function toast(msg, type = 'success') {
+    const icons = { success: '✅', error: '❌', info: 'ℹ️', warn: '⚠️' };
+    const container = document.getElementById('toastContainer');
+    const t = document.createElement('div');
+    t.className = `toast ${type}`;
+    t.innerHTML = `<span>${icons[type] || '✅'}</span><span>${msg}</span>`;
+    container.appendChild(t);
+    setTimeout(() => t.remove(), 3300);
+  }
+
+  function copyToClipboard(text, successMsg = 'Copiado!') {
+    navigator.clipboard.writeText(text)
+      .then(() => toast(successMsg, 'success'))
+      .catch(() => {
+        // fallback
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        toast(successMsg, 'success');
+      });
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  return { todayStr, dateFromStr, formatPT, formatLong, weekdayOf, pad, timeNow, uid, toast, copyToClipboard, escapeHtml };
+})();
+
+
+/* ═══════════════════════════════════════════
+   state.js – Dados globais e persistência
+   ═══════════════════════════════════════════ */
+
+const State = (() => {
+  const STORAGE_KEY = 'efetivo_v2';
+
+  const DEFAULT = {
+    obras: ['Essence Residence'],
+    andares: [
+      '2º Subsolo','1º Subsolo','Térreo',
+      '1º Pavimento','2º Pavimento','3º Pavimento','4º Pavimento',
+      '5º Pavimento','6º Pavimento','7º Pavimento','8º Pavimento',
+      '9º Pavimento','10º Pavimento','11º Pavimento','12º Pavimento',
+      '13º Pavimento','14º Pavimento','15º Pavimento','16º Pavimento',
+      'Cobertura','Área Comum','Guarita',
+    ],
+    tarefas: [
+      'Alvenaria estrutural – Lado A',
+      'Alvenaria estrutural – Lado B',
+      'Alvenaria de vedação',
+      'Armação positiva',
+      'Assoalho',
+      'Pontos de graute do andar',
+      'Aéreo da hidráulica',
+      'Aranhas (instalações)',
+      'Operação de Bobcat',
+      'Operação da mini grua',
+      'Proteção periférica',
+      'Marcação da laje',
+      'Organização da área comum',
+      'Organização e paletamento de blocos',
+      'Produção de peças (solda)',
+      'Piso do estacionamento',
+      'Betoneira',
+      'Concretagem',
+      'Instalação elétrica',
+      'Pintura',
+      'Revestimento',
+      'Serviços gerais',
+    ],
+    equipes: [
+      { id: 'eq1', nome: 'Administração',        cor: '#a855f7' },
+      { id: 'eq2', nome: 'Alvenaria Estrutural',  cor: '#f0a500' },
+      { id: 'eq3', nome: 'Alvenaria de Vedação',  cor: '#fb923c' },
+      { id: 'eq4', nome: 'Armação / Ferragem',    cor: '#ef4444' },
+      { id: 'eq5', nome: 'Carpintaria',           cor: '#22c55e' },
+      { id: 'eq6', nome: 'Hidráulica',            cor: '#3b82f6' },
+      { id: 'eq7', nome: 'Elétrica',              cor: '#eab308' },
+      { id: 'eq8', nome: 'Geral',                 cor: '#8b92b0' },
+    ],
+    workers: [
+      // Administração e Apoio
+      { id: 'w1',  nome: 'Raimundo Gonçalo Coelho',                    funcao: 'Mestre de Obras',      equipe: 'eq1', obra: 'Essence Residence' },
+      { id: 'w2',  nome: 'Milton de Campos Figueiredo',                funcao: 'Engenheiro de Obra',   equipe: 'eq1', obra: 'Essence Residence' },
+      { id: 'w3',  nome: 'Jordeano Rocha dos Santos',                  funcao: 'Encarregado Civil',    equipe: 'eq1', obra: 'Essence Residence' },
+      { id: 'w4',  nome: 'Wilson Robson de Souza',                     funcao: 'Almoxarife',           equipe: 'eq1', obra: 'Essence Residence' },
+      { id: 'w5',  nome: 'Vinicius Hideo Takemoto B. do Nascimento',   funcao: 'Assistente Engenharia',equipe: 'eq1', obra: 'Essence Residence' },
+      { id: 'w6',  nome: 'Cleber Ferreira Miranda',                    funcao: 'Administrativo',       equipe: 'eq1', obra: 'Essence Residence' },
+      // 2º Subsolo
+      { id: 'w7',  nome: 'Fabio Lopes dos Santos',                     funcao: 'Ajudante',             equipe: 'eq8', obra: 'Essence Residence' },
+      { id: 'w8',  nome: 'Jose Edigleuson Xavier dos Santos',          funcao: 'Ajudante',             equipe: 'eq8', obra: 'Essence Residence' },
+      { id: 'w9',  nome: 'José Pereira da Silva Filho',                funcao: 'Ajudante',             equipe: 'eq8', obra: 'Essence Residence' },
+      { id: 'w10', nome: 'Lino dos Santos',                            funcao: 'Ajudante',             equipe: 'eq8', obra: 'Essence Residence' },
+      { id: 'w11', nome: 'Juciel',                                     funcao: 'Pedreiro / Carpinteiro',equipe: 'eq5',obra: 'Essence Residence' },
+      // 1º Subsolo
+      { id: 'w12', nome: 'Edson Ramos da Silva',                       funcao: 'Operador de Bobcat',   equipe: 'eq8', obra: 'Essence Residence' },
+      { id: 'w13', nome: 'Edson Fernandes de Almeida',                 funcao: 'Ajudante',             equipe: 'eq8', obra: 'Essence Residence' },
+      { id: 'w14', nome: 'Francisco dos Santos da Silva',              funcao: 'Ajudante',             equipe: 'eq8', obra: 'Essence Residence' },
+      { id: 'w15', nome: 'Lucas Dantas',                               funcao: 'Soldador',             equipe: 'eq8', obra: 'Essence Residence' },
+      // 5º Pavimento
+      { id: 'w16', nome: 'Genival',                                    funcao: 'Pedreiro',             equipe: 'eq3', obra: 'Essence Residence' },
+      { id: 'w17', nome: 'Gildivan',                                   funcao: 'Ajudante',             equipe: 'eq3', obra: 'Essence Residence' },
+      { id: 'w18', nome: 'Gilvan Bispo',                               funcao: 'Ajudante',             equipe: 'eq6', obra: 'Essence Residence' },
+      { id: 'w19', nome: 'Lucas Pereira',                              funcao: 'Ajudante',             equipe: 'eq6', obra: 'Essence Residence' },
+      // 6º Pavimento
+      { id: 'w20', nome: 'Valmir da Conceição Barbosa',                funcao: 'Ajudante',             equipe: 'eq8', obra: 'Essence Residence' },
+      { id: 'w21', nome: 'Wagner (Brinco)',                            funcao: 'Encanador',            equipe: 'eq6', obra: 'Essence Residence' },
+      // 11º
+      { id: 'w22', nome: 'Ray Nascimento dos Santos',                  funcao: 'Ajudante',             equipe: 'eq8', obra: 'Essence Residence' },
+      // 12º
+      { id: 'w23', nome: 'Edson Fernandes de Morais',                  funcao: 'Ajudante',             equipe: 'eq8', obra: 'Essence Residence' },
+      // 14º
+      { id: 'w24', nome: 'Adalberto Ferreira da Silva',                funcao: 'Bloqueiro',            equipe: 'eq2', obra: 'Essence Residence' },
+      { id: 'w25', nome: 'Jose Vani',                                  funcao: 'Bloqueiro',            equipe: 'eq2', obra: 'Essence Residence' },
+      { id: 'w26', nome: 'Silvanildo João da Silva',                   funcao: 'Bloqueiro',            equipe: 'eq2', obra: 'Essence Residence' },
+      { id: 'w27', nome: 'André Borges Evangelista',                   funcao: 'Bloqueiro',            equipe: 'eq2', obra: 'Essence Residence' },
+      { id: 'w28', nome: 'Erivam de Jesus Lima',                       funcao: 'Ajudante',             equipe: 'eq2', obra: 'Essence Residence' },
+      { id: 'w29', nome: 'José de Souza Silva',                        funcao: 'Ajudante',             equipe: 'eq2', obra: 'Essence Residence' },
+      { id: 'w30', nome: 'Samuel Gonçalves Coelho',                    funcao: 'Ajudante',             equipe: 'eq2', obra: 'Essence Residence' },
+      { id: 'w31', nome: 'Jorge Ramos Machado',                        funcao: 'Ajudante',             equipe: 'eq2', obra: 'Essence Residence' },
+      { id: 'w32', nome: 'João Vitor da Silva',                        funcao: 'Ajudante',             equipe: 'eq2', obra: 'Essence Residence' },
+      { id: 'w33', nome: 'Noel Brito',                                 funcao: 'Ajudante',             equipe: 'eq2', obra: 'Essence Residence' },
+      { id: 'w34', nome: 'Valdiano Alves Santana',                     funcao: 'Ajudante',             equipe: 'eq2', obra: 'Essence Residence' },
+      { id: 'w35', nome: 'Guilherme Porfirio',                         funcao: 'Armador (Segurança)',  equipe: 'eq4', obra: 'Essence Residence' },
+      { id: 'w36', nome: 'Ezequiel Pereira dos Santos',                funcao: 'Encanador',            equipe: 'eq6', obra: 'Essence Residence' },
+      // 15º
+      { id: 'w37', nome: 'Eugenio Ribeiro de Souza',                   funcao: 'Armador',              equipe: 'eq4', obra: 'Essence Residence' },
+      { id: 'w38', nome: 'Francisco Ramylo Nascimento Silva',          funcao: 'Armador',              equipe: 'eq4', obra: 'Essence Residence' },
+      { id: 'w39', nome: 'Junior Pereira',                             funcao: 'Armador',              equipe: 'eq4', obra: 'Essence Residence' },
+      { id: 'w40', nome: 'Roniel Brito Gois',                          funcao: 'Armador',              equipe: 'eq4', obra: 'Essence Residence' },
+      { id: 'w41', nome: 'Cleto de Souza Santos',                      funcao: 'Carpinteiro',          equipe: 'eq5', obra: 'Essence Residence' },
+      { id: 'w42', nome: 'Genilson Soares Maciel',                     funcao: 'Carpinteiro',          equipe: 'eq5', obra: 'Essence Residence' },
+      { id: 'w43', nome: 'Jose Amorim da Rocha',                       funcao: 'Carpinteiro',          equipe: 'eq5', obra: 'Essence Residence' },
+      { id: 'w44', nome: 'Rodrigo Mendes da Silva',                    funcao: 'Carpinteiro',          equipe: 'eq5', obra: 'Essence Residence' },
+      { id: 'w45', nome: 'Vagner Araujo de Morais',                    funcao: 'Carpinteiro',          equipe: 'eq5', obra: 'Essence Residence' },
+      { id: 'w46', nome: 'Jose Ramalho da Silva',                      funcao: 'Carpinteiro',          equipe: 'eq5', obra: 'Essence Residence' },
+      { id: 'w47', nome: 'Thiago da Silva',                            funcao: 'Ajudante',             equipe: 'eq8', obra: 'Essence Residence' },
+    ],
+    // dailyData[date][workerId] = { presente, andar, tarefas[] }
+    dailyData: {},
+    // producao[date] = { campos... }
+    producao: {},
+    // attendance[workerId] = { dias, total }
+    attendance: {},
+    // historico[]: { ts, data, obra, texto, total }
+    historico: [],
+    // Google Sheets config
+    gsUrl: '',
+    gsSheetId: '',
+    // UI state
+    activeObra: 'Essence Residence',
+    activeTeamFilter: 'all',
+  };
+
+  let data = {};
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        data = deepMerge(DEFAULT, parsed);
+      } else {
+        data = JSON.parse(JSON.stringify(DEFAULT));
+      }
+    } catch (e) {
+      console.warn('State load error', e);
+      data = JSON.parse(JSON.stringify(DEFAULT));
+    }
+  }
+
+  function save() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+      const el = document.getElementById('lastSaved');
+      if (el) el.textContent = 'Salvo ' + Utils.timeNow();
+    } catch (e) {
+      console.warn('State save error', e);
+    }
+  }
+
+  function deepMerge(target, source) {
+    const out = Object.assign({}, target);
+    for (const key in source) {
+      if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+        out[key] = deepMerge(target[key] || {}, source[key]);
+      } else {
+        out[key] = source[key];
+      }
+    }
+    return out;
+  }
+
+  function get() { return data; }
+
+  function getDayData(workerId, date) {
+    const d = date || App.currentDate;
+    if (!data.dailyData[d]) data.dailyData[d] = {};
+    if (!data.dailyData[d][workerId]) {
+      data.dailyData[d][workerId] = { presente: true, andar: '', tarefas: [] };
+    }
+    return data.dailyData[d][workerId];
+  }
+
+  function setDayField(workerId, field, value, date) {
+    const d = getDayData(workerId, date);
+    d[field] = value;
+    save();
+  }
+
+  function getEquipe(idOrNome) {
+    return data.equipes.find(e => e.id === idOrNome || e.nome === idOrNome);
+  }
+
+  function getWorker(id) {
+    return data.workers.find(w => w.id === id);
+  }
+
+  function addWorker(w) {
+    w.id = 'w' + Date.now();
+    data.workers.push(w);
+    save();
+    return w;
+  }
+
+  function updateWorker(id, fields) {
+    const w = data.workers.find(x => x.id === id);
+    if (w) Object.assign(w, fields);
+    save();
+  }
+
+  function removeWorker(id) {
+    data.workers = data.workers.filter(w => w.id !== id);
+    save();
+  }
+
+  function addObra(nome) {
+    if (!data.obras.includes(nome)) { data.obras.push(nome); save(); }
+  }
+
+  function removeObra(nome) {
+    data.obras = data.obras.filter(o => o !== nome);
+    save();
+  }
+
+  function addAndar(v) { data.andares.push(v); save(); }
+  function removeAndar(i) { data.andares.splice(i, 1); save(); }
+
+  function addTarefa(v) { data.tarefas.push(v); save(); }
+  function removeTarefa(i) { data.tarefas.splice(i, 1); save(); }
+
+  function addEquipe(e) { e.id = 'eq' + Date.now(); data.equipes.push(e); save(); return e; }
+  function removeEquipe(id) { data.equipes = data.equipes.filter(e => e.id !== id); save(); }
+
+  function saveProducao(date, fields) {
+    data.producao[date] = Object.assign(data.producao[date] || {}, fields);
+    save();
+  }
+
+  function addHistorico(entry) {
+    data.historico.unshift(entry);
+    if (data.historico.length > 200) data.historico = data.historico.slice(0, 200);
+    save();
+  }
+
+  function updateAttendance(workerId, presente) {
+    if (!data.attendance[workerId]) data.attendance[workerId] = { dias: 0, total: 0 };
+    data.attendance[workerId].total++;
+    if (presente) data.attendance[workerId].dias++;
+    save();
+  }
+
+  function resetAttendanceForDate(date, obraWorkers) {
+    // Called when re-generating a report for an existing date (avoid double-counting)
+    // This is a simple approach – for production you'd track per-date
+  }
+
+  return {
+    load, save, get,
+    getDayData, setDayField,
+    getEquipe, getWorker,
+    addWorker, updateWorker, removeWorker,
+    addObra, removeObra,
+    addAndar, removeAndar,
+    addTarefa, removeTarefa,
+    addEquipe, removeEquipe,
+    saveProducao,
+    addHistorico,
+    updateAttendance,
+  };
+})();
+
+
+/* ═══════════════════════════════════════════
+   sheets.js – Integração Google Sheets
+   ═══════════════════════════════════════════ */
+
+const Sheets = (() => {
+
+  const APPS_SCRIPT_CODE = `// ═══════════════════════════════════════════════════════════════
+// EFETIVO DE OBRA – Google Apps Script
+// Cole este código em script.google.com → Novo Projeto
+// Depois: Implantar → Nova implantação → Aplicativo da Web
+//   Executar como: Eu mesmo
+//   Acesso: Qualquer pessoa
+// ═══════════════════════════════════════════════════════════════
+
+const SHEET_ID = ''; // Cole o ID da sua planilha aqui (opcional, pode vir no payload)
+
+function doPost(e) {
+  try {
+    const payload = JSON.parse(e.postData.contents);
+    const sheetId = payload.sheetId || SHEET_ID;
+    const ss = SpreadsheetApp.openById(sheetId);
+
+    // ── Aba: Efetivo (um registro por funcionário por dia) ──
+    let shEfetivo = ss.getSheetByName('Efetivo');
+    if (!shEfetivo) {
+      shEfetivo = ss.insertSheet('Efetivo');
+      shEfetivo.appendRow([
+        'Data', 'Obra', 'Nome', 'Função', 'Equipe',
+        'Presente', 'Andar / Local', 'Atividades', 'Timestamp'
+      ]);
+      shEfetivo.getRange(1, 1, 1, 9).setFontWeight('bold').setBackground('#f0a500').setFontColor('#000000');
+      shEfetivo.setFrozenRows(1);
+    }
+
+    if (payload.workers && Array.isArray(payload.workers)) {
+      payload.workers.forEach(w => {
+        shEfetivo.appendRow([
+          payload.data,
+          payload.obra,
+          w.nome,
+          w.funcao,
+          w.equipe || '',
+          w.presente ? 'SIM' : 'NÃO',
+          w.andar || '',
+          w.tarefas || '',
+          new Date().toISOString(),
+        ]);
+      });
+    }
+
+    // ── Aba: Relatórios (texto completo) ──
+    let shRel = ss.getSheetByName('Relatórios');
+    if (!shRel) {
+      shRel = ss.insertSheet('Relatórios');
+      shRel.appendRow(['Data', 'Obra', 'Total Trabalhadores', 'Texto Completo', 'Timestamp']);
+      shRel.getRange(1, 1, 1, 5).setFontWeight('bold').setBackground('#f0a500').setFontColor('#000000');
+      shRel.setFrozenRows(1);
+      shRel.setColumnWidth(4, 600);
+    }
+    shRel.appendRow([
+      payload.data,
+      payload.obra,
+      payload.total || 0,
+      payload.texto || '',
+      new Date().toISOString(),
+    ]);
+
+    // ── Aba: Assiduidade (resumo atualizado) ──
+    if (payload.workers) {
+      let shAss = ss.getSheetByName('Assiduidade');
+      if (!shAss) {
+        shAss = ss.insertSheet('Assiduidade');
+        shAss.appendRow(['Nome', 'Função', 'Equipe', 'Obra', 'Dias Presentes', 'Total Registrado', 'Assiduidade %']);
+        shAss.getRange(1, 1, 1, 7).setFontWeight('bold').setBackground('#f0a500').setFontColor('#000000');
+        shAss.setFrozenRows(1);
+      }
+
+      // Rebuild assiduidade from Efetivo sheet
+      const efData = shEfetivo.getDataRange().getValues();
+      const attMap = {};
+      efData.slice(1).forEach(row => {
+        const nome = row[2], presente = row[5] === 'SIM';
+        if (!nome) return;
+        if (!attMap[nome]) attMap[nome] = { funcao: row[3], equipe: row[4], obra: row[1], dias: 0, total: 0 };
+        attMap[nome].total++;
+        if (presente) attMap[nome].dias++;
+      });
+
+      shAss.clearContents();
+      shAss.appendRow(['Nome', 'Função', 'Equipe', 'Obra', 'Dias Presentes', 'Total Registrado', 'Assiduidade %']);
+      shAss.getRange(1, 1, 1, 7).setFontWeight('bold').setBackground('#f0a500').setFontColor('#000000');
+      Object.entries(attMap).forEach(([nome, a]) => {
+        const pct = a.total > 0 ? Math.round((a.dias / a.total) * 100) : 100;
+        shAss.appendRow([nome, a.funcao, a.equipe, a.obra, a.dias, a.total, pct + '%']);
+      });
+    }
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: true, msg: 'Dados salvos com sucesso.' }))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({ ok: false, error: err.toString() }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+// Ping para testar conexão
+function doGet(e) {
+  return ContentService
+    .createTextOutput(JSON.stringify({ ok: true, msg: 'Efetivo de Obra API ativa.' }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+`;
+
+  async function send(date, obra, texto, workers) {
+    const s = State.get();
+    if (!s.gsUrl) return false;
+
+    const payload = {
+      data: date,
+      obra,
+      texto,
+      total: workers.filter(w => w.presente).length,
+      sheetId: s.gsSheetId,
+      workers,
+    };
+
+    try {
+      await fetch(s.gsUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      Utils.toast('Dados enviados ao Google Sheets!', 'success');
+      return true;
+    } catch (err) {
+      Utils.toast('Erro ao enviar para Google Sheets: ' + err.message, 'error');
+      return false;
+    }
+  }
+
+  async function ping(url) {
+    try {
+      const res = await fetch(url, { method: 'GET', mode: 'cors' });
+      const json = await res.json();
+      return json.ok === true;
+    } catch {
+      return false;
+    }
+  }
+
+  return { send, ping, APPS_SCRIPT_CODE };
+})();
+
+
+/* efetivo.js */
+const EfetivoPage = (() => {
+  let activeTeam = 'all';
+  let sortCol    = null;    // 'nome' | 'equipe' | 'andar' | 'presente'
+  let sortDir    = 'asc';   // 'asc' | 'desc'
+
+  function init() { render(); }
+
+  /* ── FILTRO DE EQUIPE ── */
+  function setTeamFilter(team) {
+    activeTeam = team;
+    document.querySelectorAll('.filter-chip').forEach(c =>
+      c.classList.toggle('active', c.dataset.team === team));
+    renderList();
+  }
+
+  /* ── ORDENAÇÃO POR COLUNA ── */
+  function setSort(col) {
+    if (sortCol === col) {
+      sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortCol = col;
+      sortDir = 'asc';
+    }
+    renderList();
+    _updateSortHeaders();
+  }
+
+  function _sortWorkers(workers) {
+    if (!sortCol) return workers;
+    const date = App.getDate();
+    const s = State.get();
+    return [...workers].sort((a, b) => {
+      let va, vb;
+      if (sortCol === 'nome') {
+        va = a.nome.toLowerCase();
+        vb = b.nome.toLowerCase();
+      } else if (sortCol === 'equipe') {
+        const ea = State.getEquipe(a.equipe);
+        const eb = State.getEquipe(b.equipe);
+        va = (ea ? ea.nome : a.equipe).toLowerCase();
+        vb = (eb ? eb.nome : b.equipe).toLowerCase();
+      } else if (sortCol === 'andar') {
+        const ia = s.andares.indexOf(State.getDayData(a.id, date).andar);
+        const ib = s.andares.indexOf(State.getDayData(b.id, date).andar);
+        va = ia === -1 ? 999 : ia;
+        vb = ib === -1 ? 999 : ib;
+      } else if (sortCol === 'presente') {
+        va = State.getDayData(a.id, date).presente ? 0 : 1;
+        vb = State.getDayData(b.id, date).presente ? 0 : 1;
+      }
+      if (va < vb) return sortDir === 'asc' ? -1 : 1;
+      if (va > vb) return sortDir === 'asc' ?  1 : -1;
+      return 0;
+    });
+  }
+
+  function _updateSortHeaders() {
+    document.querySelectorAll('th[data-col]').forEach(th => {
+      const col = th.dataset.col;
+      const arrow = th.querySelector('.sort-arrow');
+      if (!arrow) return;
+      if (col === sortCol) {
+        arrow.textContent = sortDir === 'asc' ? ' ↑' : ' ↓';
+        th.style.color = 'var(--accent)';
+      } else {
+        arrow.textContent = ' ↕';
+        th.style.color = '';
+      }
+    });
+  }
+
+  /* ── RENDER ── */
+  function render() {
+    renderTeamFilters();
+    renderList();
+    updateSummary();
+  }
+
+  function renderTeamFilters() {
+    const s = State.get();
+    const wrap = document.getElementById('teamFilters');
+    if (!wrap) return;
+    const teams = [{ id: 'all', nome: 'Todos' }, ...s.equipes];
+    wrap.innerHTML = teams.map(t =>
+      `<div class="filter-chip ${activeTeam === t.id ? 'active' : ''}" data-team="${t.id}"
+         onclick="EfetivoPage.setTeamFilter('${t.id}')">${t.nome}</div>`
+    ).join('');
+  }
+
+  function renderList() {
+    const s = State.get();
+    const date = App.getDate();
+    const obra = App.getObra();
+
+    let workers = s.workers.filter(w => w.obra === obra);
+    if (activeTeam !== 'all') workers = workers.filter(w => w.equipe === activeTeam);
+    workers = _sortWorkers(workers);
+
+    /* ── MOBILE: cards ── */
+    const list = document.getElementById('workerList');
+    if (list) {
+      if (!workers.length) {
+        list.innerHTML = `<div class="empty-state">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          <span>Nenhum funcionário.<br>Toque em <strong>+ Add</strong> para cadastrar.</span>
+        </div>`;
+        updateSummary(); return;
+      }
+      const andarOpts = ['', ...s.andares].map(a =>
+        `<option value="${Utils.escapeHtml(a)}">${Utils.escapeHtml(a) || '— Selecionar local —'}</option>`
+      ).join('');
+
+      list.innerHTML = workers.map(w => {
+        const dd = State.getDayData(w.id, date);
+        const eq = State.getEquipe(w.equipe);
+        const cor = eq ? eq.cor : '#8b92b0';
+        const absent = !dd.presente;
+        const tags = (dd.tarefas || []).map(t =>
+          `<span class="activity-tag">${Utils.escapeHtml(t)}<button onclick="EfetivoPage.removeTag('${w.id}','${t.replace(/'/g, "\\'")}')">×</button></span>`
+        ).join('');
+        const tarefaOpts = s.tarefas.filter(t => !(dd.tarefas || []).includes(t))
+          .map(t => `<option value="${Utils.escapeHtml(t)}">${Utils.escapeHtml(t)}</option>`).join('');
+        const andarSel = andarOpts.replace(
+          `value="${Utils.escapeHtml(dd.andar)}"`,
+          `value="${Utils.escapeHtml(dd.andar)}" selected`
+        );
+        return `<div class="worker-card ${absent ? 'absent' : ''}" id="wcard-${w.id}">
+          <div class="worker-card-top">
+            <label class="presence-toggle">
+              <input type="checkbox" ${dd.presente ? 'checked' : ''}
+                onchange="EfetivoPage.togglePresence('${w.id}',this.checked)">
+              <span class="presence-slider"></span>
+            </label>
+            <div class="worker-info">
+              <div class="worker-name">${Utils.escapeHtml(w.nome)}</div>
+              <div class="worker-role">${Utils.escapeHtml(w.funcao)}</div>
+            </div>
+            <span class="team-badge" style="background:${cor}22;color:${cor};border:1px solid ${cor}44">
+              ${Utils.escapeHtml(eq ? eq.nome : w.equipe)}
+            </span>
+            <div class="worker-card-actions">
+              <button class="icon-btn" onclick="Modals.openAddWorker('${w.id}')">✏️</button>
+              <button class="icon-btn danger" onclick="FuncionariosPage.remove('${w.id}')">✕</button>
+            </div>
+          </div>
+          <div class="worker-card-body ${absent ? 'hidden' : ''}" id="wbody-${w.id}">
+            <div>
+              <div class="field-label">Andar / Local</div>
+              <select class="inline-select" onchange="EfetivoPage.setAndar('${w.id}',this.value)">${andarSel}</select>
+            </div>
+            <div>
+              <div class="field-label">Atividades</div>
+              <div class="activity-tags" id="tags-${w.id}">${tags}</div>
+              <div class="add-activity-row">
+                <select class="inline-select" id="actsel-${w.id}">
+                  <option value="">+ Adicionar atividade</option>${tarefaOpts}
+                </select>
+                <button class="add-btn" onclick="EfetivoPage.addTag('${w.id}')">+</button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    /* ── DESKTOP: table ── */
+    const tbody = document.getElementById('workerTableBody');
+    if (tbody) {
+      if (!workers.length) {
+        tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state" style="padding:32px">
+          Nenhum funcionário para esta obra/equipe.
+        </div></td></tr>`;
+        updateSummary(); return;
+      }
+      const andarOpts2 = ['', ...s.andares].map(a =>
+        `<option value="${Utils.escapeHtml(a)}">${Utils.escapeHtml(a) || '— Selecionar local —'}</option>`
+      ).join('');
+
+      tbody.innerHTML = workers.map(w => {
+        const dd = State.getDayData(w.id, date);
+        const eq = State.getEquipe(w.equipe);
+        const cor = eq ? eq.cor : '#8b92b0';
+        const absent = !dd.presente;
+        const tags = (dd.tarefas || []).map(t =>
+          `<span class="activity-tag" style="margin:2px">${Utils.escapeHtml(t)}<button onclick="EfetivoPage.removeTag('${w.id}','${t.replace(/'/g, "\\'")}')">×</button></span>`
+        ).join('');
+        const tarefaOpts = s.tarefas.filter(t => !(dd.tarefas || []).includes(t))
+          .map(t => `<option value="${Utils.escapeHtml(t)}">${Utils.escapeHtml(t)}</option>`).join('');
+        const andarSel = andarOpts2.replace(
+          `value="${Utils.escapeHtml(dd.andar)}"`,
+          `value="${Utils.escapeHtml(dd.andar)}" selected`
+        );
+        return `<tr id="wrow-${w.id}" class="${absent ? 'absent' : ''}">
+          <td>
+            <label class="presence-toggle">
+              <input type="checkbox" ${dd.presente ? 'checked' : ''}
+                onchange="EfetivoPage.togglePresence('${w.id}',this.checked)">
+              <span class="presence-slider"></span>
+            </label>
+          </td>
+          <td>
+            <div class="worker-name">${Utils.escapeHtml(w.nome)}</div>
+            <div class="worker-role">${Utils.escapeHtml(w.funcao)}</div>
+          </td>
+          <td>
+            <span class="team-badge" style="background:${cor}22;color:${cor};border:1px solid ${cor}44">
+              ${Utils.escapeHtml(eq ? eq.nome : w.equipe)}
+            </span>
+          </td>
+          <td>
+            <select class="inline-select" ${absent ? 'disabled' : ''}
+              onchange="EfetivoPage.setAndar('${w.id}',this.value)"
+              style="min-width:160px">${andarSel}</select>
+          </td>
+          <td>
+            <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:5px" id="tags-${w.id}">${tags}</div>
+            ${!absent ? `<div style="display:flex;gap:5px;align-items:center">
+              <select class="inline-select" id="actsel-${w.id}" style="min-width:180px">
+                <option value="">+ Adicionar atividade</option>${tarefaOpts}
+              </select>
+              <button class="add-btn" style="width:32px;height:32px;font-size:16px;flex-shrink:0"
+                onclick="EfetivoPage.addTag('${w.id}')">+</button>
+            </div>` : ''}
+          </td>
+          <td>
+            <div style="display:flex;gap:4px">
+              <button class="icon-btn" title="Editar" onclick="Modals.openAddWorker('${w.id}')">✏️</button>
+              <button class="icon-btn" title="Mover" onclick="Modals.openMove('${w.id}')">↗</button>
+              <button class="icon-btn danger" title="Remover" onclick="FuncionariosPage.remove('${w.id}')">✕</button>
+            </div>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    updateSummary();
+    App.updateTopbar();
+    _updateSortHeaders();
+  }
+
+  function togglePresence(wid, checked) {
+    State.setDayField(wid, 'presente', checked);
+    // mobile card
+    const card = document.getElementById('wcard-' + wid);
+    const body = document.getElementById('wbody-' + wid);
+    if (card) card.classList.toggle('absent', !checked);
+    if (body) body.classList.toggle('hidden', !checked);
+    // desktop row
+    const row = document.getElementById('wrow-' + wid);
+    if (row) {
+      row.classList.toggle('absent', !checked);
+      row.querySelectorAll('select').forEach(s => s.disabled = !checked);
+    }
+    updateSummary();
+    App.updateTopbar();
+  }
+
+  function setAndar(wid, val) { State.setDayField(wid, 'andar', val); }
+
+  function addTag(wid) {
+    const sel = document.getElementById('actsel-' + wid);
+    if (!sel || !sel.value) return;
+    const tarefa = sel.value;
+    const dd = State.getDayData(wid, App.getDate());
+    const tarefas = [...(dd.tarefas || [])];
+    if (!tarefas.includes(tarefa)) {
+      tarefas.push(tarefa);
+      State.setDayField(wid, 'tarefas', tarefas);
+    }
+    const tagsEl = document.getElementById('tags-' + wid);
+    if (tagsEl) tagsEl.innerHTML = tarefas.map(t =>
+      `<span class="activity-tag" style="margin:2px">${Utils.escapeHtml(t)}<button onclick="EfetivoPage.removeTag('${wid}','${t.replace(/'/g, "\\'")}')">×</button></span>`
+    ).join('');
+    const opt = sel.querySelector(`option[value="${CSS.escape(tarefa)}"]`);
+    if (opt) opt.remove();
+    else { const opts = Array.from(sel.options).find(o => o.value === tarefa); if (opts) opts.remove(); }
+    sel.value = '';
+  }
+
+  function removeTag(wid, tarefa) {
+    const dd = State.getDayData(wid, App.getDate());
+    const tarefas = (dd.tarefas || []).filter(t => t !== tarefa);
+    State.setDayField(wid, 'tarefas', tarefas);
+    const tagsEl = document.getElementById('tags-' + wid);
+    if (tagsEl) tagsEl.innerHTML = tarefas.map(t =>
+      `<span class="activity-tag" style="margin:2px">${Utils.escapeHtml(t)}<button onclick="EfetivoPage.removeTag('${wid}','${t.replace(/'/g, "\\'")}')">×</button></span>`
+    ).join('');
+    const sel = document.getElementById('actsel-' + wid);
+    if (sel) { const opt = document.createElement('option'); opt.value = tarefa; opt.textContent = tarefa; sel.appendChild(opt); }
+  }
+
+  function updateSummary() {
+    const s = State.get();
+    const date = App.getDate();
+    const obra = App.getObra();
+    const workers = s.workers.filter(w => w.obra === obra);
+    let presentes = 0;
+    workers.forEach(w => { if (State.getDayData(w.id, date).presente) presentes++; });
+    const ausentes = workers.length - presentes;
+    document.getElementById('pillPresentes').textContent = `${presentes} presentes`;
+    document.getElementById('pillAusentes').textContent  = `${ausentes} ausentes`;
+    document.getElementById('pillTotal').textContent     = `${workers.length} total`;
+  }
+
+  function buildReportText() {
+    const s = State.get();
+    const date = App.getDate();
+    const obra = App.getObra();
+    const p = s.producao[date] || {};
+    const d = Utils.dateFromStr(date);
+    const workers = s.workers.filter(w => w.obra === obra);
+    const presentes = workers.filter(w => State.getDayData(w.id, date).presente);
+
+    let txt = `EFETIVO – ${obra.toUpperCase()}\n`;
+    txt += `Data: ${Utils.formatLong(d)}\n`;
+    txt += `INFORMAÇÕES IMPORTANTES DA PRODUÇÃO\n`;
+    if (p.areaAlv)   txt += `* Área de Alvenaria Estrutural: ${p.areaAlv} m2/andar\n`;
+    if (p.areaLaje)  txt += `* Área da Laje: ${p.areaLaje} m2\n`;
+    if (p.volGraute) txt += `* Volume de Graute: ${p.volGraute} m3/andar\n`;
+    if (p.volArg)    txt += `* Volume de Argamassa: ${p.volArg} m3/andar\n`;
+    if (p.volConc)   txt += `* Volume de Concreto: ${p.volConc} m3/andar\n`;
+    if (p.acoAlv)    txt += `* Aço Alvenaria Estrutural: ${p.acoAlv} kg\n`;
+    if (p.acoLaje)   txt += `* Aço Lajes e Vigas: ${p.acoLaje} kg\n`;
+    if (p.alvEstM2 !== undefined && p.alvEstM2 !== '') {
+      const ref = p.dataAlvEst ? Utils.formatPT(p.dataAlvEst) : '–';
+      txt += `Produção de Alvenaria Estrutural – ${ref}:\n* ${p.alvEstM2 || 0} m2 executados\n* ${p.alvEstPor || 0} m2 por bloqueiro\n`;
+    }
+    if (p.alvVedM2 !== undefined && p.alvVedM2 !== '') {
+      const ref = p.dataAlvVed ? Utils.formatPT(p.dataAlvVed) : '–';
+      txt += `Produção de Alvenaria de Vedação – ${ref}:\n* ${p.alvVedM2 || 0} m2 executados\n* ${p.alvVedPor || 0} m2 por pedreiro\n`;
+    }
+    txt += `CONCRETAGENS PROGRAMADAS\n`;
+    txt += p.concretagens ? `* ${p.concretagens}\n` : `* Não há concretagens programadas registradas nos dados atuais.\n`;
+    txt += `ADMINISTRAÇÃO E APOIO\n`;
+    if (p.mestre)         txt += `* Mestre de Obras – ${p.mestre}\n`;
+    if (p.engenheiro)     txt += `* Engenheiro de Obra – ${p.engenheiro}\n`;
+    if (p.encarregado)    txt += `* Encarregado Civil – ${p.encarregado}\n`;
+    if (p.almoxarife)     txt += `* Almoxarife – ${p.almoxarife}\n`;
+    if (p.assistente)     txt += `* Assistente Engenharia – ${p.assistente}\n`;
+    if (p.administrativo) txt += `* Administrativo de Obra – ${p.administrativo}\n`;
+
+    const byAndar = {};
+    presentes.forEach(w => {
+      const dd = State.getDayData(w.id, date);
+      const andar = dd.andar || 'SEM LOCAL DEFINIDO';
+      if (!byAndar[andar]) byAndar[andar] = { tarefas: new Set(), workers: [] };
+      byAndar[andar].workers.push(w);
+      (dd.tarefas || []).forEach(t => byAndar[andar].tarefas.add(t));
+    });
+    const ordered = [
+      ...s.andares.filter(a => byAndar[a]),
+      ...Object.keys(byAndar).filter(a => !s.andares.includes(a)),
+    ];
+    ordered.forEach(andar => {
+      const grp = byAndar[andar];
+      txt += `${andar.toUpperCase()}\n`;
+      if (grp.tarefas.size > 0) { txt += `Atividades:\n`; grp.tarefas.forEach(t => { txt += `* ${t}\n`; }); }
+      txt += `Mão de obra:\n`;
+      grp.workers.forEach(w => { txt += `* ${w.nome} – ${w.funcao}\n`; });
+    });
+    txt += `\nTOTAL DE TRABALHADORES EM OBRA: ${presentes.length}\n`;
+    return txt;
+  }
+
+  function preview() {
+    document.getElementById('previewText').textContent = buildReportText();
+    Modals.open('modalPreview');
+  }
+
+  function copyReport() {
+    Utils.copyToClipboard(buildReportText(), 'Copiado! Cole no WhatsApp.');
+  }
+
+  async function gerar() {
+    const s = State.get();
+    const date = App.getDate();
+    const obra = App.getObra();
+    const texto = buildReportText();
+    const workers = s.workers.filter(w => w.obra === obra);
+    const presentes = workers.filter(w => State.getDayData(w.id, date).presente);
+    State.addHistorico({ ts: Date.now(), data: date, obra, texto, total: presentes.length });
+    workers.forEach(w => State.updateAttendance(w.id, State.getDayData(w.id, date).presente));
+    document.getElementById('previewText').textContent = texto;
+    Modals.open('modalPreview');
+    Utils.toast('Relatório salvo!', 'success');
+    if (s.gsUrl) {
+      await Sheets.send(date, obra, texto, workers.map(w => ({
+        nome: w.nome, funcao: w.funcao,
+        equipe: (State.getEquipe(w.equipe) || {}).nome || w.equipe,
+        presente: State.getDayData(w.id, date).presente,
+        andar: State.getDayData(w.id, date).andar,
+        tarefas: (State.getDayData(w.id, date).tarefas || []).join('; '),
+      })));
+    }
+    App.updateTopbar();
+  }
+
+  return {
+    init, render, renderList, renderTeamFilters,
+    setTeamFilter, setSort,
+    togglePresence, setAndar, addTag, removeTag,
+    updateSummary, buildReportText, preview, copyReport, gerar,
+  };
+})();
+
+
+/* funcionarios.js + relatorios + historico + producao */
+
+/* ── FUNCIONÁRIOS ── */
+const FuncionariosPage = (() => {
+  function render() {
+    const s = State.get();
+    const obra = App.getObra();
+    const q = (document.getElementById('workerSearch')?.value||'').toLowerCase();
+    let workers = s.workers;
+    if (q) workers = workers.filter(w => w.nome.toLowerCase().includes(q) || w.funcao.toLowerCase().includes(q));
+
+    const list = document.getElementById('funcList');
+    if (!list) return;
+    if (!workers.length) {
+      list.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Nenhum funcionário encontrado.</span></div>`;
+      return;
+    }
+    list.innerHTML = workers.map(w => {
+      const eq = State.getEquipe(w.equipe);
+      const cor = eq ? eq.cor : '#8b92b0';
+      return `<div class="func-card">
+        <div class="func-info">
+          <div class="func-name">${Utils.escapeHtml(w.nome)}</div>
+          <div class="func-meta">
+            <span class="team-badge" style="background:${cor}22;color:${cor};border:1px solid ${cor}44;font-size:10px;padding:2px 7px">${Utils.escapeHtml(eq?eq.nome:w.equipe)}</span>
+            &nbsp;${Utils.escapeHtml(w.funcao)} · ${Utils.escapeHtml(w.obra)}
+          </div>
+        </div>
+        <div class="func-actions">
+          <button class="icon-btn" onclick="Modals.openAddWorker('${w.id}')">✏️</button>
+          <button class="icon-btn" onclick="Modals.openMove('${w.id}')">↗</button>
+          <button class="icon-btn danger" onclick="FuncionariosPage.remove('${w.id}')">✕</button>
+        </div>
+      </div>`;
+    }).join('');
+    App.updateTopbar();
+  }
+
+  function saveWorker() {
+    const nome   = document.getElementById('wName').value.trim();
+    const funcao = document.getElementById('wRole').value.trim();
+    const equipe = document.getElementById('wTeam').value;
+    const obra   = document.getElementById('wObra').value;
+    const editId = document.getElementById('wEditId').value;
+    if (!nome||!funcao) { Utils.toast('Preencha nome e função.','warn'); return; }
+    if (editId) { State.updateWorker(editId,{nome,funcao,equipe,obra}); Utils.toast('Atualizado!','success'); }
+    else { State.addWorker({nome,funcao,equipe,obra}); Utils.toast(`${nome} adicionado!`,'success'); }
+    Modals.close('modalAddWorker');
+    render(); EfetivoPage.render();
+  }
+
+  function remove(id) {
+    const w = State.getWorker(id);
+    if (!w||!confirm(`Remover "${w.nome}"?`)) return;
+    State.removeWorker(id); render(); EfetivoPage.render();
+    Utils.toast('Removido.','info');
+  }
+
+  function confirmMove() {
+    const id   = document.getElementById('moveWorkerId').value;
+    const obra = document.getElementById('moveObraSelect').value;
+    State.updateWorker(id,{obra});
+    Modals.close('modalMove'); render(); EfetivoPage.render();
+    Utils.toast(`Movido para ${obra}.`,'success');
+  }
+
+  function importWorkers() {
+    const text  = document.getElementById('importText').value.trim();
+    const obra  = document.getElementById('importObraSelect').value;
+    const equipe= document.getElementById('importEquipeSelect').value;
+    if (!text) { Utils.toast('Cole a lista.','warn'); return; }
+    let count = 0;
+    text.split('\n').filter(l=>l.trim()).forEach(line => {
+      const parts = line.split(/–|-/).map(p=>p.trim());
+      const nome = parts[0]; const funcao = parts[1]||'Ajudante';
+      if (nome) { State.addWorker({nome,funcao,equipe,obra}); count++; }
+    });
+    Modals.close('modalImport'); render(); EfetivoPage.render();
+    Utils.toast(`${count} funcionários importados!`,'success');
+  }
+
+  return { render, saveWorker, remove, confirmMove, importWorkers };
+})();
+
+/* ── RELATÓRIOS / DESEMPENHO ── */
+const RelatoriosPage = (() => {
+  function render() {
+    const s = State.get();
+    const obra = App.getObra();
+    const att  = s.attendance || {};
+    const workers = s.workers.filter(w => w.obra === obra);
+    const date = App.getDate();
+    const hoje = workers.filter(w => State.getDayData(w.id, date).presente).length;
+    const totalRel = s.historico.filter(h => h.obra === obra).length;
+    const avgAss = workers.length === 0 ? 0 : Math.round(
+      workers.reduce((sum,w) => {
+        const a = att[w.id];
+        return sum + (a&&a.total>0 ? (a.dias/a.total)*100 : 100);
+      }, 0) / workers.length);
+
+    const el = document.getElementById('relatoriosContent');
+    el.innerHTML = `
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Funcionários</div><div class="stat-value">${workers.length}</div><div class="stat-desc">na obra</div></div>
+        <div class="stat-card"><div class="stat-label">Hoje</div><div class="stat-value" style="color:var(--green)">${hoje}</div><div class="stat-desc">presentes</div></div>
+        <div class="stat-card"><div class="stat-label">Relatórios</div><div class="stat-value">${totalRel}</div><div class="stat-desc">gerados</div></div>
+        <div class="stat-card"><div class="stat-label">Assiduidade</div>
+          <div class="stat-value" style="color:${avgAss>=90?'var(--green)':avgAss>=75?'var(--accent)':'var(--red)'}">${avgAss}%</div>
+          <div class="stat-desc">média equipe</div>
+        </div>
+      </div>
+      <div class="att-list">
+        ${workers.length===0
+          ? `<div class="empty-state"><span>Sem dados registrados ainda.</span></div>`
+          : workers.map(w => {
+              const a = att[w.id]||{dias:0,total:0};
+              const pct = a.total>0 ? Math.round((a.dias/a.total)*100) : 100;
+              const cls = pct>=90?'good':pct>=75?'warn':'danger';
+              const cor = pct>=90?'var(--green)':pct>=75?'var(--accent)':'var(--red)';
+              const eq = State.getEquipe(w.equipe);
+              const ecor = eq?eq.cor:'#8b92b0';
+              return `<div class="att-card">
+                <div class="att-top">
+                  <div class="att-info">
+                    <div class="att-name">${Utils.escapeHtml(w.nome)}</div>
+                    <div class="att-role">
+                      <span class="team-badge" style="background:${ecor}22;color:${ecor};border:1px solid ${ecor}44;font-size:10px;padding:2px 7px">${Utils.escapeHtml(eq?eq.nome:w.equipe)}</span>
+                      &nbsp;${Utils.escapeHtml(w.funcao)}
+                    </div>
+                  </div>
+                  <div class="att-pct" style="color:${cor}">${pct}%</div>
+                </div>
+                <div class="bar-wrap">
+                  <div class="bar-bg"><div class="bar-fill ${cls}" style="width:${pct}%"></div></div>
+                  <span class="bar-label">${a.dias}/${a.total}</span>
+                </div>
+              </div>`;
+            }).join('')
+        }
+      </div>
+      <div style="height:20px"></div>`;
+  }
+  return { render };
+})();
+
+/* ── HISTÓRICO ── */
+const HistoricoPage = (() => {
+  let currentDetail = '';
+  function render() {
+    const s = State.get();
+    const obra = App.getObra();
+    const hist = s.historico.filter(h => h.obra === obra);
+    const el = document.getElementById('historicoContent');
+    if (!hist.length) {
+      el.innerHTML = `<div class="empty-state" style="padding:60px 20px">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="width:48px;height:48px;opacity:.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>Nenhum relatório gerado ainda.</span>
+      </div>`;
+      return;
+    }
+    el.innerHTML = `<div class="hist-list">
+      ${hist.map((h,i) => {
+        const d = Utils.dateFromStr(h.data);
+        return `<div class="hist-card" onclick="HistoricoPage.openDetail(${i})">
+          <div class="hist-date-block">
+            <div class="hist-day">${String(d.getDate()).padStart(2,'0')}</div>
+            <div class="hist-month">${['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'][d.getMonth()]}</div>
+          </div>
+          <div class="hist-info">
+            <div class="hist-obra">${Utils.escapeHtml(h.obra)}</div>
+            <div class="hist-weekday">${Utils.weekdayOf(h.data)}</div>
+            <div class="hist-total">👷 ${h.total} trabalhadores</div>
+          </div>
+          <div class="hist-arrow">›</div>
+        </div>`;
+      }).join('')}
+    </div><div style="height:20px"></div>`;
+  }
+  function openDetail(i) {
+    const s = State.get();
+    const hist = s.historico.filter(h => h.obra === App.getObra());
+    const h = hist[i];
+    if (!h) return;
+    currentDetail = h.texto;
+    document.getElementById('historicoDetailTitle').textContent = `Efetivo – ${Utils.formatPT(h.data)}`;
+    document.getElementById('historicoDetailText').textContent = h.texto;
+    Modals.open('modalHistorico');
+  }
+  function copyDetail() { Utils.copyToClipboard(currentDetail,'Copiado!'); }
+  return { render, openDetail, copyDetail };
+})();
+
+/* ── PRODUÇÃO ── */
+const ProducaoPage = (() => {
+  function render() {
+    const el = document.getElementById('producaoContent');
+    el.innerHTML = `
+      <div class="prod-section">
+        <div class="prod-section-title">📐 Informações Gerais</div>
+        <div class="prod-grid">
+          <div class="form-group"><label>Área Alv. Estrutural (m2/andar)</label><input class="form-input" id="pAreaAlv" placeholder="554,75" style="font-family:'JetBrains Mono',monospace"></div>
+          <div class="form-group"><label>Área da Laje (m2)</label><input class="form-input" id="pAreaLaje" placeholder="557,58" style="font-family:'JetBrains Mono',monospace"></div>
+          <div class="form-group"><label>Volume Graute (m3/andar)</label><input class="form-input" id="pVolGraute" placeholder="17,67" style="font-family:'JetBrains Mono',monospace"></div>
+          <div class="form-group"><label>Volume Argamassa (m3/andar)</label><input class="form-input" id="pVolArg" placeholder="1,89" style="font-family:'JetBrains Mono',monospace"></div>
+          <div class="form-group"><label>Volume Concreto (m3/andar)</label><input class="form-input" id="pVolConc" placeholder="103,49" style="font-family:'JetBrains Mono',monospace"></div>
+          <div class="form-group"><label>Aço Alv. Estrutural (kg)</label><input class="form-input" id="pAcoAlv" placeholder="2.789" style="font-family:'JetBrains Mono',monospace"></div>
+          <div class="form-group"><label>Aço Lajes e Vigas (kg)</label><input class="form-input" id="pAcoLaje" placeholder="4.051" style="font-family:'JetBrains Mono',monospace"></div>
+        </div>
+      </div>
+      <div class="prod-section">
+        <div class="prod-section-title">🧱 Alvenaria Estrutural</div>
+        <div class="prod-grid">
+          <div class="form-group"><label>Data Referência</label><input class="form-input" type="date" id="pDataAlvEst"></div>
+          <div></div>
+          <div class="form-group"><label>m2 Executados</label><input class="form-input" type="number" id="pAlvEstM2" placeholder="0"></div>
+          <div class="form-group"><label>m2 por Bloqueiro</label><input class="form-input" type="number" id="pAlvEstPor" placeholder="0"></div>
+        </div>
+      </div>
+      <div class="prod-section">
+        <div class="prod-section-title">🏗 Alvenaria de Vedação</div>
+        <div class="prod-grid">
+          <div class="form-group"><label>Data Referência</label><input class="form-input" type="date" id="pDataAlvVed"></div>
+          <div></div>
+          <div class="form-group"><label>m2 Executados</label><input class="form-input" type="number" id="pAlvVedM2" placeholder="0"></div>
+          <div class="form-group"><label>m2 por Pedreiro</label><input class="form-input" type="number" id="pAlvVedPor" placeholder="0"></div>
+        </div>
+      </div>
+      <div class="prod-section">
+        <div class="prod-section-title">🚧 Concretagens Programadas</div>
+        <div class="form-group"><textarea class="form-input" id="pConcretagens" rows="3" placeholder="Descreva ou deixe em branco."></textarea></div>
+      </div>
+      <div class="prod-section">
+        <div class="prod-section-title">👷 Administração e Apoio</div>
+        <div class="prod-grid">
+          <div class="form-group"><label>Mestre de Obras</label><input class="form-input" id="pMestre"></div>
+          <div class="form-group"><label>Engenheiro</label><input class="form-input" id="pEngenheiro"></div>
+          <div class="form-group"><label>Encarregado Civil</label><input class="form-input" id="pEncarregado"></div>
+          <div class="form-group"><label>Almoxarife</label><input class="form-input" id="pAlmoxarife"></div>
+          <div class="form-group"><label>Assistente Eng.</label><input class="form-input" id="pAssistente"></div>
+          <div class="form-group"><label>Administrativo</label><input class="form-input" id="pAdministrativo"></div>
+        </div>
+      </div>`;
+    loadFields();
+  }
+
+  const MAP = {
+    pAreaAlv:'areaAlv',pAreaLaje:'areaLaje',pVolGraute:'volGraute',pVolArg:'volArg',
+    pVolConc:'volConc',pAcoAlv:'acoAlv',pAcoLaje:'acoLaje',
+    pDataAlvEst:'dataAlvEst',pAlvEstM2:'alvEstM2',pAlvEstPor:'alvEstPor',
+    pDataAlvVed:'dataAlvVed',pAlvVedM2:'alvVedM2',pAlvVedPor:'alvVedPor',
+    pConcretagens:'concretagens',pMestre:'mestre',pEngenheiro:'engenheiro',
+    pEncarregado:'encarregado',pAlmoxarife:'almoxarife',pAssistente:'assistente',
+    pAdministrativo:'administrativo',
+  };
+
+  function loadFields() {
+    const p = State.get().producao[App.getDate()]||{};
+    Object.entries(MAP).forEach(([id,key]) => { const el=document.getElementById(id); if(el) el.value=p[key]||''; });
+  }
+
+  function salvar() {
+    const fields = {};
+    Object.entries(MAP).forEach(([id,key]) => { const el=document.getElementById(id); if(el) fields[key]=el.value; });
+    State.saveProducao(App.getDate(), fields);
+    Utils.toast('Dados de produção salvos!','success');
+  }
+
+  return { render, loadFields, salvar };
+})();
+
+
+/* configuracoes.js + integracao */
+
+const ConfigPage = (() => {
+  function render() {
+    const s = State.get();
+    document.getElementById('configContent').innerHTML = `
+      ${block('🏢 Andares / Locais', s.andares.map((a,i)=>item(a,`ConfigPage.removeAndar(${i})`)).join(''),
+        `<div class="add-item-row"><input type="text" id="newAndar" placeholder="ex: 17º Pavimento"><button class="btn btn-accent" onclick="ConfigPage.addAndar()">Add</button></div>`)}
+      ${block('⚒ Atividades', s.tarefas.map((t,i)=>item(t,`ConfigPage.removeTarefa(${i})`)).join(''),
+        `<div class="add-item-row"><input type="text" id="newTarefa" placeholder="ex: Instalação elétrica"><button class="btn btn-accent" onclick="ConfigPage.addTarefa()">Add</button></div>`)}
+      ${block('👥 Equipes', s.equipes.map(e=>itemColor(e.cor,e.nome,`ConfigPage.removeEquipe('${e.id}')`)).join(''),
+        `<div class="add-item-row"><input type="text" id="newEquipe" placeholder="Nova equipe"><input type="color" id="newEquipeCor" value="#22c55e"><button class="btn btn-accent" onclick="ConfigPage.addEquipe()">Add</button></div>`)}
+      ${block('🏗 Obras', s.obras.map((o,i)=>item(o, i>0?`ConfigPage.removeObra('${Utils.escapeHtml(o)}')`:null, i===0?'<span style="font-size:10px;color:var(--text3)">principal</span>':'')).join(''),
+        `<div class="add-item-row"><input type="text" id="newObra" placeholder="Nova obra"><button class="btn btn-accent" onclick="ConfigPage.addObra()">Add</button></div>`)}
+    `;
+  }
+
+  function block(title, body, footer) {
+    return `<div class="settings-section">
+      <div class="settings-section-header">
+        <span class="settings-section-title">${title}</span>
+      </div>
+      <div class="settings-section-body">${body}${footer}</div>
+    </div>`;
+  }
+
+  function item(text, removeFn, extra='') {
+    return `<div class="settings-item">
+      <span style="flex:1">${Utils.escapeHtml(text)}</span>
+      ${extra}
+      ${removeFn ? `<button class="icon-btn danger" style="width:26px;height:26px;font-size:12px" onclick="${removeFn}">✕</button>` : ''}
+    </div>`;
+  }
+
+  function itemColor(cor, text, removeFn) {
+    return `<div class="settings-item">
+      <span class="color-dot" style="background:${cor}"></span>
+      <span style="flex:1">${Utils.escapeHtml(text)}</span>
+      <button class="icon-btn danger" style="width:26px;height:26px;font-size:12px" onclick="${removeFn}">✕</button>
+    </div>`;
+  }
+
+  function addAndar()  { const v=document.getElementById('newAndar').value.trim(); if(!v)return; State.addAndar(v); document.getElementById('newAndar').value=''; render(); EfetivoPage.render(); }
+  function removeAndar(i) { State.removeAndar(i); render(); EfetivoPage.render(); }
+  function addTarefa() { const v=document.getElementById('newTarefa').value.trim(); if(!v)return; State.addTarefa(v); document.getElementById('newTarefa').value=''; render(); EfetivoPage.render(); }
+  function removeTarefa(i) { State.removeTarefa(i); render(); EfetivoPage.render(); }
+  function addEquipe() {
+    const nome=document.getElementById('newEquipe').value.trim();
+    const cor=document.getElementById('newEquipeCor').value;
+    if(!nome)return; State.addEquipe({nome,cor}); document.getElementById('newEquipe').value=''; render(); EfetivoPage.renderTeamFilters();
+  }
+  function removeEquipe(id) { State.removeEquipe(id); render(); EfetivoPage.renderTeamFilters(); }
+  function addObra()  {
+    const v=document.getElementById('newObra').value.trim(); if(!v)return;
+    State.addObra(v); document.getElementById('newObra').value='';
+    App.rebuildObraSelects(); render();
+  }
+  function removeObra(nome) {
+    if(nome===App.getObra()){Utils.toast('Não pode remover a obra ativa.','warn');return;}
+    if(!confirm(`Remover "${nome}"?`))return;
+    State.removeObra(nome); App.rebuildObraSelects(); render();
+  }
+
+  return { render, addAndar, removeAndar, addTarefa, removeTarefa, addEquipe, removeEquipe, addObra, removeObra };
+})();
+
+/* ── INTEGRAÇÃO ── */
+const IntegracaoPage = (() => {
+  function render() {
+    const s = State.get();
+    document.getElementById('integracaoContent').innerHTML = `
+      <div class="int-card">
+        <div class="int-card-title">🔗 Configuração</div>
+        <div class="form-group">
+          <label>URL do Web App (Apps Script)</label>
+          <input class="form-input" id="gsUrl" type="text" style="font-size:11px;font-family:'JetBrains Mono',monospace"
+            placeholder="https://script.google.com/macros/s/…/exec" value="${Utils.escapeHtml(s.gsUrl)}">
+        </div>
+        <div class="form-group">
+          <label>ID da Planilha</label>
+          <input class="form-input" id="gsSheetId" type="text" style="font-size:12px;font-family:'JetBrains Mono',monospace"
+            placeholder="1BxiMVs0XRA5…" value="${Utils.escapeHtml(s.gsSheetId)}">
+        </div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-accent btn-full" onclick="IntegracaoPage.salvar()">Salvar</button>
+          <button class="btn btn-ghost" onclick="IntegracaoPage.testar()">Testar</button>
+        </div>
+        ${s.gsUrl?`<p style="font-size:11px;color:var(--green);margin-top:10px">✅ Integração ativa</p>`:''}
+      </div>
+      <div class="int-card">
+        <div class="int-card-title">📋 Como configurar</div>
+        <ol class="steps-list">
+          <li>Crie uma planilha em <a href="https://sheets.google.com" target="_blank">sheets.google.com</a> e copie o ID da URL.</li>
+          <li>Acesse <a href="https://script.google.com" target="_blank">script.google.com</a> → Novo projeto.</li>
+          <li>Apague o código existente e cole o código abaixo.</li>
+          <li>Clique em Implantar → Nova implantação → Aplicativo da Web → Acesso: Qualquer pessoa.</li>
+          <li>Copie a URL gerada e cole no campo acima junto com o ID da planilha.</li>
+        </ol>
+        <button class="btn btn-ghost btn-full" style="margin-top:8px" onclick="IntegracaoPage.showScript()">Ver código Apps Script</button>
+      </div>
+    `;
+  }
+
+  function salvar() {
+    State.get().gsUrl = document.getElementById('gsUrl').value.trim();
+    State.get().gsSheetId = document.getElementById('gsSheetId').value.trim();
+    State.save(); App.updateGSIndicator();
+    Utils.toast('Configuração salva!','success'); render();
+  }
+
+  async function testar() {
+    const url = document.getElementById('gsUrl').value.trim();
+    if (!url) { Utils.toast('Configure a URL primeiro.','warn'); return; }
+    Utils.toast('Testando…','info');
+    const ok = await Sheets.ping(url);
+    ok ? Utils.toast('Conexão OK!','success') : Utils.toast('Falha. Verifique a URL.','error');
+  }
+
+  function showScript() {
+    document.getElementById('appsScriptCode').textContent = Sheets.APPS_SCRIPT_CODE;
+    Modals.open('modalAppsScript');
+  }
+
+  function copyScript() { Utils.copyToClipboard(Sheets.APPS_SCRIPT_CODE,'Código copiado!'); }
+
+  return { render, salvar, testar, showScript, copyScript };
+})();
+
+
+/* modals.js */
+const Modals = (() => {
+  function open(id) {
+    document.getElementById('modalBackdrop')?.classList.add('open');
+    document.querySelectorAll('.modal').forEach(m => m.style.display='none');
+    const m = document.getElementById(id);
+    if (m) m.style.display='block';
+    if (id==='modalObra') App.renderObraOptions();
+  }
+
+  function close(id) {
+    const m = document.getElementById(id);
+    if (m) m.style.display='none';
+    const any = Array.from(document.querySelectorAll('.modal')).some(m=>m.style.display!=='none');
+    if (!any) document.getElementById('modalBackdrop')?.classList.remove('open');
+  }
+
+  function closeAll(e) {
+    if (e && e.target !== document.getElementById('modalBackdrop')) return;
+    document.querySelectorAll('.modal').forEach(m=>m.style.display='none');
+    document.getElementById('modalBackdrop')?.classList.remove('open');
+  }
+
+  function openAddWorker(wid) {
+    const s = State.get();
+    document.getElementById('wTeam').innerHTML = s.equipes.map(e=>`<option value="${e.id}">${e.nome}</option>`).join('');
+    document.getElementById('wObra').innerHTML = s.obras.map(o=>`<option value="${Utils.escapeHtml(o)}" ${o===App.getObra()?'selected':''}>${Utils.escapeHtml(o)}</option>`).join('');
+    if (wid) {
+      const w = State.getWorker(wid);
+      document.getElementById('modalAddWorkerTitle').textContent='Editar Funcionário';
+      document.getElementById('wEditId').value=wid;
+      document.getElementById('wName').value=w.nome;
+      document.getElementById('wRole').value=w.funcao;
+      document.getElementById('wTeam').value=w.equipe;
+      document.getElementById('wObra').value=w.obra;
+    } else {
+      document.getElementById('modalAddWorkerTitle').textContent='Novo Funcionário';
+      document.getElementById('wEditId').value='';
+      document.getElementById('wName').value='';
+      document.getElementById('wRole').value='';
+    }
+    open('modalAddWorker');
+  }
+
+  function openMove(wid) {
+    const s = State.get();
+    const w = State.getWorker(wid);
+    document.getElementById('moveWorkerId').value=wid;
+    document.getElementById('moveWorkerName').textContent=w?w.nome:'';
+    document.getElementById('moveObraSelect').innerHTML=s.obras
+      .filter(o=>o!==(w?.obra))
+      .map(o=>`<option value="${Utils.escapeHtml(o)}">${Utils.escapeHtml(o)}</option>`).join('');
+    open('modalMove');
+  }
+
+  function openImport() {
+    const s = State.get();
+    document.getElementById('importObraSelect').innerHTML=s.obras.map(o=>`<option value="${Utils.escapeHtml(o)}" ${o===App.getObra()?'selected':''}>${Utils.escapeHtml(o)}</option>`).join('');
+    document.getElementById('importEquipeSelect').innerHTML=s.equipes.map(e=>`<option value="${e.id}">${e.nome}</option>`).join('');
+    document.getElementById('importText').value='';
+    open('modalImport');
+  }
+
+  return { open, close, closeAll, openAddWorker, openMove, openImport };
+})();
+
+
+/* app.js */
+const App = (() => {
+  let currentDate = Utils.todayStr();
+  let currentObra = '';
+
+  const PAGE_TITLES = {
+    efetivo:'DO DIA', producao:'EXECUÇÃO', funcionarios:'EQUIPE',
+    relatorios:'DESEMPENHO', historico:'HISTÓRICO',
+    configuracoes:'CONFIG', integracao:'SHEETS',
+  };
+
+  function init() {
+    State.load();
+    currentDate = Utils.todayStr();
+    currentObra = State.get().activeObra || State.get().obras[0];
+
+    document.getElementById('datePicker').value = currentDate;
+    document.getElementById('datePicker').addEventListener('change', e => setDate(e.target.value));
+
+    _updateDateLabels();
+    _rebuildObraSelects();
+    _updateGSIndicator();
+    EfetivoPage.init();
+    _updateTopbar();
+  }
+
+  function showPage(id, el) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.bnav-item,.nav-item-d').forEach(n => n.classList.remove('active'));
+    document.getElementById('page-' + id)?.classList.add('active');
+    // highlight all matching nav elements
+    document.querySelectorAll(`[data-page="${id}"]`).forEach(n => n.classList.add('active'));
+    document.getElementById('topbarTitle').textContent = PAGE_TITLES[id] || id.toUpperCase();
+    if (id==='relatorios')    RelatoriosPage.render();
+    if (id==='historico')     HistoricoPage.render();
+    if (id==='configuracoes') ConfigPage.render();
+    if (id==='funcionarios')  FuncionariosPage.render();
+    if (id==='integracao')    IntegracaoPage.render();
+    if (id==='producao')      ProducaoPage.render();
+  }
+
+  function changeObra(v) {
+    currentObra = v;
+    State.get().activeObra = v;
+    State.save();
+    document.getElementById('obraLabel').textContent = v;
+    document.getElementById('obraPill').textContent = v.length > 14 ? v.slice(0,13)+'…' : v;
+    _renderObraOptions();
+    EfetivoPage.render();
+    _updateTopbar();
+  }
+
+  function openDrawer() {
+    document.getElementById('drawer').classList.add('open');
+    document.getElementById('drawerBackdrop').classList.add('open');
+  }
+
+  function closeDrawer() {
+    document.getElementById('drawer').classList.remove('open');
+    document.getElementById('drawerBackdrop').classList.remove('open');
+  }
+
+  function addObra() {
+    const v = document.getElementById('newObraInput').value.trim();
+    if (!v) return;
+    State.addObra(v);
+    document.getElementById('newObraInput').value = '';
+    _rebuildObraSelects();
+    _renderObraOptions();
+  }
+
+  function _renderObraOptions() {
+    const s = State.get();
+    const el = document.getElementById('obraOptions');
+    if (!el) return;
+    el.innerHTML = s.obras.map(o => `
+      <div class="obra-option ${o===currentObra?'selected':''}" onclick="App.changeObra('${Utils.escapeHtml(o)}');Modals.close('modalObra')">
+        <span>${Utils.escapeHtml(o)}</span>
+        ${o===currentObra?'<span class="obra-option-check">✓</span>':''}
+      </div>`).join('');
+  }
+
+  function _updateDateLabels() {
+    const d = Utils.dateFromStr(currentDate);
+    document.getElementById('weekdayLabel').textContent = Utils.weekdayOf(d);
+  }
+
+  function _updateTopbar() {
+    const s = State.get();
+    const workers = s.workers.filter(w => w.obra === currentObra);
+    let presentes = 0;
+    workers.forEach(w => { if (State.getDayData(w.id, currentDate).presente) presentes++; });
+
+    document.getElementById('topbarPresentes').textContent = presentes;
+    const bp = document.getElementById('bnavPresentes');
+    if (bp) { bp.textContent = presentes; bp.style.display = presentes > 0 ? '' : 'none'; }
+    const dp = document.getElementById('dNavPresentes');
+    if (dp) dp.textContent = presentes;
+    const dt = document.getElementById('dNavTotal');
+    if (dt) dt.textContent = workers.length;
+
+    const pill = document.getElementById('obraPill');
+    if (pill) pill.textContent = currentObra.length > 14 ? currentObra.slice(0,13)+'…' : currentObra;
+    const lbl = document.getElementById('obraLabel');
+    if (lbl) lbl.textContent = currentObra;
+    const fs = document.getElementById('funcSubtitle');
+    if (fs) fs.textContent = `${workers.length} cadastrados · ${currentObra}`;
+  }
+
+  function _rebuildObraSelects() {
+    const s = State.get();
+    const opts = s.obras.map(o =>
+      `<option value="${Utils.escapeHtml(o)}" ${o===currentObra?'selected':''}>${Utils.escapeHtml(o)}</option>`
+    ).join('');
+    ['obraSelectDesktop'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = opts;
+    });
+  }
+
+  function _updateGSIndicator() {
+    const s = State.get();
+    ['gsIndicator','gsIndicatorDrawer'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.className = 'gs-indicator' + (s.gsUrl ? ' connected' : '');
+    });
+  }
+
+  function getDate()  { return currentDate; }
+  function getObra()  { return currentObra; }
+  function setDate(d) {
+    currentDate = d;
+    _updateDateLabels();
+    EfetivoPage.render();
+    ProducaoPage.loadFields && ProducaoPage.loadFields();
+  }
+
+  function rebuildObraSelects() { _rebuildObraSelects(); _renderObraOptions(); }
+  function updateTopbar()       { _updateTopbar(); }
+  function updateGSIndicator()  { _updateGSIndicator(); }
+  function renderObraOptions()  { _renderObraOptions(); }
+
+  return { init, showPage, changeObra, openDrawer, closeDrawer, addObra,
+           getDate, getObra, setDate, rebuildObraSelects, updateTopbar, updateGSIndicator, renderObraOptions };
+})();
+
+document.addEventListener('DOMContentLoaded', App.init);
+
+</script>
 </body>
 </html>
