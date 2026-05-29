@@ -13,67 +13,76 @@
 </head>
 <body>
 
-<!-- ══ SIDEBAR DESKTOP ══ -->
+<!-- ════════════════════════════════════════
+     SIDEBAR DESKTOP
+════════════════════════════════════════ -->
 <aside class="sidebar-desktop" id="sidebarDesktop">
   <div class="sidebar-logo-d">
-    <span class="logo-icon">⚒</span>
+    <span style="font-size:22px">⚒</span>
     <div>
       <div class="logo-tag-d">EFETIVO</div>
       <div class="logo-sub-d">GESTÃO DE OBRA</div>
     </div>
   </div>
+
   <div class="obra-selector-d">
     <label>OBRA ATIVA</label>
     <select id="obraSelectDesktop" onchange="App.changeObra(this.value)"></select>
   </div>
+
   <nav class="nav-d">
     <div class="nav-section-d">PRINCIPAL</div>
     <div class="nav-item-d active" data-page="efetivo" onclick="App.showPage('efetivo',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       <span>Efetivo do Dia</span>
       <span class="nav-badge-d" id="dNavPresentes">0</span>
     </div>
     <div class="nav-item-d" data-page="producao" onclick="App.showPage('producao',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
       <span>Rel. de Execução</span>
     </div>
     <div class="nav-section-d">GESTÃO</div>
     <div class="nav-item-d" data-page="funcionarios" onclick="App.showPage('funcionarios',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       <span>Funcionários</span>
       <span class="nav-badge-d sec" id="dNavTotal">0</span>
     </div>
     <div class="nav-item-d" data-page="relatorios" onclick="App.showPage('relatorios',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
       <span>Desempenho</span>
     </div>
     <div class="nav-item-d" data-page="historico" onclick="App.showPage('historico',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       <span>Histórico</span>
     </div>
     <div class="nav-section-d">SISTEMA</div>
     <div class="nav-item-d" data-page="configuracoes" onclick="App.showPage('configuracoes',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M2 12h2M20 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M2 12h2M20 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/></svg>
       <span>Configurações</span>
     </div>
     <div class="nav-item-d" data-page="integracao" onclick="App.showPage('integracao',this)">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
       <span>Google Sheets</span>
-      <span class="gs-indicator" id="gsIndicator"></span>
+      <span class="gs-indicator" id="gsIndicatorSidebar"></span>
     </div>
   </nav>
+
   <div class="sidebar-footer-d">
-    <span>v2.0</span><span id="lastSaved">–</span>
+    <span>v2.1</span>
+    <span id="lastSaved">–</span>
   </div>
 </aside>
 
-<!-- ══ TOPBAR ══ -->
+<!-- ════════════════════════════════════════
+     TOPBAR
+════════════════════════════════════════ -->
 <header class="topbar">
-  <span class="topbar-logo">
-    <span class="topbar-icon">⚒</span>
+  <div class="topbar-left">
+    <span style="font-size:18px;line-height:1">⚒</span>
     <span class="topbar-name">EFETIVO</span>
-  </span>
-  <span class="topbar-title" id="topbarTitle">DO DIA</span>
+    <span class="topbar-divider">|</span>
+    <span class="topbar-title" id="topbarTitle">DO DIA</span>
+  </div>
   <div class="topbar-right">
     <div class="topbar-chip">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
@@ -83,69 +92,100 @@
   </div>
 </header>
 
-<!-- ══ PAGE AREA ══ -->
+<!-- ════════════════════════════════════════
+     PAGES
+════════════════════════════════════════ -->
 <main class="page-area">
 
-  <!-- PAGE: EFETIVO -->
+  <!-- ── EFETIVO ── -->
   <section class="page active" id="page-efetivo">
     <div class="date-bar">
       <div class="date-bar-row">
-        <label>DATA</label>
+        <label>DATA DO EFETIVO</label>
         <input type="date" id="datePicker">
         <span class="weekday-label" id="weekdayLabel"></span>
       </div>
       <div class="pills-row">
-        <span class="pill green" id="pillPresentes">0 presentes</span>
-        <span class="pill red"   id="pillAusentes">0 ausentes</span>
+        <span class="pill green"  id="pillPresentes">0 presentes</span>
+        <span class="pill red"    id="pillAusentes">0 ausentes</span>
         <span class="pill orange" id="pillTotal">0 total</span>
       </div>
     </div>
 
     <div class="section-header">
       <div>
-        <div class="section-title">EFETIVO</div>
+        <div class="section-title">EFETIVO DE OBRA</div>
         <div class="section-sub" id="obraLabel">–</div>
       </div>
-      <button class="btn btn-ghost" onclick="Modals.openAddWorker()" style="padding:8px 12px">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-        Add
-      </button>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <div class="team-filter-scroll" id="teamFilters"></div>
+        <button class="btn btn-ghost" onclick="Modals.openAddWorker()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Funcionário
+        </button>
+      </div>
     </div>
 
-    <div class="team-filter-scroll" id="teamFilters"></div>
+    <!-- Desktop table -->
+    <div class="worker-table-wrap card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width:54px" data-col="presente" onclick="EfetivoPage.setSort('presente')" class="th-sort">
+              Pres.<span class="sort-arrow"> &#8645;</span>
+            </th>
+            <th data-col="nome" onclick="EfetivoPage.setSort('nome')" class="th-sort">
+              Nome<span class="sort-arrow"> &#8645;</span>
+            </th>
+            <th style="width:170px" data-col="equipe" onclick="EfetivoPage.setSort('equipe')" class="th-sort">
+              Equipe<span class="sort-arrow"> &#8645;</span>
+            </th>
+            <th style="width:185px" data-col="andar" onclick="EfetivoPage.setSort('andar')" class="th-sort">
+              Andar / Local<span class="sort-arrow"> &#8645;</span>
+            </th>
+            <th>Atividade(s)</th>
+            <th style="width:96px">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="workerTableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Mobile cards -->
     <div class="worker-list" id="workerList"></div>
 
     <div class="action-bar">
       <button class="btn btn-ghost" onclick="EfetivoPage.preview()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-        Ver
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        Pré-visualizar
       </button>
       <button class="btn btn-accent" onclick="EfetivoPage.gerar()">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         Gerar Relatório
       </button>
     </div>
   </section>
 
-  <!-- PAGE: PRODUCAO -->
+  <!-- ── EXECUÇÃO ── -->
   <section class="page" id="page-producao">
     <div class="section-header">
-      <div><div class="section-title">EXECUÇÃO</div><div class="section-sub">Dados de produção do dia</div></div>
-      <button class="btn btn-accent" onclick="ProducaoPage.salvar()" style="padding:8px 14px">Salvar</button>
+      <div><div class="section-title">RELATÓRIO DE EXECUÇÃO</div><div class="section-sub">Dados de produção incluídos no efetivo</div></div>
+      <button class="btn btn-accent" onclick="ProducaoPage.salvar()">Salvar</button>
     </div>
     <div id="producaoContent"></div>
     <div style="height:80px"></div>
   </section>
 
-  <!-- PAGE: FUNCIONÁRIOS -->
+  <!-- ── FUNCIONÁRIOS ── -->
   <section class="page" id="page-funcionarios">
     <div class="section-header">
-      <div><div class="section-title">EQUIPE</div><div class="section-sub" id="funcSubtitle">–</div></div>
-      <div style="display:flex;gap:6px">
-        <button class="btn btn-ghost" onclick="Modals.openImport()" style="padding:8px 10px">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="15"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+      <div><div class="section-title">FUNCIONÁRIOS</div><div class="section-sub" id="funcSubtitle">–</div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-ghost" onclick="Modals.openImport()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Importar
         </button>
-        <button class="btn btn-accent" onclick="Modals.openAddWorker()" style="padding:8px 12px">+ Add</button>
+        <button class="btn btn-accent" onclick="Modals.openAddWorker()">+ Novo</button>
       </div>
     </div>
     <div class="search-bar">
@@ -156,35 +196,35 @@
     <div style="height:20px"></div>
   </section>
 
-  <!-- PAGE: RELATORIOS -->
+  <!-- ── DESEMPENHO ── -->
   <section class="page" id="page-relatorios">
     <div class="section-header">
-      <div><div class="section-title">DESEMPENHO</div><div class="section-sub">Presença e assiduidade</div></div>
+      <div><div class="section-title">DESEMPENHO & PRESENÇA</div><div class="section-sub">Métricas de assiduidade da equipe</div></div>
     </div>
     <div id="relatoriosContent"></div>
   </section>
 
-  <!-- PAGE: HISTORICO -->
+  <!-- ── HISTÓRICO ── -->
   <section class="page" id="page-historico">
     <div class="section-header">
-      <div><div class="section-title">HISTÓRICO</div><div class="section-sub">Efetivos gerados</div></div>
+      <div><div class="section-title">HISTÓRICO DE EFETIVOS</div><div class="section-sub">Relatórios gerados anteriormente</div></div>
     </div>
     <div id="historicoContent"></div>
   </section>
 
-  <!-- PAGE: CONFIGURAÇÕES -->
+  <!-- ── CONFIGURAÇÕES ── -->
   <section class="page" id="page-configuracoes">
     <div class="section-header">
-      <div><div class="section-title">CONFIG</div><div class="section-sub">Andares, tarefas, equipes, obras</div></div>
+      <div><div class="section-title">CONFIGURAÇÕES</div><div class="section-sub">Andares, tarefas, equipes e obras</div></div>
     </div>
     <div id="configContent"></div>
     <div style="height:20px"></div>
   </section>
 
-  <!-- PAGE: INTEGRAÇÃO -->
+  <!-- ── INTEGRAÇÃO ── -->
   <section class="page" id="page-integracao">
     <div class="section-header">
-      <div><div class="section-title">GOOGLE SHEETS</div><div class="section-sub">Integração com planilha</div></div>
+      <div><div class="section-title">GOOGLE SHEETS</div><div class="section-sub">Integração com a planilha</div></div>
     </div>
     <div id="integracaoContent"></div>
     <div style="height:20px"></div>
@@ -192,12 +232,14 @@
 
 </main>
 
-<!-- ══ BOTTOM NAV (mobile) ══ -->
+<!-- ════════════════════════════════════════
+     BOTTOM NAV (mobile)
+════════════════════════════════════════ -->
 <nav class="bottom-nav">
   <div class="bnav-item active" data-page="efetivo" onclick="App.showPage('efetivo',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
     <span>Efetivo</span>
-    <span class="bnav-badge" id="bnavPresentes">0</span>
+    <span class="bnav-badge" id="bnavPresentes" style="display:none">0</span>
   </div>
   <div class="bnav-item" data-page="funcionarios" onclick="App.showPage('funcionarios',this)">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -212,59 +254,63 @@
     <span>Histórico</span>
   </div>
   <div class="bnav-item" onclick="App.openDrawer()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
     <span>Mais</span>
   </div>
 </nav>
 
-<!-- ══ DRAWER (Mais) ══ -->
+<!-- DRAWER (Mais) -->
 <div class="drawer-backdrop" id="drawerBackdrop" onclick="App.closeDrawer()"></div>
 <div class="drawer" id="drawer">
   <div class="drawer-handle"></div>
   <div class="drawer-title">MAIS OPÇÕES</div>
   <div class="drawer-item" onclick="App.showPage('producao');App.closeDrawer()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
     <span>Relatório de Execução</span>
   </div>
   <div class="drawer-item" onclick="App.showPage('configuracoes');App.closeDrawer()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M2 12h2M20 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M2 12h2M20 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/></svg>
     <span>Configurações</span>
   </div>
   <div class="drawer-item" onclick="App.showPage('integracao');App.closeDrawer()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
     <span>Google Sheets</span>
     <span class="gs-indicator" id="gsIndicatorDrawer"></span>
   </div>
 </div>
 
-<!-- ══ MODALS ══ -->
+<!-- ════════════════════════════════════════
+     MODALS
+════════════════════════════════════════ -->
 <div id="modalBackdrop" class="modal-backdrop" onclick="Modals.closeAll(event)">
 
-  <!-- Seletor de Obra -->
-  <div class="modal" id="modalObra" style="max-width:480px;margin:auto;border-radius:20px">
+  <!-- Selecionar Obra -->
+  <div class="modal" id="modalObra">
     <div class="modal-handle"></div>
     <div class="modal-header">
       <div class="modal-title">Selecionar Obra</div>
-      <button class="modal-close" onclick="Modals.close('modalObra')">✕</button>
+      <button class="modal-close" onclick="Modals.close('modalObra')">&#x2715;</button>
     </div>
     <div id="obraOptions"></div>
-    <div class="add-item-row" style="margin-top:14px">
-      <input type="text" id="newObraInput" placeholder="Nova obra…">
+    <div class="add-item-row" style="margin-top:12px">
+      <input type="text" id="newObraInput" placeholder="Nome da nova obra…">
       <button class="btn btn-accent" onclick="App.addObra()">Add</button>
     </div>
   </div>
 
-  <!-- Add/Edit Worker -->
-  <div class="modal" id="modalAddWorker" style="max-width:480px;margin:auto;border-radius:20px">
+  <!-- Add / Edit Funcionário -->
+  <div class="modal" id="modalAddWorker">
     <div class="modal-handle"></div>
     <div class="modal-header">
       <div class="modal-title" id="modalAddWorkerTitle">Novo Funcionário</div>
-      <button class="modal-close" onclick="Modals.close('modalAddWorker')">✕</button>
+      <button class="modal-close" onclick="Modals.close('modalAddWorker')">&#x2715;</button>
     </div>
     <div class="form-group"><label>Nome Completo *</label><input class="form-input" id="wName" placeholder="ex: João Silva dos Santos"></div>
     <div class="form-group"><label>Função / Cargo *</label><input class="form-input" id="wRole" placeholder="ex: Pedreiro, Ajudante…"></div>
-    <div class="form-group"><label>Equipe</label><select class="form-input" id="wTeam"></select></div>
-    <div class="form-group"><label>Obra</label><select class="form-input" id="wObra"></select></div>
+    <div class="form-row">
+      <div class="form-group"><label>Equipe</label><select class="form-input" id="wTeam"></select></div>
+      <div class="form-group"><label>Obra</label><select class="form-input" id="wObra"></select></div>
+    </div>
     <input type="hidden" id="wEditId">
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="Modals.close('modalAddWorker')">Cancelar</button>
@@ -272,12 +318,12 @@
     </div>
   </div>
 
-  <!-- Move Worker -->
-  <div class="modal" id="modalMove" style="max-width:480px;margin:auto;border-radius:20px">
+  <!-- Mover Funcionário -->
+  <div class="modal" id="modalMove">
     <div class="modal-handle"></div>
     <div class="modal-header">
       <div class="modal-title">Mover de Obra</div>
-      <button class="modal-close" onclick="Modals.close('modalMove')">✕</button>
+      <button class="modal-close" onclick="Modals.close('modalMove')">&#x2715;</button>
     </div>
     <p style="font-size:13px;color:var(--text2);margin-bottom:14px" id="moveWorkerName"></p>
     <div class="form-group"><label>Obra de destino</label><select class="form-input" id="moveObraSelect"></select></div>
@@ -288,16 +334,18 @@
     </div>
   </div>
 
-  <!-- Import -->
-  <div class="modal" id="modalImport" style="max-width:480px;margin:auto;border-radius:20px">
+  <!-- Importar Lista -->
+  <div class="modal" id="modalImport">
     <div class="modal-handle"></div>
     <div class="modal-header">
       <div class="modal-title">Importar Lista</div>
-      <button class="modal-close" onclick="Modals.close('modalImport')">✕</button>
+      <button class="modal-close" onclick="Modals.close('modalImport')">&#x2715;</button>
     </div>
-    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Um por linha no formato: <code>Nome – Função</code></p>
-    <div class="form-group"><label>Obra</label><select class="form-input" id="importObraSelect"></select></div>
-    <div class="form-group"><label>Equipe padrão</label><select class="form-input" id="importEquipeSelect"></select></div>
+    <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Um por linha: <code style="background:var(--surface3);padding:2px 6px;border-radius:4px">Nome – Função</code></p>
+    <div class="form-row">
+      <div class="form-group"><label>Obra</label><select class="form-input" id="importObraSelect"></select></div>
+      <div class="form-group"><label>Equipe padrão</label><select class="form-input" id="importEquipeSelect"></select></div>
+    </div>
     <div class="form-group"><label>Lista</label><textarea class="form-input" id="importText" rows="8" placeholder="Fabio Lopes dos Santos – Ajudante&#10;Genival – Pedreiro"></textarea></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="Modals.close('modalImport')">Cancelar</button>
@@ -305,42 +353,42 @@
     </div>
   </div>
 
-  <!-- Preview -->
-  <div class="modal modal-large" id="modalPreview" style="max-width:600px;margin:auto;border-radius:20px">
+  <!-- Pré-visualizar -->
+  <div class="modal modal-large" id="modalPreview">
     <div class="modal-handle"></div>
     <div class="modal-header">
       <div class="modal-title">Pré-visualização</div>
-      <button class="modal-close" onclick="Modals.close('modalPreview')">✕</button>
+      <button class="modal-close" onclick="Modals.close('modalPreview')">&#x2715;</button>
     </div>
     <div class="report-preview" id="previewText"></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="Modals.close('modalPreview')">Fechar</button>
-      <button class="btn btn-accent" onclick="EfetivoPage.copyReport()">📋 Copiar WhatsApp</button>
+      <button class="btn btn-accent" onclick="EfetivoPage.copyReport()">&#128203; Copiar WhatsApp</button>
     </div>
   </div>
 
-  <!-- Historico detail -->
-  <div class="modal modal-large" id="modalHistorico" style="max-width:600px;margin:auto;border-radius:20px">
+  <!-- Detalhe Histórico -->
+  <div class="modal modal-large" id="modalHistorico">
     <div class="modal-handle"></div>
     <div class="modal-header">
       <div class="modal-title" id="historicoDetailTitle">Relatório</div>
-      <button class="modal-close" onclick="Modals.close('modalHistorico')">✕</button>
+      <button class="modal-close" onclick="Modals.close('modalHistorico')">&#x2715;</button>
     </div>
     <div class="report-preview" id="historicoDetailText"></div>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="Modals.close('modalHistorico')">Fechar</button>
-      <button class="btn btn-accent" onclick="HistoricoPage.copyDetail()">📋 Copiar</button>
+      <button class="btn btn-accent" onclick="HistoricoPage.copyDetail()">&#128203; Copiar</button>
     </div>
   </div>
 
   <!-- Apps Script -->
-  <div class="modal modal-large" id="modalAppsScript" style="max-width:600px;margin:auto;border-radius:20px">
+  <div class="modal modal-large" id="modalAppsScript">
     <div class="modal-handle"></div>
     <div class="modal-header">
-      <div class="modal-title">Apps Script</div>
-      <button class="modal-close" onclick="Modals.close('modalAppsScript')">✕</button>
+      <div class="modal-title">Código Apps Script</div>
+      <button class="modal-close" onclick="Modals.close('modalAppsScript')">&#x2715;</button>
     </div>
-    <pre class="report-preview" id="appsScriptCode" style="font-size:10px"></pre>
+    <pre class="report-preview" id="appsScriptCode" style="font-size:10px;line-height:1.6"></pre>
     <div class="modal-footer">
       <button class="btn btn-ghost" onclick="Modals.close('modalAppsScript')">Fechar</button>
       <button class="btn btn-accent" onclick="IntegracaoPage.copyScript()">Copiar código</button>
@@ -352,7 +400,9 @@
 <!-- TOAST -->
 <div class="toast-container" id="toastContainer"></div>
 
-<!-- SCRIPTS -->
+<!-- ════════════════════════════════════════
+     SCRIPTS
+════════════════════════════════════════ -->
 <script src="js/utils.js"></script>
 <script src="js/state.js"></script>
 <script src="js/sheets.js"></script>
