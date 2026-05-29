@@ -1,233 +1,119 @@
-/* ═══════════════════════════════════════════
-   pages/configuracoes.js
-   ═══════════════════════════════════════════ */
+/* configuracoes.js + integracao */
 
 const ConfigPage = (() => {
   function render() {
     const s = State.get();
-    const el = document.getElementById('configContent');
-
-    el.innerHTML = `
-      <div class="settings-grid">
-
-        <!-- Andares -->
-        <div class="settings-card">
-          <div class="settings-card-title">🏢 Andares / Locais</div>
-          <ul class="settings-list" id="cfgAndarList">
-            ${s.andares.map((a, i) => `
-              <li>
-                <span class="item-text">${Utils.escapeHtml(a)}</span>
-                <button class="icon-btn danger" style="width:22px;height:22px;font-size:11px"
-                  onclick="ConfigPage.removeAndar(${i})">✕</button>
-              </li>`).join('')}
-          </ul>
-          <div class="add-item-row">
-            <input type="text" id="newAndar" placeholder="ex: 17º Pavimento">
-            <button class="btn btn-accent" onclick="ConfigPage.addAndar()">Add</button>
-          </div>
-        </div>
-
-        <!-- Tarefas -->
-        <div class="settings-card">
-          <div class="settings-card-title">⚒ Atividades</div>
-          <ul class="settings-list" id="cfgTarefaList">
-            ${s.tarefas.map((t, i) => `
-              <li>
-                <span class="item-text">${Utils.escapeHtml(t)}</span>
-                <button class="icon-btn danger" style="width:22px;height:22px;font-size:11px"
-                  onclick="ConfigPage.removeTarefa(${i})">✕</button>
-              </li>`).join('')}
-          </ul>
-          <div class="add-item-row">
-            <input type="text" id="newTarefa" placeholder="ex: Instalação hidráulica">
-            <button class="btn btn-accent" onclick="ConfigPage.addTarefa()">Add</button>
-          </div>
-        </div>
-
-        <!-- Equipes -->
-        <div class="settings-card">
-          <div class="settings-card-title">👥 Equipes</div>
-          <ul class="settings-list" id="cfgEquipeList">
-            ${s.equipes.map(e => `
-              <li>
-                <span class="color-dot" style="background:${e.cor}"></span>
-                <span class="item-text">${Utils.escapeHtml(e.nome)}</span>
-                <button class="icon-btn danger" style="width:22px;height:22px;font-size:11px"
-                  onclick="ConfigPage.removeEquipe('${e.id}')">✕</button>
-              </li>`).join('')}
-          </ul>
-          <div class="add-item-row">
-            <input type="text" id="newEquipe" placeholder="ex: Elétrica">
-            <input type="color" id="newEquipeCor" value="#22c55e">
-            <button class="btn btn-accent" onclick="ConfigPage.addEquipe()">Add</button>
-          </div>
-        </div>
-
-        <!-- Obras -->
-        <div class="settings-card">
-          <div class="settings-card-title">🏗 Obras</div>
-          <ul class="settings-list" id="cfgObraList">
-            ${s.obras.map((o, i) => `
-              <li>
-                <span class="item-text">${Utils.escapeHtml(o)}</span>
-                ${i === 0
-                  ? '<span style="font-size:10px;color:var(--text3)">principal</span>'
-                  : `<button class="icon-btn danger" style="width:22px;height:22px;font-size:11px"
-                      onclick="ConfigPage.removeObra('${Utils.escapeHtml(o)}')">✕</button>`}
-              </li>`).join('')}
-          </ul>
-          <div class="add-item-row">
-            <input type="text" id="newObra" placeholder="ex: Nova Obra 2025">
-            <button class="btn btn-accent" onclick="ConfigPage.addObra()">Add</button>
-          </div>
-        </div>
-
-      </div>`;
+    document.getElementById('configContent').innerHTML = `
+      ${block('🏢 Andares / Locais', s.andares.map((a,i)=>item(a,`ConfigPage.removeAndar(${i})`)).join(''),
+        `<div class="add-item-row"><input type="text" id="newAndar" placeholder="ex: 17º Pavimento"><button class="btn btn-accent" onclick="ConfigPage.addAndar()">Add</button></div>`)}
+      ${block('⚒ Atividades', s.tarefas.map((t,i)=>item(t,`ConfigPage.removeTarefa(${i})`)).join(''),
+        `<div class="add-item-row"><input type="text" id="newTarefa" placeholder="ex: Instalação elétrica"><button class="btn btn-accent" onclick="ConfigPage.addTarefa()">Add</button></div>`)}
+      ${block('👥 Equipes', s.equipes.map(e=>itemColor(e.cor,e.nome,`ConfigPage.removeEquipe('${e.id}')`)).join(''),
+        `<div class="add-item-row"><input type="text" id="newEquipe" placeholder="Nova equipe"><input type="color" id="newEquipeCor" value="#22c55e"><button class="btn btn-accent" onclick="ConfigPage.addEquipe()">Add</button></div>`)}
+      ${block('🏗 Obras', s.obras.map((o,i)=>item(o, i>0?`ConfigPage.removeObra('${Utils.escapeHtml(o)}')`:null, i===0?'<span style="font-size:10px;color:var(--text3)">principal</span>':'')).join(''),
+        `<div class="add-item-row"><input type="text" id="newObra" placeholder="Nova obra"><button class="btn btn-accent" onclick="ConfigPage.addObra()">Add</button></div>`)}
+    `;
   }
 
-  function addAndar() {
-    const v = document.getElementById('newAndar').value.trim();
-    if (!v) return;
-    State.addAndar(v);
-    document.getElementById('newAndar').value = '';
-    render();
-    EfetivoPage.render();
+  function block(title, body, footer) {
+    return `<div class="settings-section">
+      <div class="settings-section-header">
+        <span class="settings-section-title">${title}</span>
+      </div>
+      <div class="settings-section-body">${body}${footer}</div>
+    </div>`;
   }
 
-  function removeAndar(i) {
-    State.removeAndar(i);
-    render();
-    EfetivoPage.render();
+  function item(text, removeFn, extra='') {
+    return `<div class="settings-item">
+      <span style="flex:1">${Utils.escapeHtml(text)}</span>
+      ${extra}
+      ${removeFn ? `<button class="icon-btn danger" style="width:26px;height:26px;font-size:12px" onclick="${removeFn}">✕</button>` : ''}
+    </div>`;
   }
 
-  function addTarefa() {
-    const v = document.getElementById('newTarefa').value.trim();
-    if (!v) return;
-    State.addTarefa(v);
-    document.getElementById('newTarefa').value = '';
-    render();
-    EfetivoPage.render();
+  function itemColor(cor, text, removeFn) {
+    return `<div class="settings-item">
+      <span class="color-dot" style="background:${cor}"></span>
+      <span style="flex:1">${Utils.escapeHtml(text)}</span>
+      <button class="icon-btn danger" style="width:26px;height:26px;font-size:12px" onclick="${removeFn}">✕</button>
+    </div>`;
   }
 
-  function removeTarefa(i) {
-    State.removeTarefa(i);
-    render();
-    EfetivoPage.render();
-  }
-
+  function addAndar()  { const v=document.getElementById('newAndar').value.trim(); if(!v)return; State.addAndar(v); document.getElementById('newAndar').value=''; render(); EfetivoPage.render(); }
+  function removeAndar(i) { State.removeAndar(i); render(); EfetivoPage.render(); }
+  function addTarefa() { const v=document.getElementById('newTarefa').value.trim(); if(!v)return; State.addTarefa(v); document.getElementById('newTarefa').value=''; render(); EfetivoPage.render(); }
+  function removeTarefa(i) { State.removeTarefa(i); render(); EfetivoPage.render(); }
   function addEquipe() {
-    const nome = document.getElementById('newEquipe').value.trim();
-    const cor  = document.getElementById('newEquipeCor').value;
-    if (!nome) return;
-    State.addEquipe({ nome, cor });
-    document.getElementById('newEquipe').value = '';
-    render();
-    EfetivoPage.renderTeamFilters();
+    const nome=document.getElementById('newEquipe').value.trim();
+    const cor=document.getElementById('newEquipeCor').value;
+    if(!nome)return; State.addEquipe({nome,cor}); document.getElementById('newEquipe').value=''; render(); EfetivoPage.renderTeamFilters();
   }
-
-  function removeEquipe(id) {
-    State.removeEquipe(id);
-    render();
-    EfetivoPage.renderTeamFilters();
+  function removeEquipe(id) { State.removeEquipe(id); render(); EfetivoPage.renderTeamFilters(); }
+  function addObra()  {
+    const v=document.getElementById('newObra').value.trim(); if(!v)return;
+    State.addObra(v); document.getElementById('newObra').value='';
+    App.rebuildObraSelects(); render();
   }
-
-  function addObra() {
-    const v = document.getElementById('newObra').value.trim();
-    if (!v) return;
-    State.addObra(v);
-    document.getElementById('newObra').value = '';
-    App.rebuildObraSelect();
-    render();
-  }
-
   function removeObra(nome) {
-    if (nome === App.getObra()) { Utils.toast('Não é possível remover a obra ativa.', 'warn'); return; }
-    if (!confirm(`Remover a obra "${nome}"?`)) return;
-    State.removeObra(nome);
-    App.rebuildObraSelect();
-    render();
+    if(nome===App.getObra()){Utils.toast('Não pode remover a obra ativa.','warn');return;}
+    if(!confirm(`Remover "${nome}"?`))return;
+    State.removeObra(nome); App.rebuildObraSelects(); render();
   }
 
   return { render, addAndar, removeAndar, addTarefa, removeTarefa, addEquipe, removeEquipe, addObra, removeObra };
 })();
 
-
-/* ═══════════════════════════════════════════
-   pages/integracao.js
-   ═══════════════════════════════════════════ */
-
+/* ── INTEGRAÇÃO ── */
 const IntegracaoPage = (() => {
   function render() {
     const s = State.get();
-    const el = document.getElementById('integracaoContent');
-    el.innerHTML = `
-      <div class="integration-card">
-        <div class="integration-card-title">🔗 Configuração da Planilha</div>
+    document.getElementById('integracaoContent').innerHTML = `
+      <div class="int-card">
+        <div class="int-card-title">🔗 Configuração</div>
         <div class="form-group">
-          <label>URL do Google Apps Script (Web App Deploy)</label>
-          <input class="form-input" id="gsUrl" type="text"
-            style="font-family:'JetBrains Mono',monospace;font-size:11px"
-            placeholder="https://script.google.com/macros/s/AKfyc.../exec"
-            value="${Utils.escapeHtml(s.gsUrl)}">
+          <label>URL do Web App (Apps Script)</label>
+          <input class="form-input" id="gsUrl" type="text" style="font-size:11px;font-family:'JetBrains Mono',monospace"
+            placeholder="https://script.google.com/macros/s/…/exec" value="${Utils.escapeHtml(s.gsUrl)}">
         </div>
         <div class="form-group">
-          <label>ID da Planilha Google Sheets</label>
-          <input class="form-input" id="gsSheetId" type="text"
-            style="font-family:'JetBrains Mono',monospace;font-size:12px"
-            placeholder="1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms"
-            value="${Utils.escapeHtml(s.gsSheetId)}">
+          <label>ID da Planilha</label>
+          <input class="form-input" id="gsSheetId" type="text" style="font-size:12px;font-family:'JetBrains Mono',monospace"
+            placeholder="1BxiMVs0XRA5…" value="${Utils.escapeHtml(s.gsSheetId)}">
         </div>
         <div style="display:flex;gap:8px">
-          <button class="btn btn-accent" onclick="IntegracaoPage.salvar()">Salvar configuração</button>
-          <button class="btn btn-ghost" onclick="IntegracaoPage.testar()">Testar conexão</button>
+          <button class="btn btn-accent btn-full" onclick="IntegracaoPage.salvar()">Salvar</button>
+          <button class="btn btn-ghost" onclick="IntegracaoPage.testar()">Testar</button>
         </div>
-        ${s.gsUrl ? `<p style="font-size:11px;color:var(--green);margin-top:10px">✅ URL configurada – envio automático ativo</p>` : ''}
+        ${s.gsUrl?`<p style="font-size:11px;color:var(--green);margin-top:10px">✅ Integração ativa</p>`:''}
       </div>
-
-      <div class="integration-card">
-        <div class="integration-card-title">📋 Como configurar passo a passo</div>
+      <div class="int-card">
+        <div class="int-card-title">📋 Como configurar</div>
         <ol class="steps-list">
-          <li>Abra o <a href="https://docs.google.com/spreadsheets/create" target="_blank">Google Sheets</a> e crie uma planilha nova. Copie o <strong>ID</strong> da URL (entre /d/ e /edit).</li>
-          <li>Acesse o <a href="https://script.google.com" target="_blank">Google Apps Script</a> e clique em <strong>Novo Projeto</strong>.</li>
-          <li>Apague o código existente e cole o código gerado pelo botão abaixo. Salve o projeto.</li>
-          <li>Clique em <strong>Implantar → Nova implantação</strong>. Tipo: <em>Aplicativo da Web</em>. Executar como: <em>eu mesmo</em>. Acesso: <em>Qualquer pessoa</em>.</li>
-          <li>Autorize as permissões solicitadas pelo Google.</li>
-          <li>Copie a <strong>URL do Web App</strong> gerada e cole no campo acima junto com o ID da planilha. Salve.</li>
+          <li>Crie uma planilha em <a href="https://sheets.google.com" target="_blank">sheets.google.com</a> e copie o ID da URL.</li>
+          <li>Acesse <a href="https://script.google.com" target="_blank">script.google.com</a> → Novo projeto.</li>
+          <li>Apague o código existente e cole o código abaixo.</li>
+          <li>Clique em Implantar → Nova implantação → Aplicativo da Web → Acesso: Qualquer pessoa.</li>
+          <li>Copie a URL gerada e cole no campo acima junto com o ID da planilha.</li>
         </ol>
-        <button class="btn btn-ghost" style="margin-top:4px" onclick="IntegracaoPage.showScript()">
-          Ver código Apps Script
-        </button>
-      </div>
-
-      <div class="integration-card">
-        <div class="integration-card-title">📊 Estrutura da Planilha</div>
-        <p style="font-size:12px;color:var(--text2);line-height:1.8">
-          O Apps Script criará automaticamente as seguintes abas:<br>
-          <strong style="color:var(--accent)">Efetivo</strong> – Um registro por funcionário por dia (data, obra, nome, função, presente, andar, atividades)<br>
-          <strong style="color:var(--accent)">Relatórios</strong> – O texto completo de cada efetivo gerado<br>
-          <strong style="color:var(--accent)">Assiduidade</strong> – Resumo de presença por funcionário
-        </p>
+        <button class="btn btn-ghost btn-full" style="margin-top:8px" onclick="IntegracaoPage.showScript()">Ver código Apps Script</button>
       </div>
     `;
   }
 
   function salvar() {
-    const url = document.getElementById('gsUrl').value.trim();
-    const id  = document.getElementById('gsSheetId').value.trim();
-    State.get().gsUrl     = url;
-    State.get().gsSheetId = id;
-    State.save();
-    App.updateGSIndicator();
-    Utils.toast('Configuração salva!', 'success');
-    render();
+    State.get().gsUrl = document.getElementById('gsUrl').value.trim();
+    State.get().gsSheetId = document.getElementById('gsSheetId').value.trim();
+    State.save(); App.updateGSIndicator();
+    Utils.toast('Configuração salva!','success'); render();
   }
 
   async function testar() {
     const url = document.getElementById('gsUrl').value.trim();
-    if (!url) { Utils.toast('Configure a URL primeiro.', 'warn'); return; }
-    Utils.toast('Testando conexão…', 'info');
+    if (!url) { Utils.toast('Configure a URL primeiro.','warn'); return; }
+    Utils.toast('Testando…','info');
     const ok = await Sheets.ping(url);
-    ok ? Utils.toast('Conexão OK!', 'success') : Utils.toast('Falha na conexão. Verifique a URL.', 'error');
+    ok ? Utils.toast('Conexão OK!','success') : Utils.toast('Falha. Verifique a URL.','error');
   }
 
   function showScript() {
@@ -235,9 +121,7 @@ const IntegracaoPage = (() => {
     Modals.open('modalAppsScript');
   }
 
-  function copyScript() {
-    Utils.copyToClipboard(Sheets.APPS_SCRIPT_CODE, 'Código copiado!');
-  }
+  function copyScript() { Utils.copyToClipboard(Sheets.APPS_SCRIPT_CODE,'Código copiado!'); }
 
   return { render, salvar, testar, showScript, copyScript };
 })();
