@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Efetivo de Obra</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚒</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">⚒</div>
+      <div>
+        <div class="logo-tag">EFETIVO</div>
+        <div class="logo-sub">Gestão de Obra</div>
+      </div>
+    </div>
+
+    <div class="obra-selector">
+      <label>OBRA ATIVA</label>
+      <div class="select-wrap">
+        <select id="obraSelect" onchange="App.changeObra(this.value)"></select>
+        <svg viewBox="0 0 10 6"><path d="M1 1l4 4 4-4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>
+      </div>
+    </div>
+
+    <nav>
+      <div class="nav-section">PRINCIPAL</div>
+      <div class="nav-item active" data-page="efetivo" onclick="App.showPage('efetivo',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Efetivo do Dia</span>
+        <span class="nav-badge" id="navCountPresentes">0</span>
+      </div>
+      <div class="nav-item" data-page="producao" onclick="App.showPage('producao',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
+        <span>Relatório de Execução</span>
+      </div>
+
+      <div class="nav-section">GESTÃO</div>
+      <div class="nav-item" data-page="funcionarios" onclick="App.showPage('funcionarios',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        <span>Funcionários</span>
+        <span class="nav-badge secondary" id="navCountTotal">0</span>
+      </div>
+      <div class="nav-item" data-page="relatorios" onclick="App.showPage('relatorios',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span>Desempenho</span>
+      </div>
+      <div class="nav-item" data-page="historico" onclick="App.showPage('historico',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        <span>Histórico</span>
+      </div>
+
+      <div class="nav-section">SISTEMA</div>
+      <div class="nav-item" data-page="configuracoes" onclick="App.showPage('configuracoes',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M2 12h2M20 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/></svg>
+        <span>Configurações</span>
+      </div>
+      <div class="nav-item" data-page="integracao" onclick="App.showPage('integracao',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+        <span>Google Sheets</span>
+        <span class="gs-indicator" id="gsIndicator" title="Desconectado"></span>
+      </div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <span>v2.0</span>
+      <span id="lastSaved">–</span>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-wrapper">
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+      <button class="sidebar-toggle" onclick="App.toggleSidebar()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="20" height="20"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <h1 class="topbar-title" id="topbarTitle">EFETIVO DO DIA</h1>
+      <div class="topbar-right">
+        <div class="topbar-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          <strong id="topbarPresentes">0</strong> presentes
+        </div>
+        <div class="topbar-chip">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span id="topbarDate">–</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- PAGES -->
+    <main class="page-area">
+
+      <!-- PAGE: EFETIVO -->
+      <section class="page active" id="page-efetivo">
+        <div class="date-bar">
+          <div class="date-bar-left">
+            <label>DATA DO EFETIVO</label>
+            <input type="date" id="datePicker" onchange="EfetivoPage.onDateChange()">
+            <span class="weekday-label" id="weekdayLabel"></span>
+          </div>
+          <div class="date-bar-pills">
+            <span class="pill green" id="pillPresentes">0 presentes</span>
+            <span class="pill red" id="pillAusentes">0 ausentes</span>
+            <span class="pill orange" id="pillTotal">0 total</span>
+          </div>
+        </div>
+
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">EFETIVO DE OBRA</h2>
+            <p class="section-sub" id="obraLabel">–</p>
+          </div>
+          <div class="header-actions">
+            <div class="team-filter-wrap" id="teamFilters"></div>
+            <button class="btn btn-ghost" onclick="Modals.openAddWorker()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Funcionário
+            </button>
+          </div>
+        </div>
+
+        <div class="card table-card">
+          <table class="data-table" id="workerTable">
+            <thead>
+              <tr>
+                <th class="col-check">Pres.</th>
+                <th>Nome</th>
+                <th class="col-equipe">Equipe</th>
+                <th class="col-andar">Andar / Local</th>
+                <th class="col-tarefa">Atividade(s)</th>
+                <th class="col-actions">Ações</th>
+              </tr>
+            </thead>
+            <tbody id="workerTableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="action-bar">
+          <button class="btn btn-ghost" onclick="EfetivoPage.preview()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            Pré-visualizar
+          </button>
+          <button class="btn btn-accent" onclick="EfetivoPage.gerar()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            Gerar & Enviar Relatório
+          </button>
+          <span class="action-bar-hint">Salva no Google Sheets + gera texto WhatsApp</span>
+        </div>
+      </section>
+
+      <!-- PAGE: PRODUCAO -->
+      <section class="page" id="page-producao">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">RELATÓRIO DE EXECUÇÃO</h2>
+            <p class="section-sub">Dados de produção incluídos no efetivo</p>
+          </div>
+          <button class="btn btn-accent" onclick="ProducaoPage.salvar()">Salvar</button>
+        </div>
+        <div id="producaoContent"></div>
+      </section>
+
+      <!-- PAGE: FUNCIONÁRIOS -->
+      <section class="page" id="page-funcionarios">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">FUNCIONÁRIOS</h2>
+            <p class="section-sub">Cadastro e alocação por obra</p>
+          </div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost" onclick="Modals.openImport()">Importar lista</button>
+            <button class="btn btn-accent" onclick="Modals.openAddWorker()">+ Novo funcionário</button>
+          </div>
+        </div>
+        <div class="card table-card">
+          <div class="table-search-bar">
+            <input type="text" id="workerSearch" placeholder="Buscar por nome ou função…" oninput="FuncionariosPage.render()">
+          </div>
+          <table class="data-table">
+            <thead><tr>
+              <th>Nome</th>
+              <th>Função</th>
+              <th class="col-equipe">Equipe</th>
+              <th>Obra</th>
+              <th class="col-actions">Ações</th>
+            </tr></thead>
+            <tbody id="fullWorkerList"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- PAGE: RELATORIOS -->
+      <section class="page" id="page-relatorios">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">DESEMPENHO & PRESENÇA</h2>
+            <p class="section-sub">Métricas de assiduidade da equipe</p>
+          </div>
+        </div>
+        <div id="relatoriosContent"></div>
+      </section>
+
+      <!-- PAGE: HISTORICO -->
+      <section class="page" id="page-historico">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">HISTÓRICO DE EFETIVOS</h2>
+            <p class="section-sub">Relatórios gerados anteriormente</p>
+          </div>
+        </div>
+        <div id="historicoContent"></div>
+      </section>
+
+      <!-- PAGE: CONFIGURAÇÕES -->
+      <section class="page" id="page-configuracoes">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">CONFIGURAÇÕES</h2>
+            <p class="section-sub">Andares, atividades, equipes e obras</p>
+          </div>
+        </div>
+        <div id="configContent"></div>
+      </section>
+
+      <!-- PAGE: INTEGRAÇÃO -->
+      <section class="page" id="page-integracao">
+        <div class="section-header">
+          <div>
+            <h2 class="section-title">GOOGLE SHEETS</h2>
+            <p class="section-sub">Configurar integração com a planilha</p>
+          </div>
+        </div>
+        <div id="integracaoContent"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- MODALS -->
+  <div id="modalBackdrop" class="modal-backdrop" onclick="Modals.closeAll(event)">
+
+    <!-- Add/Edit Worker -->
+    <div class="modal" id="modalAddWorker">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modalAddWorkerTitle">Novo Funcionário</h3>
+        <button class="modal-close" onclick="Modals.close('modalAddWorker')">✕</button>
+      </div>
+      <div class="form-group"><label>Nome Completo *</label><input class="form-input" id="wName" placeholder="ex: João Silva dos Santos"></div>
+      <div class="form-group"><label>Função / Cargo *</label><input class="form-input" id="wRole" placeholder="ex: Pedreiro, Ajudante, Encanador"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Equipe</label><select class="form-input" id="wTeam"></select></div>
+        <div class="form-group"><label>Obra</label><select class="form-input" id="wObra"></select></div>
+      </div>
+      <input type="hidden" id="wEditId">
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="Modals.close('modalAddWorker')">Cancelar</button>
+        <button class="btn btn-accent" onclick="FuncionariosPage.saveWorker()">Salvar</button>
+      </div>
+    </div>
+
+    <!-- Move Worker -->
+    <div class="modal" id="modalMove">
+      <div class="modal-header">
+        <h3 class="modal-title">Mover para outra obra</h3>
+        <button class="modal-close" onclick="Modals.close('modalMove')">✕</button>
+      </div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:16px" id="moveWorkerName"></p>
+      <div class="form-group"><label>Obra de destino</label><select class="form-input" id="moveObraSelect"></select></div>
+      <input type="hidden" id="moveWorkerId">
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="Modals.close('modalMove')">Cancelar</button>
+        <button class="btn btn-accent" onclick="FuncionariosPage.confirmMove()">Mover</button>
+      </div>
+    </div>
+
+    <!-- Import workers -->
+    <div class="modal" id="modalImport" style="max-width:560px">
+      <div class="modal-header">
+        <h3 class="modal-title">Importar Lista de Funcionários</h3>
+        <button class="modal-close" onclick="Modals.close('modalImport')">✕</button>
+      </div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:12px">Cole uma lista no formato: <code style="background:var(--surface3);padding:2px 6px;border-radius:4px">Nome – Função</code> (um por linha)</p>
+      <div class="form-group"><label>Obra destino</label><select class="form-input" id="importObraSelect"></select></div>
+      <div class="form-group"><label>Equipe padrão</label><select class="form-input" id="importEquipeSelect"></select></div>
+      <div class="form-group"><label>Lista</label><textarea class="form-input" id="importText" rows="10" placeholder="Fabio Lopes dos Santos – Ajudante&#10;Jose Edigleuson Xavier dos Santos – Ajudante&#10;Genival – Pedreiro"></textarea></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="Modals.close('modalImport')">Cancelar</button>
+        <button class="btn btn-accent" onclick="FuncionariosPage.importWorkers()">Importar</button>
+      </div>
+    </div>
+
+    <!-- Preview -->
+    <div class="modal modal-large" id="modalPreview">
+      <div class="modal-header">
+        <h3 class="modal-title">Pré-visualização do Efetivo</h3>
+        <button class="modal-close" onclick="Modals.close('modalPreview')">✕</button>
+      </div>
+      <div class="report-preview" id="previewText"></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="Modals.close('modalPreview')">Fechar</button>
+        <button class="btn btn-accent" onclick="EfetivoPage.copyReport()">📋 Copiar para WhatsApp</button>
+      </div>
+    </div>
+
+    <!-- History detail -->
+    <div class="modal modal-large" id="modalHistorico">
+      <div class="modal-header">
+        <h3 class="modal-title" id="historicoDetailTitle">Relatório</h3>
+        <button class="modal-close" onclick="Modals.close('modalHistorico')">✕</button>
+      </div>
+      <div class="report-preview" id="historicoDetailText"></div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="Modals.close('modalHistorico')">Fechar</button>
+        <button class="btn btn-accent" onclick="HistoricoPage.copyDetail()">📋 Copiar</button>
+      </div>
+    </div>
+
+    <!-- Apps Script code -->
+    <div class="modal modal-large" id="modalAppsScript">
+      <div class="modal-header">
+        <h3 class="modal-title">Código Google Apps Script</h3>
+        <button class="modal-close" onclick="Modals.close('modalAppsScript')">✕</button>
+      </div>
+      <pre class="report-preview" id="appsScriptCode" style="font-size:11px;line-height:1.6"></pre>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="Modals.close('modalAppsScript')">Fechar</button>
+        <button class="btn btn-accent" onclick="IntegracaoPage.copyScript()">Copiar código</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- SCRIPTS (ordem importa) -->
+  <script src="js/utils.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/sheets.js"></script>
+  <script src="js/pages/efetivo.js"></script>
+  <script src="js/pages/funcionarios.js"></script>
+  <script src="js/pages/configuracoes.js"></script>
+  <script src="js/modals.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
