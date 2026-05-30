@@ -176,19 +176,21 @@ input[type=date]:focus{border-color:var(--ac);}
 .sort-arrow{font-size:10px;color:var(--t3);margin-left:2px;}
 
 /* ══ MOBILE CARDS ══ */
-.worker-list-mobile{display:none;flex-direction:column;gap:8px;}
-.worker-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;transition:border-color .15s;}
+.worker-list-mobile{display:none;flex-direction:column;gap:10px;}
+.worker-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;}
 .worker-card.absent{opacity:.55;border-style:dashed;}
-.worker-card-top{display:flex;align-items:center;gap:10px;padding:12px 14px;cursor:default;}
+.worker-card-top{padding:12px 14px;}
+.worker-card-row1{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
+.worker-card-row2{display:flex;align-items:center;justify-content:space-between;gap:8px;}
 .worker-info{flex:1;min-width:0;cursor:pointer;-webkit-tap-highlight-color:transparent;}
-.worker-name{font-weight:600;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.worker-role{font-size:11px;color:var(--t3);margin-top:1px;}
-.worker-card-actions{display:flex;gap:5px;flex-shrink:0;}
+.worker-name{font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.worker-role{font-size:11px;color:var(--t3);margin-top:2px;}
+.worker-card-actions{display:flex;gap:6px;flex-shrink:0;}
 /* card body — FECHADO por padrão */
-.worker-card-body{display:none;padding:10px 14px 12px;border-top:1px solid var(--bd);flex-direction:column;gap:8px;}
+.worker-card-body{display:none;padding:12px 14px 14px;border-top:1px solid var(--bd);flex-direction:column;gap:10px;}
 .worker-card-body.open{display:flex;}
-.expand-arrow{color:var(--t3);flex-shrink:0;transition:transform .2s;cursor:pointer;-webkit-tap-highlight-color:transparent;}
-.expand-arrow.open{transform:rotate(180deg);}
+.expand-btn{background:var(--sf2);border:1px solid var(--bd2);color:var(--t2);border-radius:20px;padding:4px 12px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:4px;-webkit-tap-highlight-color:transparent;white-space:nowrap;}
+.expand-btn.open{border-color:var(--ac);color:var(--ac);}
 
 /* ══ PRESENCE TOGGLE ══ */
 .presence-toggle{position:relative;width:44px;height:24px;cursor:pointer;flex-shrink:0;display:block;}
@@ -499,11 +501,12 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
       <input type="text" id="workerSearch" placeholder="Buscar nome ou função…" oninput="FuncionariosPage.render()">
     </div>
     <div class="filter-row">
-      <select id="funcEquipeFilter" onchange="FuncionariosPage.render()">
-        <option value="all">Todas as equipes</option>
-      </select>
-      <select id="funcObraFilter" onchange="FuncionariosPage.render()">
-        <option value="all">Todas as obras</option>
+      <select id="funcSortBy" onchange="FuncionariosPage.render()">
+        <option value="nome">Ordenar: Nome A-Z</option>
+        <option value="nome_desc">Ordenar: Nome Z-A</option>
+        <option value="cargo">Ordenar: Cargo</option>
+        <option value="equipe">Ordenar: Equipe</option>
+        <option value="obra">Ordenar: Obra</option>
       </select>
     </div>
     <div class="func-list" id="funcList"></div>
@@ -1215,9 +1218,18 @@ const EfetivoPage = (() => {
   function toggleCard(wid) {
     const body = document.getElementById('wbody-' + wid);
     if (!body) return;
-    body.classList.toggle('open');
-    const arrow = document.getElementById('warrow-' + wid);
-    if (arrow) arrow.classList.toggle('open');
+    const isOpen = body.style.display === 'flex' || body.classList.contains('open');
+    if (isOpen) {
+      body.style.display = 'none';
+      body.classList.remove('open');
+      const btn = document.getElementById('warrow-' + wid);
+      if (btn) { btn.classList.remove('open'); const t=btn.querySelector('svg'); if(t) btn.innerHTML = btn.innerHTML.replace('Fechar','Ver tarefas'); }
+    } else {
+      body.style.display = 'flex';
+      body.classList.add('open');
+      const btn = document.getElementById('warrow-' + wid);
+      if (btn) { btn.classList.add('open'); }
+    }
   }
 
   /* ── RENDER ── */
@@ -1279,45 +1291,44 @@ const EfetivoPage = (() => {
           `value="${Utils.escapeHtml(dd.andar)}" selected`
         );
 
-        // card body starts HIDDEN — user taps to expand
         return `
         <div class="worker-card ${absent ? 'absent' : ''}" id="wcard-${w.id}">
-
-          <!-- TOP ROW: toggle presença + info + equipe + ações -->
           <div class="worker-card-top">
-            <label class="presence-toggle" onclick="event.stopPropagation()">
-              <input type="checkbox" ${dd.presente ? 'checked' : ''}
-                onchange="EfetivoPage.togglePresence('${w.id}',this.checked)">
-              <span class="presence-slider"></span>
-            </label>
 
-            <!-- Nome + função: toque abre/fecha o card -->
-            <div class="worker-info" onclick="EfetivoPage.toggleCard('${w.id}')">
-              <div class="worker-name">${Utils.escapeHtml(w.nome)}</div>
-              <div class="worker-role">${Utils.escapeHtml(w.funcao)}</div>
+            <!-- Linha 1: toggle + nome + equipe -->
+            <div class="worker-card-row1">
+              <label class="presence-toggle" onclick="event.stopPropagation()">
+                <input type="checkbox" ${dd.presente ? 'checked' : ''}
+                  onchange="EfetivoPage.togglePresence('${w.id}',this.checked)">
+                <span class="presence-slider"></span>
+              </label>
+              <div class="worker-info" onclick="EfetivoPage.toggleCard('${w.id}')">
+                <div class="worker-name">${Utils.escapeHtml(w.nome)}</div>
+                <div class="worker-role">${Utils.escapeHtml(w.funcao)}</div>
+              </div>
             </div>
 
-            <span class="team-badge" style="background:${cor}22;color:${cor};border:1px solid ${cor}44">
-              ${Utils.escapeHtml(eq ? eq.nome : w.equipe)}
-            </span>
-
-            <!-- Seta expand -->
-            <svg id="warrow-${w.id}" class="expand-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-              stroke-width="2" width="16" height="16"
-              style="color:var(--text3);flex-shrink:0;transition:transform .2s;cursor:pointer"
-              onclick="EfetivoPage.toggleCard('${w.id}')">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-
-            <div class="worker-card-actions">
-              <button class="icon-btn" title="Editar" onclick="event.stopPropagation();Modals.openAddWorker('${w.id}')">✏️</button>
-              <button class="icon-btn danger" title="Remover" onclick="event.stopPropagation();FuncionariosPage.remove('${w.id}')">✕</button>
+            <!-- Linha 2: badge equipe + botão expandir + ações -->
+            <div class="worker-card-row2">
+              <span class="team-badge" style="background:${cor}22;color:${cor};border:1px solid ${cor}44">
+                ${Utils.escapeHtml(eq ? eq.nome : w.equipe)}
+              </span>
+              <button class="expand-btn ${!absent ? '' : ''}" id="warrow-${w.id}"
+                onclick="EfetivoPage.toggleCard('${w.id}')">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="6 9 12 15 18 9"/></svg>
+                ${absent ? 'Ausente' : 'Ver tarefas'}
+              </button>
+              <div class="worker-card-actions">
+                <button class="icon-btn" title="Editar" onclick="Modals.openAddWorker('${w.id}')">✏️</button>
+                <button class="icon-btn danger" title="Remover" onclick="FuncionariosPage.remove('${w.id}')">✕</button>
+              </div>
             </div>
+
           </div>
 
-          <!-- BODY: começa oculto, abre ao tocar no nome -->
+          <!-- BODY fechado por padrão -->
           <div class="worker-card-body" id="wbody-${w.id}" style="display:none">
-            ${absent ? `<div style="text-align:center;color:var(--text3);font-size:12px;padding:4px 0">Ausente — sem tarefas</div>` : `
+            ${absent ? '' : `
             <div>
               <div class="field-label">Andar / Local</div>
               <select class="inline-select" onchange="EfetivoPage.setAndar('${w.id}',this.value)">${andarSel}</select>
@@ -1582,14 +1593,23 @@ const FuncionariosPage = (() => {
     const s = State.get();
     const obra = App.getObra();
     const q = (document.getElementById('workerSearch')?.value||'').toLowerCase();
-    const eqF = document.getElementById('funcEquipeFilter');
-    const obF = document.getElementById('funcObraFilter');
-    const eqFilter = eqF ? eqF.value : 'all';
-    const obFilter = obF ? obF.value : 'all';
-    let workers = s.workers;
+    const sortBy = document.getElementById('funcSortBy')?.value || 'nome';
+    let workers = [...s.workers];
     if (q) workers = workers.filter(w => w.nome.toLowerCase().includes(q) || w.funcao.toLowerCase().includes(q));
-    if (eqFilter !== 'all') workers = workers.filter(w => w.equipe === eqFilter);
-    if (obFilter !== 'all') workers = workers.filter(w => w.obra === obFilter);
+    workers.sort((a, b) => {
+      if (sortBy === 'nome' || sortBy === 'nome_desc') {
+        const r = a.nome.localeCompare(b.nome, 'pt-BR');
+        return sortBy === 'nome_desc' ? -r : r;
+      }
+      if (sortBy === 'cargo') return a.funcao.localeCompare(b.funcao, 'pt-BR');
+      if (sortBy === 'equipe') {
+        const ea = (State.getEquipe(a.equipe)||{}).nome||a.equipe;
+        const eb = (State.getEquipe(b.equipe)||{}).nome||b.equipe;
+        return ea.localeCompare(eb, 'pt-BR');
+      }
+      if (sortBy === 'obra') return a.obra.localeCompare(b.obra, 'pt-BR');
+      return 0;
+    });
 
     const list = document.getElementById('funcList');
     if (!list) return;
@@ -1616,16 +1636,7 @@ const FuncionariosPage = (() => {
       </div>`;
     }).join('');
     App.updateTopbar();
-    // populate filter dropdowns
-    const s2 = State.get();
-    const eqEl = document.getElementById('funcEquipeFilter');
-    const obEl = document.getElementById('funcObraFilter');
-    if (eqEl && eqEl.options.length <= 1) {
-      s2.equipes.forEach(e => { const o=document.createElement('option'); o.value=e.id; o.textContent=e.nome; eqEl.appendChild(o); });
-    }
-    if (obEl && obEl.options.length <= 1) {
-      s2.obras.forEach(ob => { const o=document.createElement('option'); o.value=ob; o.textContent=ob; obEl.appendChild(o); });
-    }
+
   }
 
   function saveWorker() {
