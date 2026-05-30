@@ -5,6 +5,9 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#111420">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <!-- v2.2 build: 2026-05-30 -->
   <title>Efetivo de Obra</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9874;</text></svg>">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -1582,9 +1585,11 @@ const FuncionariosPage = (() => {
     const obra = App.getObra();
     const q = (document.getElementById('workerSearch')?.value||'').toLowerCase();
     const equipeFilter = document.getElementById('funcEquipeFilter')?.value || 'all';
+    const obraFilter = document.getElementById('funcObraFilter')?.value || 'all';
     let workers = s.workers;
     if (q) workers = workers.filter(w => w.nome.toLowerCase().includes(q) || w.funcao.toLowerCase().includes(q));
     if (equipeFilter !== 'all') workers = workers.filter(w => w.equipe === equipeFilter);
+    if (obraFilter !== 'all') workers = workers.filter(w => w.obra === obraFilter);
 
     const list = document.getElementById('funcList');
     if (!list) return;
