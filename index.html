@@ -1316,7 +1316,7 @@ const EfetivoPage = (() => {
           </div>
 
           <!-- BODY: começa oculto, abre ao tocar no nome -->
-          <div class="worker-card-body" id="wbody-${w.id}">
+          <div class="worker-card-body" id="wbody-${w.id}" style="display:none">
             ${absent ? `<div style="text-align:center;color:var(--text3);font-size:12px;padding:4px 0">Ausente — sem tarefas</div>` : `
             <div>
               <div class="field-label">Andar / Local</div>
@@ -2203,7 +2203,13 @@ const App = (() => {
            getDate, getObra, setDate, rebuildObraSelects, updateTopbar, updateGSIndicator, renderObraOptions };
 })();
 
-document.addEventListener('DOMContentLoaded', App.init);
+document.addEventListener('DOMContentLoaded', () => {
+  // Clear old storage versions
+  ['efetivo_v1','efetivoState','efetivo_obra'].forEach(k => {
+    try { localStorage.removeItem(k); } catch(e) {}
+  });
+  App.init();
+});
 
 </script>
 </body>
