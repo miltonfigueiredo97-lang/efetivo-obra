@@ -530,28 +530,26 @@ const State = (() => {
     } catch(e) { d = JSON.parse(JSON.stringify(DEF)); }
   }
 
-  function save(context) {
+  function save() {
     try {
       localStorage.setItem(KEY, JSON.stringify(d));
       const el = document.getElementById('lastSaved');
       if (el) { const n=new Date(); el.textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0'); }
-      _syncToSheets(context);
+      // Push state to Sheets for cross-device sync
+      _syncToSheets();
     } catch(e) {}
   }
 
   let _syncTimer = null;
-  let _pendingCtx = {};
-
-  function _syncToSheets(context) {
-    if (context) _pendingCtx[context] = true;
+  function _syncToSheets() {
+    // Debounce: wait 2s after last save before pushing
     clearTimeout(_syncTimer);
-    _syncTimer = setTimeout(async function() {
-      const ctx = Object.assign({}, _pendingCtx);
-      _pendingCtx = {};
-      if (!d.gsUrl || !d.gsSheetId) return;
-      if (ctx.workers) await Sheets.saveWorkers();
-      if (ctx.config)  await Sheets.saveConfig();
-    }, 1500);
+    _syncTimer = setTimeout(function() {
+      const gsUrl = d.gsUrl;
+      const gsSheetId = d.gsSheetId;
+      if (!gsUrl || !gsSheetId) return;
+      var _x=new XMLHttpRequest();_x.open('POST',gsUrl,true);_x.setRequestHeader('Content-Type','text/plain');_x.send(JSON.stringify({action:'saveState',sheetId:gsSheetId,state:d}));
+    }, 2000);
   }
 
   function _merge(t, s) {
@@ -643,89 +641,89 @@ const Utils = (() => {
 
 /* ═══ GOOGLE SHEETS ═══ */
 const Sheets = (() => {
-  const CODE = `// EFETIVO DE OBRA – Apps Script v5
+  const CODE = `// EFETIVO DE OBRA – Apps Script v2
 // Implantar → Nova implantação → App da Web → Qualquer pessoa → Executar como: Eu mesmo
-var ABA_FUNC='👷 Funcionários',ABA_EFET='📅 Efetivo Diário',ABA_REL='📊 Relatórios',ABA_ASSID='👷 Assiduidade',ABA_CFG='⚙️ Configurações',ABA_PROD='📐 Prod. Técnica',ABA_HE='⏰ Horas Extras';
-function doGet(e){try{var id=e&&e.parameter&&e.parameter.sheetId;if(!id)return _ok({msg:'API ativa'});var ss=SpreadsheetApp.openById(id);return ContentService.createTextOutput(JSON.stringify({ok:true,state:_buildState(ss)})).setMimeType(ContentService.MimeType.JSON);}catch(err){return _err(err);}}
-function doPost(e){try{var raw=e.postData&&e.postData.contents?e.postData.contents:(e.parameter&&e.parameter.payload?e.parameter.payload:'');var p=JSON.parse(raw);var ss=SpreadsheetApp.openById(p.sheetId||'');var act=p.action||'';if(act==='saveWorkers'){_saveWorkers(ss,p.workers);return _ok({msg:'ok'});}if(act==='saveEfetivo'){_saveEfetivo(ss,p);_syncAssid(ss,p);return _ok({msg:'ok'});}if(act==='saveRelatorio'){_saveRelatorio(ss,p);return _ok({msg:'ok'});}if(act==='saveConfig'){_saveConfig(ss,p);return _ok({msg:'ok'});}if(act==='saveHE'){_saveHE(ss,p);return _ok({msg:'ok'});}if(act==='deleteHE'){_deleteHE(ss,p);return _ok({msg:'ok'});}return _ok({msg:'ação desconhecida'});}catch(err){return _err(err);}}
-function _buildState(ss){var state={workers:[],equipes:[],andares:[],tarefas:[],obras:[],dailyData:{},historico:[],horasExtras:{},producaoGeral:{},producaoDiaria:{},gsUrl:'',gsSheetId:'',activeObra:''};var shF=ss.getSheetByName(ABA_FUNC);if(shF&&shF.getLastRow()>3){shF.getRange(4,1,shF.getLastRow()-3,7).getValues().forEach(function(r){if(r[0]&&r[1])state.workers.push({id:String(r[0]),nome:r[1],funcao:r[2],equipe:r[3],obra:r[4],ativo:r[5]!=='NÃO'});});}var shC=ss.getSheetByName(ABA_CFG);if(shC&&shC.getLastRow()>4){var eq=1;shC.getRange(5,1,shC.getLastRow()-4,8).getValues().forEach(function(r){if(r[0])state.andares.push(String(r[0]).trim());if(r[2])state.tarefas.push(String(r[2]).trim());if(r[4]){var p=String(r[4]).split('|');state.equipes.push({id:'eq'+(eq++),nome:p[0].trim(),cor:p[1]?p[1].trim():'#8b92b0'});}if(r[6]){var o=String(r[6]).trim();if(o&&state.obras.indexOf(o)===-1)state.obras.push(o);}});}if(!state.obras.length)state.obras=['Essence Residence'];if(!state.andares.length)state.andares=['Térreo'];state.activeObra=state.obras[0];var shE=ss.getSheetByName(ABA_EFET);if(shE&&shE.getLastRow()>3){shE.getRange(4,1,shE.getLastRow()-3,9).getValues().forEach(function(r){if(!r[0]||!r[2])return;var d=_toISO(r[0]),o=String(r[1]),w=state.workers.find(function(x){return x.nome===String(r[2]);});if(!w)return;if(!state.dailyData[o])state.dailyData[o]={};if(!state.dailyData[o][d])state.dailyData[o][d]={};state.dailyData[o][d][w.id]={presente:String(r[5])==='SIM',andar:String(r[6]||''),tarefas:r[7]?String(r[7]).split('; ').filter(Boolean):[],motivo:''};});}var shR=ss.getSheetByName(ABA_REL);if(shR&&shR.getLastRow()>3){shR.getRange(4,1,shR.getLastRow()-3,5).getValues().forEach(function(r){if(r[0]&&r[3])state.historico.push({data:_toISO(r[0]),obra:String(r[1]),total:Number(r[2])||0,texto:String(r[3])});});state.historico.reverse();}var shHE=ss.getSheetByName(ABA_HE);if(shHE&&shHE.getLastRow()>3){shHE.getRange(4,1,shHE.getLastRow()-3,8).getValues().forEach(function(r){if(!r[0]||!r[1])return;var o=String(r[2]);if(!state.horasExtras[o])state.horasExtras[o]=[];var w=state.workers.find(function(x){return x.nome===String(r[3]);});state.horasExtras[o].push({id:String(r[0]),data:_toISO(r[1]),wid:w?w.id:'',nome:String(r[3]),funcao:String(r[4]),horas:Number(r[5])||0,tipo:String(r[6]||'Normal')});});}return state;}
-function _saveWorkers(ss,workers){var sh=_gc(ss,ABA_FUNC,['ID','Nome','Função / Cargo','Equipe','Obra','Ativo','Timestamp'],3);var l=sh.getLastRow();if(l>3)sh.deleteRows(4,l-3);var ts=_ts();if(workers.length)sh.getRange(4,1,workers.length,7).setValues(workers.map(function(w){return[w.id,w.nome,w.funcao,w.equipe,w.obra,w.ativo===false?'NÃO':'SIM',ts];}));}
-function _saveEfetivo(ss,p){var sh=_gc(ss,ABA_EFET,['Data','Obra','Nome','Função','Equipe','Presente','Andar / Local','Atividades','Timestamp'],3);var l=sh.getLastRow();if(l>3){var v=sh.getRange(4,1,l-3,2).getValues();for(var i=v.length-1;i>=0;i--){if(_toISO(v[i][0])===p.data&&String(v[i][1])===p.obra)sh.deleteRow(i+4);}}var ts=_ts(),dp=_toPT(p.data);var rows=(p.workers||[]).map(function(w){return[dp,p.obra,w.nome,w.funcao,w.equipe,w.presente?'SIM':'NÃO',w.andar||'–',(w.tarefas||[]).join('; ')||'–',ts];});if(rows.length){var s=sh.getLastRow()+1;sh.getRange(s,1,rows.length,9).setValues(rows);for(var j=0;j<rows.length;j++)sh.getRange(s+j,6).setFontColor(rows[j][5]==='SIM'?'#22c55e':'#ef4444').setFontWeight('bold');}}
-function _saveRelatorio(ss,p){var sh=_gc(ss,ABA_REL,['Data','Obra','Total','Texto Completo','Timestamp'],3);sh.appendRow([_toPT(p.data),p.obra,p.total||0,p.texto,_ts()]);sh.setColumnWidth(4,600);}
-function _syncAssid(ss,p){if(!p.state)return;var sh=_gc(ss,ABA_ASSID,['Nome','Função','Equipe','Obra','Dias Presentes','Total','Assiduidade %','Status'],3);var l=sh.getLastRow();if(l>3)sh.deleteRows(4,l-3);var att={};Object.keys(p.state.dailyData||{}).forEach(function(o){Object.keys(p.state.dailyData[o]).forEach(function(d){Object.keys(p.state.dailyData[o][d]).forEach(function(wid){if(!att[wid])att[wid]={dias:0,total:0};att[wid].total++;if(p.state.dailyData[o][d][wid].presente!==false)att[wid].dias++;});});});var rows=(p.state.workers||[]).map(function(w){var a=att[w.id]||{dias:0,total:0};var pct=a.total>0?Math.round(a.dias/a.total*100):100;var eq=(p.state.equipes||[]).find(function(e){return e.id===w.equipe;});var st=pct>=90?'✅ Regular':pct>=75?'⚠️ Atenção':'❌ Crítico';return[w.nome,w.funcao,eq?eq.nome:w.equipe,w.obra,a.dias,a.total,pct+'%',st];});if(rows.length){sh.getRange(4,1,rows.length,8).setValues(rows);rows.forEach(function(r,i){sh.getRange(i+4,8).setFontColor(r[7].includes('Regular')?'#22c55e':r[7].includes('Atenção')?'#f59e0b':'#ef4444');});}}
-function _saveConfig(ss,p){var sh=ss.getSheetByName(ABA_CFG);if(!sh)return;var l=sh.getLastRow();if(l>4)sh.deleteRows(5,l-4);var a=p.andares||[],t=p.tarefas||[],e=p.equipes||[],o=p.obras||[];var max=Math.max(a.length,t.length,e.length,o.length);for(var i=0;i<max;i++)sh.appendRow([a[i]||'','',t[i]||'','',e[i]?e[i].nome+'|'+e[i].cor:'','',o[i]||'','']);}
-function _saveHE(ss,p){var sh=_gc(ss,ABA_HE,['ID','Data','Obra','Nome','Função','Horas','Tipo','Timestamp'],3);(p.registros||[]).forEach(function(r){sh.appendRow([r.id,_toPT(r.data),p.obra,r.nome,r.funcao,r.horas,r.tipo||'Normal',_ts()]);});}
-function _deleteHE(ss,p){var sh=ss.getSheetByName(ABA_HE);if(!sh||sh.getLastRow()<4)return;var v=sh.getRange(4,1,sh.getLastRow()-3,1).getValues();for(var i=v.length-1;i>=0;i--)if(String(v[i][0])===String(p.id))sh.deleteRow(i+4);}
-function _gc(ss,name,headers,hRow){var sh=ss.getSheetByName(name);if(!sh){sh=ss.insertSheet(name);var r=sh.getRange(hRow,1,1,headers.length);r.setValues([headers]);r.setFontWeight('bold').setBackground('#f0a500').setFontColor('#000000');sh.setFrozenRows(hRow);}return sh;}
-function _toISO(v){if(!v)return '';if(v instanceof Date)return Utilities.formatDate(v,'America/Sao_Paulo','yyyy-MM-dd');var s=String(v);if(s.match(/^\d{4}-\d{2}-\d{2}/))return s.substring(0,10);var p=s.split('/');return p.length===3?p[2]+'-'+p[1]+'-'+p[0]:s;}
-function _toPT(iso){if(!iso)return '';var p=String(iso).split('-');return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:iso;}
-function _ts(){return Utilities.formatDate(new Date(),'America/Sao_Paulo','dd/MM/yyyy HH:mm');}
-function _ok(d){return ContentService.createTextOutput(JSON.stringify(Object.assign({ok:true},d))).setMimeType(ContentService.MimeType.JSON);}
-function _err(e){return ContentService.createTextOutput(JSON.stringify({ok:false,error:e.toString()})).setMimeType(ContentService.MimeType.JSON);}
+function doPost(e) {
+  try {
+    const p = JSON.parse(e.postData.contents);
+    const ss = SpreadsheetApp.openById(p.sheetId || '');
+    const action = p.action || 'log';
+
+    // ── Salvar estado completo ──
+    if (action === 'saveState') {
+      let sh = ss.getSheetByName('Estado') || ss.insertSheet('Estado');
+      sh.clearContents();
+      sh.getRange(1,1).setValue(JSON.stringify(p.state));
+      sh.getRange(1,2).setValue(new Date().toISOString());
+      return ok({msg:'Estado salvo'});
+    }
+
+    // ── Log do efetivo (aba Efetivo) ──
+    let shEf = ss.getSheetByName('Efetivo') || ss.insertSheet('Efetivo');
+    if (shEf.getLastRow()===0) {
+      shEf.appendRow(['Data','Obra','Nome','Função','Equipe','Presente','Motivo','Andar','Atividades','Timestamp']);
+      shEf.getRange(1,1,1,10).setFontWeight('bold').setBackground('#f0a500');
+      shEf.setFrozenRows(1);
+    }
+    (p.workers||[]).forEach(w => shEf.appendRow([p.data,p.obra,w.nome,w.funcao,w.equipe,w.presente?'SIM':'NÃO',w.motivo||'',w.andar,w.tarefas,new Date().toISOString()]));
+
+    // ── Log do relatório (aba Relatórios) ──
+    let shRel = ss.getSheetByName('Relatórios') || ss.insertSheet('Relatórios');
+    if (shRel.getLastRow()===0) {
+      shRel.appendRow(['Data','Obra','Total','Texto','Timestamp']);
+      shRel.getRange(1,1,1,5).setFontWeight('bold').setBackground('#f0a500');
+      shRel.setFrozenRows(1); shRel.setColumnWidth(4,600);
+    }
+    if (p.texto) shRel.appendRow([p.data,p.obra,p.total,p.texto,new Date().toISOString()]);
+
+    // ── Log horas extras (aba Horas Extras) ──
+    if (p.horasExtras && p.horasExtras.length) {
+      let shHE = ss.getSheetByName('Horas Extras') || ss.insertSheet('Horas Extras');
+      if (shHE.getLastRow()===0) {
+        shHE.appendRow(['Data','Obra','Nome','Função','Horas','Tipo','Timestamp']);
+        shHE.getRange(1,1,1,7).setFontWeight('bold').setBackground('#f0a500');
+        shHE.setFrozenRows(1);
+      }
+      p.horasExtras.forEach(r => shHE.appendRow([r.data,p.obra,r.nome,r.funcao,r.horas,r.tipo,new Date().toISOString()]));
+    }
+
+    return ok({msg:'Dados salvos'});
+  } catch(err) { return err_(err); }
+}
+
+// ── Retorna estado salvo (para sincronização entre dispositivos) ──
+function doGet(e) {
+  try {
+    const sheetId = e&&e.parameter&&e.parameter.sheetId;
+    if (!sheetId) return ok({msg:'API ativa. Passe ?sheetId=SEU_ID para sincronizar.'});
+    const ss = SpreadsheetApp.openById(sheetId);
+    const sh = ss.getSheetByName('Estado');
+    if (!sh || sh.getLastRow()===0) return ok({state:null,msg:'Sem estado salvo ainda.'});
+    const raw = sh.getRange(1,1).getValue();
+    const ts  = sh.getRange(1,2).getValue();
+    return ContentService.createTextOutput(JSON.stringify({ok:true,state:JSON.parse(raw),savedAt:ts}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch(err) { return err_(err); }
+}
+
+function ok(data)  { return ContentService.createTextOutput(JSON.stringify({ok:true,...data})).setMimeType(ContentService.MimeType.JSON); }
+function err_(e)   { return ContentService.createTextOutput(JSON.stringify({ok:false,error:e.toString()})).setMimeType(ContentService.MimeType.JSON); }
 `;
 
-  async function _post(payload) {
-    const s = State.get();
-    if (!s.gsUrl || !s.gsSheetId) return false;
+  async function send(payload) {
+    const s=State.get();
+    if (!s.gsUrl) return;
     try {
-      await fetch(s.gsUrl, {
-        method: 'POST', mode: 'no-cors',
-        headers: {'Content-Type': 'text/plain;charset=utf-8'},
-        body: JSON.stringify({...payload, sheetId: s.gsSheetId})
-      });
-      return true;
-    } catch(e) { return false; }
-  }
-
-  async function loadState() {
-    const s = State.get();
-    if (!s.gsUrl || !s.gsSheetId) return null;
-    try {
-      const res = await fetch(s.gsUrl + '?sheetId=' + s.gsSheetId, {method:'GET', mode:'cors'});
-      const json = await res.json();
-      return json.ok ? json.state : null;
-    } catch(e) { return null; }
-  }
-
-  async function saveWorkers() {
-    const s = State.get();
-    return _post({action:'saveWorkers', workers: s.workers});
-  }
-
-  async function saveEfetivo(date, obra) {
-    const s = State.get();
-    const dayMap = s.dailyData?.[obra]?.[date] || {};
-    const workers = s.workers.filter(w => w.obra === obra).map(w => {
-      const dd = dayMap[w.id] || {presente:true, andar:'', tarefas:[]};
-      const eq = s.equipes.find(e => e.id === w.equipe);
-      return {nome:w.nome, funcao:w.funcao, equipe:eq?eq.nome:w.equipe,
-              presente:dd.presente!==false, andar:dd.andar||'', tarefas:dd.tarefas||[]};
-    });
-    return _post({action:'saveEfetivo', data:date, obra, workers, state:s});
-  }
-
-  async function saveRelatorio(date, obra, total, texto) {
-    return _post({action:'saveRelatorio', data:date, obra, total, texto});
-  }
-
-  async function saveConfig() {
-    const s = State.get();
-    return _post({action:'saveConfig', andares:s.andares, tarefas:s.tarefas, equipes:s.equipes, obras:s.obras});
-  }
-
-  async function saveHE(obra, registros) {
-    return _post({action:'saveHE', obra, registros});
-  }
-
-  async function deleteHE(id) {
-    return _post({action:'deleteHE', id});
+      await fetch(s.gsUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,sheetId:s.gsSheetId})});
+      Utils.toast('Enviado ao Google Sheets!','success');
+    } catch(e) { Utils.toast('Erro ao enviar: '+e.message,'error'); }
   }
 
   async function ping(url) {
     try { const r=await fetch(url,{method:'GET',mode:'cors'}); const j=await r.json(); return j.ok===true; } catch { return false; }
   }
 
-  return { CODE, loadState, saveWorkers, saveEfetivo, saveRelatorio, saveConfig, saveHE, deleteHE, ping };
+  return { CODE, send, ping };
 })();
 
 
@@ -1598,12 +1596,11 @@ const App = (() => {
       state.gsSheetId = s.gsSheetId;
       localStorage.setItem('efetivo_v3', JSON.stringify(state));
       State.load();
-      App.rebuildObraSelects();
       if (typeof EfPage !== 'undefined') EfPage.render();
       if (typeof FuncPage !== 'undefined') FuncPage.render();
       if (dot) { dot.style.background='#22c55e'; dot.style.animation='none'; }
       Utils.toast('✅ Sincronizado!', 'success');
-    } catch(e) { if (dot) { dot.style.background='#ef4444'; dot.style.animation='none'; } }
+    } catch(e) { if(dot){dot.style.background='#ef4444';dot.style.animation='none';} }
   }
 
   function obra() { return _obra; }
@@ -1691,8 +1688,10 @@ const App = (() => {
     });
   }
 
+  async function syncNow() { await _loadFromSheets(); }
+
   return { init, obra, date, setObra, showPage, openDrawer, closeDrawer,
-           addObra, rebuildObraSelects, updateTopbar, updateGSIndicator , syncNow };
+           addObra, rebuildObraSelects, updateTopbar, updateGSIndicator, syncNow };
 })();
 
 document.addEventListener('DOMContentLoaded', App.init);
