@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#111420">
-<title>Efetivo de Obra — Mobile</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚒</text></svg>">
+<title>Efetivo de Obra</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9874;</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>:root{
   --bg:#0b0d13;--sf:#111420;--sf2:#171b28;--sf3:#1c2133;
@@ -285,51 +285,42 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
 </style>
 </head>
 <body>
-
 <header class="topbar">
-  <div class="tl"><span style="font-size:18px;line-height:1">⚒</span><span class="topbar-name">EFETIVO</span><span class="tdiv">|</span><span id="topbarTitle">DO DIA</span></div>
-  <div class="tr">
-    <div class="chip-info"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><strong id="topbarPresentes">0</strong></div>
-    <div class="obra-pill" id="obraPill" onclick="Modals.open('modalObra')">–</div>
-  </div>
+  <div class="topbar-left"><span style="font-size:18px;line-height:1">&#9874;</span><span class="topbar-name">EFETIVO</span><span class="topbar-divider">|</span><span class="topbar-title" id="topbarTitle">DO DIA</span></div>
+  <div class="topbar-right"><div class="topbar-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><strong id="topbarPresentes">0</strong></div><div class="obra-pill" id="obraPill" onclick="Modals.open('modalObra')">–</div></div>
 </header>
-
-<main class="main">
+<main class="page-area">
   <section class="page active" id="page-efetivo">
-    <div class="datebar">
-      <div class="dbl"><label>DATA</label><input type="date" id="datePicker"><span class="weekday-label" id="weekdayLabel"></span></div>
-      <div class="pills">
-        <span class="pill green" id="pillPresentes">0 presentes</span>
-        <span class="pill red" id="pillAusentes">0 ausentes</span>
-        <span class="pill orange" id="pillTotal">0 total</span>
-      </div>
+    <div class="date-bar">
+      <div class="date-bar-left" style="flex-wrap:wrap;gap:8px"><label>DATA</label><input type="date" id="datePicker" style="flex:1"><span class="weekday-label" id="weekdayLabel"></span></div>
+      <div class="pills-row"><span class="pill green" id="pillPresentes">0 presentes</span><span class="pill red" id="pillAusentes">0 ausentes</span><span class="pill orange" id="pillTotal">0 total</span></div>
     </div>
-    <div class="sh">
-      <div><div class="section-title">EFETIVO</div><div class="ssub" id="obraLabel">–</div></div>
-      <button class="btn btn-gh" onclick="Modals.openWorker()" style="padding:8px 12px">+ Add</button>
+    <div class="section-header">
+      <div><div class="section-title">EFETIVO</div><div class="section-sub" id="obraLabel">–</div></div>
+      <button class="btn btn-ghost" onclick="Modals.openWorker()" style="padding:8px 12px">+ Add</button>
     </div>
-    <div class="chip-row" id="teamFilters"></div>
-    <div id="workerList"></div>
+    <div class="team-filter-scroll" id="teamFilters"></div>
+    <div class="worker-list-mobile" id="workerList"></div>
     <div class="action-bar">
-      <button class="btn btn-gh" onclick="EfPage.preview()">👁 Ver</button>
-      <button class="btn btn-ac" onclick="EfPage.gerar()">📄 Gerar Relatório</button>
+      <button class="btn btn-ghost" onclick="EfPage.preview()">👁 Ver</button>
+      <button class="btn btn-accent" onclick="EfPage.gerar()">📄 Gerar Relatório</button>
     </div>
   </section>
 
   <section class="page" id="page-funcionarios">
-    <div class="sh">
-      <div><div class="section-title">FUNCIONÁRIOS</div><div class="ssub" id="funcSubtitle">–</div></div>
+    <div class="section-header">
+      <div><div class="section-title">FUNCIONÁRIOS</div><div class="section-sub" id="funcSubtitle">–</div></div>
       <div style="display:flex;gap:8px">
-        <button class="btn btn-gh" onclick="Modals.openImport()">↑ Importar</button>
-        <button class="btn btn-ac" onclick="Modals.openWorker()">+ Novo</button>
+        <button class="btn btn-ghost" onclick="Modals.openImport()">↑ Importar</button>
+        <button class="btn btn-accent" onclick="Modals.openWorker()">+ Novo</button>
       </div>
     </div>
     <div class="search-bar">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input type="text" id="funcSearch" placeholder="Buscar nome ou função…" oninput="FuncPage.render()">
     </div>
-    <div class="filter-row">
-      <select id="funcSort" onchange="FuncPage.render()">
+    <div style="margin-bottom:12px">
+      <select id="funcSort" onchange="FuncPage.render()" class="form-input" style="max-width:200px">
         <option value="nome">Nome A-Z</option>
         <option value="nome_z">Nome Z-A</option>
         <option value="cargo">Cargo</option>
@@ -339,135 +330,109 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
     </div>
     <div class="func-list" id="funcList"></div>
   </section>
-
   <section class="page" id="page-relatorios">
-    <div class="sh"><div><div class="section-title">DESEMPENHO & PRESENÇA</div><div class="ssub">Métricas de assiduidade</div></div></div>
+    <div class="section-header"><div><div class="section-title">DESEMPENHO & PRESENÇA</div><div class="section-sub">Métricas de assiduidade</div></div></div>
     <div id="statContent"></div>
   </section>
-
   <section class="page" id="page-historico">
-    <div class="sh"><div><div class="section-title">HISTÓRICO DE EFETIVOS</div><div class="ssub">Relatórios anteriores</div></div></div>
+    <div class="section-header"><div><div class="section-title">HISTÓRICO DE EFETIVOS</div><div class="section-sub">Relatórios anteriores</div></div></div>
     <div id="histContent"></div>
   </section>
-
   <section class="page" id="page-configuracoes">
-    <div class="sh"><div><div class="section-title">CONFIGURAÇÕES</div><div class="ssub">Andares, tarefas, equipes e obras</div></div></div>
+    <div class="section-header"><div><div class="section-title">CONFIGURAÇÕES</div><div class="section-sub">Andares, tarefas, equipes e obras</div></div></div>
     <div id="cfgContent"></div>
     <div style="height:20px"></div>
   </section>
-
   <section class="page" id="page-horasextras">
     <div id="heContent"></div>
     <div style="height:20px"></div>
   </section>
-
   <section class="page" id="page-producao">
     <div id="prodContent"></div>
     <div style="height:80px"></div>
   </section>
 </main>
-
-<nav class="bnav">
-  <div class="bni active" data-page="efetivo" onclick="App.showPage('efetivo',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-    <span>Efetivo</span><span class="bni-badge" id="bnavBadge" style="display:none">0</span>
-  </div>
-  <div class="bni" data-page="funcionarios" onclick="App.showPage('funcionarios',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-    <span>Equipe</span>
-  </div>
-  <div class="bni" data-page="relatorios" onclick="App.showPage('relatorios',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-    <span>Stats</span>
-  </div>
-  <div class="bni" data-page="historico" onclick="App.showPage('historico',this)">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-    <span>Histórico</span>
-  </div>
-  <div class="bni" onclick="App.openDrawer()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>
-    <span>Mais</span>
-  </div>
+<nav class="bottom-nav">
+  <div class="bnav-item active" data-page="efetivo" onclick="App.showPage('efetivo',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><span>Efetivo</span><span class="bnav-badge" id="bnavBadge" style="display:none">0</span></div>
+  <div class="bnav-item" data-page="funcionarios" onclick="App.showPage('funcionarios',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Equipe</span></div>
+  <div class="bnav-item" data-page="relatorios" onclick="App.showPage('relatorios',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Stats</span></div>
+  <div class="bnav-item" data-page="historico" onclick="App.showPage('historico',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Histórico</span></div>
+  <div class="bnav-item" onclick="App.openDrawer()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="22" height="22"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg><span>Mais</span></div>
 </nav>
-
-<div class="dbg" id="drawerBg" onclick="App.closeDrawer()"></div>
+<div class="drawer-backdrop" id="drawerBg" onclick="App.closeDrawer()"></div>
 <div class="drawer" id="drawer">
-  <div class="dhandle"></div>
-  <div class="dtitle">MAIS OPÇÕES</div>
-  <div class="ditem" onclick="App.showPage('producao');App.closeDrawer()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg>
-    <span>Relatório de Execução</span>
-  </div>
-  <div class="ditem" onclick="App.showPage('horasextras');App.closeDrawer()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-    <span>Horas Extras</span>
-  </div>
-  <div class="ditem" onclick="App.showPage('configuracoes');App.closeDrawer()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M2 12h2M20 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/></svg>
-    <span>Configurações</span>
-  </div>
+  <div class="drawer-handle"></div>
+  <div class="drawer-title">MAIS OPÇÕES</div>
+  <div class="drawer-item" onclick="App.showPage('producao');App.closeDrawer()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg><span>Relatório de Execução</span></div>
+  <div class="drawer-item" onclick="App.showPage('horasextras');App.closeDrawer()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Horas Extras</span></div>
+  <div class="drawer-item" onclick="App.showPage('configuracoes');App.closeDrawer()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="20" height="20"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M2 12h2M20 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/></svg><span>Configurações</span></div>
 </div>
-
 <div id="modalBackdrop" class="modal-backdrop" onclick="Modals.closeAll(event)">
   <div class="modal" id="modalObra">
     <div class="modal-handle"></div>
-    <div class="mh"><div class="modal-title">Selecionar Obra</div><button class="mclose" onclick="Modals.close('modalObra')">✕</button></div>
+    <div class="modal-header"><div class="modal-title">Selecionar Obra</div><button class="modal-close" onclick="Modals.close('modalObra')">✕</button></div>
     <div id="obraOptions"></div>
-    <div class="add-row" style="margin-top:12px"><input id="newObraInput" placeholder="Nova obra…"><button class="btn btn-ac" onclick="App.addObra()">Add</button></div>
+    <div class="add-item-row" style="margin-top:12px"><input class="form-input" id="newObraInput" placeholder="Nova obra…"><button class="btn btn-accent" onclick="App.addObra()">Add</button></div>
   </div>
   <div class="modal" id="modalWorker">
     <div class="modal-handle"></div>
-    <div class="mh"><div class="modal-title" id="mwTitle">Novo Funcionário</div><button class="mclose" onclick="Modals.close('modalWorker')">✕</button></div>
-    <div class="form-g"><label>Nome Completo *</label><input class="finput" id="wName" placeholder="ex: João Silva dos Santos"></div>
-    <div class="form-g"><label>Função / Cargo *</label><input class="finput" id="wRole" placeholder="ex: Pedreiro, Ajudante…"></div>
-    <div class="form-2"><div class="form-g"><label>Equipe</label><select class="finput" id="wTeam"></select></div><div class="form-g"><label>Obra</label><select class="finput" id="wObra"></select></div></div>
+    <div class="modal-header"><div class="modal-title" id="mwTitle">Novo Funcionário</div><button class="modal-close" onclick="Modals.close('modalWorker')">✕</button></div>
+    <div class="form-group"><label>Nome Completo *</label><input class="form-input" id="wName" placeholder="ex: João Silva"></div>
+    <div class="form-group"><label>Função / Cargo *</label><input class="form-input" id="wRole" placeholder="ex: Pedreiro"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Equipe</label><select class="form-input" id="wTeam"></select></div>
+      <div class="form-group"><label>Obra</label><select class="form-input" id="wObra"></select></div>
+    </div>
     <input type="hidden" id="wEditId">
-    <div class="mfoot"><button class="btn btn-gh" onclick="Modals.close('modalWorker')">Cancelar</button><button class="btn btn-ac" onclick="FuncPage.save()">Salvar</button></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="Modals.close('modalWorker')">Cancelar</button><button class="btn btn-accent" onclick="FuncPage.save()">Salvar</button></div>
   </div>
   <div class="modal" id="modalMove">
     <div class="modal-handle"></div>
-    <div class="mh"><div class="modal-title">Mover de Obra</div><button class="mclose" onclick="Modals.close('modalMove')">✕</button></div>
+    <div class="modal-header"><div class="modal-title">Mover de Obra</div><button class="modal-close" onclick="Modals.close('modalMove')">✕</button></div>
     <p style="font-size:13px;color:var(--t2);margin-bottom:14px" id="mvName"></p>
-    <div class="form-g"><label>Obra de destino</label><select class="finput" id="mvObra"></select></div>
+    <div class="form-group"><label>Obra de destino</label><select class="form-input" id="mvObra"></select></div>
     <input type="hidden" id="mvWid">
-    <div class="mfoot"><button class="btn btn-gh" onclick="Modals.close('modalMove')">Cancelar</button><button class="btn btn-ac" onclick="FuncPage.confirmMove()">Mover</button></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="Modals.close('modalMove')">Cancelar</button><button class="btn btn-accent" onclick="FuncPage.confirmMove()">Mover</button></div>
   </div>
   <div class="modal" id="modalImport">
     <div class="modal-handle"></div>
-    <div class="mh"><div class="modal-title">Importar Lista</div><button class="mclose" onclick="Modals.close('modalImport')">✕</button></div>
-    <p style="font-size:12px;color:var(--t2);margin-bottom:12px">Um por linha: <code style="background:var(--sf3);padding:2px 6px;border-radius:4px">Nome – Função</code></p>
-    <div class="form-2"><div class="form-g"><label>Obra</label><select class="finput" id="impObra"></select></div><div class="form-g"><label>Equipe padrão</label><select class="finput" id="impEquipe"></select></div></div>
-    <div class="form-g"><label>Lista</label><textarea class="finput" id="impText" rows="8" placeholder="Fabio Lopes dos Santos – Ajudante&#10;Genival – Pedreiro"></textarea></div>
-    <div class="mfoot"><button class="btn btn-gh" onclick="Modals.close('modalImport')">Cancelar</button><button class="btn btn-ac" onclick="FuncPage.importW()">Importar</button></div>
+    <div class="modal-header"><div class="modal-title">Importar Lista</div><button class="modal-close" onclick="Modals.close('modalImport')">✕</button></div>
+    <p style="font-size:12px;color:var(--t2);margin-bottom:12px">Um por linha: <code>Nome – Função</code></p>
+    <div class="form-row">
+      <div class="form-group"><label>Obra</label><select class="form-input" id="impObra"></select></div>
+      <div class="form-group"><label>Equipe padrão</label><select class="form-input" id="impEquipe"></select></div>
+    </div>
+    <div class="form-group"><label>Lista</label><textarea class="form-input" id="impText" rows="8" placeholder="Fabio – Ajudante&#10;Genival – Pedreiro"></textarea></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="Modals.close('modalImport')">Cancelar</button><button class="btn btn-accent" onclick="FuncPage.importW()">Importar</button></div>
   </div>
   <div class="modal modal-large" id="modalPreview">
     <div class="modal-handle"></div>
-    <div class="mh"><div class="modal-title">Pré-visualização</div><button class="mclose" onclick="Modals.close('modalPreview')">✕</button></div>
+    <div class="modal-header"><div class="modal-title">Pré-visualização</div><button class="modal-close" onclick="Modals.close('modalPreview')">✕</button></div>
     <div class="report-preview" id="previewText"></div>
-    <div class="mfoot"><button class="btn btn-gh" onclick="Modals.close('modalPreview')">Fechar</button><button class="btn btn-ac" onclick="EfPage.copyReport()">📋 Copiar WhatsApp</button></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="Modals.close('modalPreview')">Fechar</button><button class="btn btn-accent" onclick="EfPage.copyReport()">📋 Copiar WhatsApp</button></div>
   </div>
   <div class="modal modal-large" id="modalHistDetail">
     <div class="modal-handle"></div>
-    <div class="mh"><div class="modal-title" id="histDetailTitle">Relatório</div><button class="mclose" onclick="Modals.close('modalHistDetail')">✕</button></div>
+    <div class="modal-header"><div class="modal-title" id="histDetailTitle">Relatório</div><button class="modal-close" onclick="Modals.close('modalHistDetail')">✕</button></div>
     <div class="report-preview" id="histDetailText"></div>
-    <div class="mfoot"><button class="btn btn-gh" onclick="Modals.close('modalHistDetail')">Fechar</button><button class="btn btn-ac" onclick="HistPage.copyCur()">📋 Copiar</button></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="Modals.close('modalHistDetail')">Fechar</button><button class="btn btn-accent" onclick="HistPage.copyCur()">📋 Copiar</button></div>
   </div>
   <div class="modal modal-large" id="modalScript">
     <div class="modal-handle"></div>
-    <div class="mh"><div class="modal-title">Código Apps Script</div><button class="mclose" onclick="Modals.close('modalScript')">✕</button></div>
+    <div class="modal-header"><div class="modal-title">Código Apps Script</div><button class="modal-close" onclick="Modals.close('modalScript')">✕</button></div>
     <pre class="report-preview" id="scriptCode" style="font-size:10px;line-height:1.6"></pre>
-    <div class="mfoot"><button class="btn btn-gh" onclick="Modals.close('modalScript')">Fechar</button><button class="btn btn-ac" onclick="Utils.copy(document.getElementById('scriptCode').textContent,'Copiado!')">Copiar</button></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="Modals.close('modalScript')">Fechar</button><button class="btn btn-accent" onclick="Utils.copy(document.getElementById('scriptCode').textContent,'Copiado!')">Copiar</button></div>
   </div>
   <div class="modal" id="modalHE">
     <div class="modal-handle"></div>
-    <div class="mh"><div class="modal-title">Lançar Horas Extras</div><button class="mclose" onclick="Modals.close('modalHE')">✕</button></div>
-    <div class="form-g"><label>Data</label><input class="finput" type="date" id="heDate"></div>
+    <div class="modal-header"><div class="modal-title">Lançar Horas Extras</div><button class="modal-close" onclick="Modals.close('modalHE')">✕</button></div>
+    <div class="form-group"><label>Data</label><input class="form-input" type="date" id="heDate"></div>
     <div style="max-height:50vh;overflow-y:auto;display:flex;flex-direction:column;gap:4px" id="heRows"></div>
-    <div class="mfoot"><button class="btn btn-gh" onclick="Modals.close('modalHE')">Cancelar</button><button class="btn btn-ac" onclick="HEPage.saveAdd()">Salvar</button></div>
+    <div class="modal-footer"><button class="btn btn-ghost" onclick="Modals.close('modalHE')">Cancelar</button><button class="btn btn-accent" onclick="HEPage.saveAdd()">Salvar</button></div>
   </div>
 </div>
 <div class="toast-container" id="toastContainer"></div>
-
+<span id="lastSaved" style="display:none"></span>
 <script>
 /* ═══ STATE + PERSISTÊNCIA ═══ */
 const State = (() => {
@@ -789,9 +754,9 @@ const FuncPage = (() => {
           <div class="func-meta"><span class="badge" style="background:${cor}22;color:${cor};border:1px solid ${cor}44">${Utils.esc(eq?eq.nome:w.equipe)}</span> ${Utils.esc(w.funcao)} · ${Utils.esc(w.obra)}</div>
         </div>
         <div class="row-actions">
-          <button class="ibtn" onclick="Modals.openWorker('${w.id}')">✏️</button>
-          <button class="ibtn" onclick="Modals.openMove('${w.id}')">↗</button>
-          <button class="ibtn danger" onclick="FuncPage.remove('${w.id}')">✕</button>
+          <button class="icon-btn" onclick="Modals.openWorker('${w.id}')">✏️</button>
+          <button class="icon-btn" onclick="Modals.openMove('${w.id}')">↗</button>
+          <button class="icon-btn danger" onclick="FuncPage.remove('${w.id}')">✕</button>
         </div>
       </div>`;
     }).join('');
@@ -935,32 +900,32 @@ const CfgPage = (() => {
     el.innerHTML=`
       ${blk('🏢 Andares / Locais',
         s.andares.map((a,i)=>itm(a,`CfgPage.rmAndar(${i})`)).join(''),
-        `<div class="add-row"><input id="newAndar" placeholder="ex: 17º Pavimento"><button class="btn btn-ac" onclick="CfgPage.addAndar()">Add</button></div>`)}
+        `<div class="add-item-row"><input id="newAndar" placeholder="ex: 17º Pavimento"><button class="btn btn-accent" onclick="CfgPage.addAndar()">Add</button></div>`)}
       ${blk('⚒ Atividades',
         s.tarefas.map((t,i)=>itm(t,`CfgPage.rmTarefa(${i})`)).join(''),
-        `<div class="add-row"><input id="newTarefa" placeholder="ex: Instalação elétrica"><button class="btn btn-ac" onclick="CfgPage.addTarefa()">Add</button></div>`)}
+        `<div class="add-item-row"><input id="newTarefa" placeholder="ex: Instalação elétrica"><button class="btn btn-accent" onclick="CfgPage.addTarefa()">Add</button></div>`)}
       ${blk('👥 Equipes',
-        s.equipes.map(e=>`<div class="cfg-item"><span class="cdot" style="background:${e.cor}"></span><span style="flex:1">${Utils.esc(e.nome)}</span><button class="ibtn danger" onclick="CfgPage.rmEquipe('${e.id}')">✕</button></div>`).join(''),
-        `<div class="add-row"><input id="newEquipe" placeholder="Nova equipe"><input type="color" id="newEquipeCor" value="#22c55e" style="width:40px;padding:3px;border-radius:6px;border:1px solid var(--bd2);cursor:pointer;background:none"><button class="btn btn-ac" onclick="CfgPage.addEquipe()">Add</button></div>`)}
+        s.equipes.map(e=>`<div class="settings-item"><span class="color-dot" style="background:${e.cor}"></span><span style="flex:1">${Utils.esc(e.nome)}</span><button class="icon-btn danger" onclick="CfgPage.rmEquipe('${e.id}')">✕</button></div>`).join(''),
+        `<div class="add-item-row"><input id="newEquipe" placeholder="Nova equipe"><input type="color" id="newEquipeCor" value="#22c55e" style="width:40px;padding:3px;border-radius:6px;border:1px solid var(--bd2);cursor:pointer;background:none"><button class="btn btn-accent" onclick="CfgPage.addEquipe()">Add</button></div>`)}
       ${blk('🏗 Obras',
-        s.obras.map((o,i)=>`<div class="cfg-item"><span style="flex:1">${Utils.esc(o)}</span>${i===0?'<span style="font-size:10px;color:var(--t3)">principal</span>':`<button class="ibtn danger" onclick="CfgPage.rmObra('${Utils.esc(o)}')">✕</button>`}</div>`).join(''),
-        `<div class="add-row"><input id="newObra" placeholder="Nova obra"><button class="btn btn-ac" onclick="CfgPage.addObra()">Add</button></div>`)}
+        s.obras.map((o,i)=>`<div class="settings-item"><span style="flex:1">${Utils.esc(o)}</span>${i===0?'<span style="font-size:10px;color:var(--t3)">principal</span>':`<button class="icon-btn danger" onclick="CfgPage.rmObra('${Utils.esc(o)}')">✕</button>`}</div>`).join(''),
+        `<div class="add-item-row"><input id="newObra" placeholder="Nova obra"><button class="btn btn-accent" onclick="CfgPage.addObra()">Add</button></div>`)}
       ${blk('🔗 Google Sheets',
         `<div class="form-g"><label>URL do Web App</label><input class="finput" id="gsUrl" placeholder="https://script.google.com/macros/s/…/exec" value="${Utils.esc(s.gsUrl)}" style="font-size:11px;font-family:'JetBrains Mono',monospace"></div>
          <div class="form-g"><label>ID da Planilha</label><input class="finput" id="gsSheetId" placeholder="1BxiMVs0XRA5…" value="${Utils.esc(s.gsSheetId)}" style="font-family:'JetBrains Mono',monospace"></div>
          <div style="display:flex;gap:8px;margin-top:6px">
-           <button class="btn btn-ac" onclick="CfgPage.saveGS()">Salvar</button>
-           <button class="btn btn-gh" onclick="CfgPage.testGS()">Testar</button>
-           <button class="btn btn-gh" onclick="CfgPage.showScript()">Ver código Script</button>
+           <button class="btn btn-accent" onclick="CfgPage.saveGS()">Salvar</button>
+           <button class="btn btn-ghost" onclick="CfgPage.testGS()">Testar</button>
+           <button class="btn btn-ghost" onclick="CfgPage.showScript()">Ver código Script</button>
          </div>`,
         '')}
     `;
   }
   function blk(title,body,footer) {
-    return `<div class="cfg-section"><div class="cfg-title">${title}</div><div class="cfg-body">${body}${footer}</div></div>`;
+    return `<div class="settings-section"><div class="settings-section-title">${title}</div><div class="settings-section-body">${body}${footer}</div></div>`;
   }
   function itm(text,fn) {
-    return `<div class="cfg-item"><span style="flex:1">${Utils.esc(text)}</span><button class="ibtn danger" style="width:24px;height:24px;font-size:11px" onclick="${fn}">✕</button></div>`;
+    return `<div class="settings-item"><span style="flex:1">${Utils.esc(text)}</span><button class="icon-btn danger" style="width:24px;height:24px;font-size:11px" onclick="${fn}">✕</button></div>`;
   }
   function addAndar(){const v=document.getElementById('newAndar').value.trim();if(!v)return;State.addAndar(v);document.getElementById('newAndar').value='';render();if(typeof EfPage!=='undefined')EfPage.renderFilters();}
   function rmAndar(i){State.removeAndar(i);render();if(typeof EfPage!=='undefined')EfPage.renderFilters();}
@@ -987,8 +952,8 @@ const HEPage = (() => {
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
         <div><div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1px">HORAS EXTRAS</div><div style="font-size:11px;color:var(--t3)">${obra}</div></div>
         <div style="display:flex;gap:8px">
-          <button class="btn btn-gh" onclick="HEPage.gerarRelatorio()">📋 Gerar Relatório</button>
-          <button class="btn btn-ac" onclick="HEPage.openAdd()">+ Lançar</button>
+          <button class="btn btn-ghost" onclick="HEPage.gerarRelatorio()">📋 Gerar Relatório</button>
+          <button class="btn btn-accent" onclick="HEPage.openAdd()">+ Lançar</button>
         </div>
       </div>
       ${!entries.length?`<div class="empty">Nenhum lançamento ainda.</div>`:
@@ -1000,7 +965,7 @@ const HEPage = (() => {
                   <span style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--ac)">${Utils.fmtPT(e.data)}</span>
                   <span style="font-size:11px;color:var(--t3);margin-left:8px">${Utils.weekday(e.data)}${Utils.isSunday(e.data)?' 🔴 100%':' ⚪ 60%'}</span>
                 </div>
-                <button class="ibtn danger" onclick="HEPage.remove('${e.id}')">✕</button>
+                <button class="icon-btn danger" onclick="HEPage.remove('${e.id}')">✕</button>
               </div>
               <div style="display:flex;flex-direction:column;gap:4px">
                 ${e.registros.map(r=>{
@@ -1229,59 +1194,59 @@ const ProdPage = (() => {
 
     el.innerHTML = `
       <!-- Informações Gerais (fixas por obra) -->
-      <div class="prod-sec">
-        <div class="prod-title">📐 Informações Gerais da Obra (fixas)</div>
+      <div class="prod-section">
+        <div class="prod-section-title">📐 Informações Gerais da Obra (fixas)</div>
         <div class="prod-grid">
-          <div class="form-g"><label>Área Alv. Estrutural (m²/andar)</label><input class="finput" id="pgAreaAlv" value="${Utils.esc(pg.areaAlv||'')}" placeholder="554,75" style="font-family:'JetBrains Mono',monospace"></div>
-          <div class="form-g"><label>Área da Laje (m²)</label><input class="finput" id="pgAreaLaje" value="${Utils.esc(pg.areaLaje||'')}" placeholder="557,58" style="font-family:'JetBrains Mono',monospace"></div>
-          <div class="form-g"><label>Vol. Graute (m³/andar)</label><input class="finput" id="pgVolGraute" value="${Utils.esc(pg.volGraute||'')}" placeholder="17,67" style="font-family:'JetBrains Mono',monospace"></div>
-          <div class="form-g"><label>Vol. Argamassa (m³/andar)</label><input class="finput" id="pgVolArg" value="${Utils.esc(pg.volArg||'')}" placeholder="1,89" style="font-family:'JetBrains Mono',monospace"></div>
-          <div class="form-g"><label>Vol. Concreto (m³/andar)</label><input class="finput" id="pgVolConc" value="${Utils.esc(pg.volConc||'')}" placeholder="103,49" style="font-family:'JetBrains Mono',monospace"></div>
-          <div class="form-g"><label>Aço Alv. Estrutural (kg)</label><input class="finput" id="pgAcoAlv" value="${Utils.esc(pg.acoAlv||'')}" placeholder="2.789" style="font-family:'JetBrains Mono',monospace"></div>
-          <div class="form-g"><label>Aço Lajes e Vigas (kg)</label><input class="finput" id="pgAcoLaje" value="${Utils.esc(pg.acoLaje||'')}" placeholder="4.051" style="font-family:'JetBrains Mono',monospace"></div>
+          <div class="form-group"><label>Área Alv. Estrutural (m²/andar)</label><input class="form-input" id="pgAreaAlv" value="${Utils.esc(pg.areaAlv||'')}" placeholder="554,75" style="font-family:'JetBrains Mono',monospace"></div>
+          <div class="form-group"><label>Área da Laje (m²)</label><input class="form-input" id="pgAreaLaje" value="${Utils.esc(pg.areaLaje||'')}" placeholder="557,58" style="font-family:'JetBrains Mono',monospace"></div>
+          <div class="form-group"><label>Vol. Graute (m³/andar)</label><input class="form-input" id="pgVolGraute" value="${Utils.esc(pg.volGraute||'')}" placeholder="17,67" style="font-family:'JetBrains Mono',monospace"></div>
+          <div class="form-group"><label>Vol. Argamassa (m³/andar)</label><input class="form-input" id="pgVolArg" value="${Utils.esc(pg.volArg||'')}" placeholder="1,89" style="font-family:'JetBrains Mono',monospace"></div>
+          <div class="form-group"><label>Vol. Concreto (m³/andar)</label><input class="form-input" id="pgVolConc" value="${Utils.esc(pg.volConc||'')}" placeholder="103,49" style="font-family:'JetBrains Mono',monospace"></div>
+          <div class="form-group"><label>Aço Alv. Estrutural (kg)</label><input class="form-input" id="pgAcoAlv" value="${Utils.esc(pg.acoAlv||'')}" placeholder="2.789" style="font-family:'JetBrains Mono',monospace"></div>
+          <div class="form-group"><label>Aço Lajes e Vigas (kg)</label><input class="form-input" id="pgAcoLaje" value="${Utils.esc(pg.acoLaje||'')}" placeholder="4.051" style="font-family:'JetBrains Mono',monospace"></div>
         </div>
-        <div class="prod-title" style="margin-top:14px">👷 Administração e Operacional (fixo)</div>
+        <div class="prod-section-title" style="margin-top:14px">👷 Administração e Operacional (fixo)</div>
         <div class="prod-grid">
-          <div class="form-g"><label>Mestre de Obras</label><input class="finput" id="pgMestre" value="${Utils.esc(pg.mestre||'')}"></div>
-          <div class="form-g"><label>Engenheiro de Obra</label><input class="finput" id="pgEngenheiro" value="${Utils.esc(pg.engenheiro||'')}"></div>
-          <div class="form-g"><label>Encarregado Civil</label><input class="finput" id="pgEncarregado" value="${Utils.esc(pg.encarregado||'')}"></div>
-          <div class="form-g"><label>Almoxarife</label><input class="finput" id="pgAlmoxarife" value="${Utils.esc(pg.almoxarife||'')}"></div>
-          <div class="form-g"><label>Assistente Engenharia</label><input class="finput" id="pgAssistente" value="${Utils.esc(pg.assistente||'')}"></div>
-          <div class="form-g"><label>Administrativo</label><input class="finput" id="pgAdministrativo" value="${Utils.esc(pg.administrativo||'')}"></div>
+          <div class="form-group"><label>Mestre de Obras</label><input class="form-input" id="pgMestre" value="${Utils.esc(pg.mestre||'')}"></div>
+          <div class="form-group"><label>Engenheiro de Obra</label><input class="form-input" id="pgEngenheiro" value="${Utils.esc(pg.engenheiro||'')}"></div>
+          <div class="form-group"><label>Encarregado Civil</label><input class="form-input" id="pgEncarregado" value="${Utils.esc(pg.encarregado||'')}"></div>
+          <div class="form-group"><label>Almoxarife</label><input class="form-input" id="pgAlmoxarife" value="${Utils.esc(pg.almoxarife||'')}"></div>
+          <div class="form-group"><label>Assistente Engenharia</label><input class="form-input" id="pgAssistente" value="${Utils.esc(pg.assistente||'')}"></div>
+          <div class="form-group"><label>Administrativo</label><input class="form-input" id="pgAdministrativo" value="${Utils.esc(pg.administrativo||'')}"></div>
         </div>
-        <button class="btn btn-ac" onclick="ProdPage.saveGeral()" style="margin-top:10px">Salvar Informações Gerais</button>
+        <button class="btn btn-accent" onclick="ProdPage.saveGeral()" style="margin-top:10px">Salvar Informações Gerais</button>
       </div>
 
       <!-- Produção do dia -->
-      <div class="prod-sec">
-        <div class="prod-title">📅 Produção do Dia — ${Utils.fmtPT(date)}</div>
+      <div class="prod-section">
+        <div class="prod-section-title">📅 Produção do Dia — ${Utils.fmtPT(date)}</div>
 
-        <div class="prod-title" style="font-size:13px;color:var(--t2);margin-bottom:8px">🧱 Alvenaria Estrutural</div>
+        <div class="prod-section-title" style="font-size:13px;color:var(--t2);margin-bottom:8px">🧱 Alvenaria Estrutural</div>
         <div class="prod-grid" style="margin-bottom:8px">
-          <div class="form-g"><label>Volume executado (m²)</label><input class="finput" type="number" id="pdAlvEstVol" value="${pd.alvEst?.vol||''}" placeholder="0" oninput="ProdPage.calcAlvEst()"></div>
-          <div class="form-g"><label>Nº de funcionários</label><input class="finput" type="number" id="pdAlvEstQtd" value="${pd.alvEst?.qtd||''}" placeholder="0" oninput="ProdPage.calcAlvEst()"></div>
-          <div class="form-g"><label>m² por funcionário (calculado)</label><input class="finput" id="pdAlvEstM2" readonly style="opacity:.6" value="${pd.alvEst?.vol&&pd.alvEst?.qtd?(pd.alvEst.vol/pd.alvEst.qtd).toFixed(2):''}"></div>
+          <div class="form-group"><label>Volume executado (m²)</label><input class="form-input" type="number" id="pdAlvEstVol" value="${pd.alvEst?.vol||''}" placeholder="0" oninput="ProdPage.calcAlvEst()"></div>
+          <div class="form-group"><label>Nº de funcionários</label><input class="form-input" type="number" id="pdAlvEstQtd" value="${pd.alvEst?.qtd||''}" placeholder="0" oninput="ProdPage.calcAlvEst()"></div>
+          <div class="form-group"><label>m² por funcionário (calculado)</label><input class="form-input" id="pdAlvEstM2" readonly style="opacity:.6" value="${pd.alvEst?.vol&&pd.alvEst?.qtd?(pd.alvEst.vol/pd.alvEst.qtd).toFixed(2):''}"></div>
         </div>
 
-        <div class="prod-title" style="font-size:13px;color:var(--t2);margin-bottom:8px">🏗 Alvenaria de Vedação</div>
+        <div class="prod-section-title" style="font-size:13px;color:var(--t2);margin-bottom:8px">🏗 Alvenaria de Vedação</div>
         <div class="prod-grid" style="margin-bottom:8px">
-          <div class="form-g"><label>Volume executado (m²)</label><input class="finput" type="number" id="pdAlvVedVol" value="${pd.alvVed?.vol||''}" placeholder="0" oninput="ProdPage.calcAlvVed()"></div>
-          <div class="form-g"><label>Nº de funcionários</label><input class="finput" type="number" id="pdAlvVedQtd" value="${pd.alvVed?.qtd||''}" placeholder="0" oninput="ProdPage.calcAlvVed()"></div>
-          <div class="form-g"><label>m² por funcionário (calculado)</label><input class="finput" id="pdAlvVedM2" readonly style="opacity:.6" value="${pd.alvVed?.vol&&pd.alvVed?.qtd?(pd.alvVed.vol/pd.alvVed.qtd).toFixed(2):''}"></div>
+          <div class="form-group"><label>Volume executado (m²)</label><input class="form-input" type="number" id="pdAlvVedVol" value="${pd.alvVed?.vol||''}" placeholder="0" oninput="ProdPage.calcAlvVed()"></div>
+          <div class="form-group"><label>Nº de funcionários</label><input class="form-input" type="number" id="pdAlvVedQtd" value="${pd.alvVed?.qtd||''}" placeholder="0" oninput="ProdPage.calcAlvVed()"></div>
+          <div class="form-group"><label>m² por funcionário (calculado)</label><input class="form-input" id="pdAlvVedM2" readonly style="opacity:.6" value="${pd.alvVed?.vol&&pd.alvVed?.qtd?(pd.alvVed.vol/pd.alvVed.qtd).toFixed(2):''}"></div>
         </div>
 
-        <div class="prod-title" style="font-size:13px;color:var(--t2);margin-bottom:8px">🚧 Concretagens Programadas</div>
+        <div class="prod-section-title" style="font-size:13px;color:var(--t2);margin-bottom:8px">🚧 Concretagens Programadas</div>
         <div id="concList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px">
           ${conc.map((c,i)=>`
             <div style="display:flex;gap:8px;align-items:center">
-              <input class="finput" value="${Utils.esc(c.local)}" placeholder="Local" style="flex:1" onchange="ProdPage.updConc(${i},'local',this.value)">
-              <input class="finput" type="number" value="${c.volume}" placeholder="m³" style="width:90px;font-family:'JetBrains Mono',monospace" onchange="ProdPage.updConc(${i},'volume',this.value)">
-              <button class="ibtn danger" onclick="ProdPage.rmConc(${i})">✕</button>
+              <input class="form-input" value="${Utils.esc(c.local)}" placeholder="Local" style="flex:1" onchange="ProdPage.updConc(${i},'local',this.value)">
+              <input class="form-input" type="number" value="${c.volume}" placeholder="m³" style="width:90px;font-family:'JetBrains Mono',monospace" onchange="ProdPage.updConc(${i},'volume',this.value)">
+              <button class="icon-btn danger" onclick="ProdPage.rmConc(${i})">✕</button>
             </div>`).join('')}
         </div>
-        <button class="btn btn-gh" onclick="ProdPage.addConc()" style="margin-bottom:10px">+ Adicionar concretagem</button>
+        <button class="btn btn-ghost" onclick="ProdPage.addConc()" style="margin-bottom:10px">+ Adicionar concretagem</button>
 
-        <div><button class="btn btn-ac" onclick="ProdPage.saveDaily()">Salvar Produção do Dia</button></div>
+        <div><button class="btn btn-accent" onclick="ProdPage.saveDaily()">Salvar Produção do Dia</button></div>
       </div>
     `;
   }
@@ -1374,7 +1339,7 @@ const EfPage = (() => {
     if (!wrap) return;
     const teams = [{id:'all',nome:'Todos'}, ...s.equipes];
     wrap.innerHTML = teams.map(t =>
-      `<div class="chip ${activeTeam===t.id?'active':''}" data-team="${t.id}" onclick="EfPage.setTeam('${t.id}')">${t.nome}</div>`
+      `<div class="filter-chip ${activeTeam===t.id?'active':''}" data-team="${t.id}" onclick="EfPage.setTeam('${t.id}')">${t.nome}</div>`
     ).join('');
   }
 
@@ -1401,25 +1366,25 @@ const EfPage = (() => {
       const eq = State.getEquipe(w.equipe); const cor = eq?eq.cor:'#8b92b0';
       const absent = dd.presente === false;
       const tags = (dd.tarefas||[]).map(t =>
-        `<span class="tag">${Utils.esc(t)}<button onclick="EfPage.rmTag('${w.id}','${t.replace(/'/g,"\\'")}')">×</button></span>`
+        `<span class="activity-tag">${Utils.esc(t)}<button onclick="EfPage.rmTag('${w.id}','${t.replace(/'/g,"\\'")}')">×</button></span>`
       ).join('');
       const tarefaOpts = s.tarefas.filter(t=>!(dd.tarefas||[]).includes(t)).map(t=>`<option value="${Utils.esc(t)}">${Utils.esc(t)}</option>`).join('');
       const andarSel = andarOpts.replace(`value="${Utils.esc(dd.andar)}"`,`value="${Utils.esc(dd.andar)}" selected`);
 
-      return `<div class="wcard ${absent?'absent':''}" id="wcard-${w.id}">
-        <div class="wcard-top">
-          <div class="wc-r1">
-            <label class="toggle" onclick="event.stopPropagation()">
+      return `<div class="worker-card ${absent?'absent':''}" id="wcard-${w.id}">
+        <div class="worker-card-top">
+          <div class="wc-row1">
+            <label class="presence-toggle" onclick="event.stopPropagation()">
               <input type="checkbox" ${!absent?'checked':''} onchange="EfPage.togglePres('${w.id}',this.checked)">
-              <span class="tslider"></span>
+              <span class="presence-slider"></span>
             </label>
-            <div class="winfo" onclick="EfPage.toggleCard('${w.id}')">
-              <div class="wname">${Utils.esc(w.nome)}</div>
-              <div class="wrole">${Utils.esc(w.funcao)}</div>
+            <div class="worker-info" onclick="EfPage.toggleCard('${w.id}')">
+              <div class="worker-name">${Utils.esc(w.nome)}</div>
+              <div class="worker-role">${Utils.esc(w.funcao)}</div>
             </div>
           </div>
-          <div class="wc-r2">
-            <span class="badge" style="background:${cor}22;color:${cor};border:1px solid ${cor}44">${Utils.esc(eq?eq.nome:w.equipe)}</span>
+          <div class="wc-row2">
+            <span class="team-badge" style="background:${cor}22;color:${cor};border:1px solid ${cor}44">${Utils.esc(eq?eq.nome:w.equipe)}</span>
             ${!absent
               ? `<button class="expand-btn" id="wexp-${w.id}" onclick="EfPage.toggleCard('${w.id}')">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="12" height="12"><polyline points="6 9 12 15 18 9"/></svg>
@@ -1427,31 +1392,31 @@ const EfPage = (() => {
                 </button>`
               : `<span style="font-size:11px;color:var(--rd)">Ausente</span>`
             }
-            <div class="row-actions">
-              <button class="ibtn" onclick="Modals.openWorker('${w.id}')">✏️</button>
-              <button class="ibtn danger" onclick="FuncPage.remove('${w.id}')">✕</button>
+            <div class="worker-card-actions">
+              <button class="icon-btn" onclick="Modals.openWorker('${w.id}')">✏️</button>
+              <button class="icon-btn danger" onclick="FuncPage.remove('${w.id}')">✕</button>
             </div>
           </div>
         </div>
-        <div class="wcard-body" id="wbody-${w.id}">
+        <div class="worker-card-body" id="wbody-${w.id}">
           ${absent ? `
             <div>
-              <div class="flabel">Motivo da Falta</div>
+              <div class="field-label">Motivo da Falta</div>
               <input class="finput" placeholder="Sem justificativa" value="${Utils.esc(dd.motivo||'')}"
                 onchange="EfPage.setMotivo('${w.id}',this.value)">
             </div>` : `
             <div>
-              <div class="flabel">Andar / Local</div>
-              <select class="sel" onchange="EfPage.setAndar('${w.id}',this.value)">${andarSel}</select>
+              <div class="field-label">Andar / Local</div>
+              <select class="inline-select" onchange="EfPage.setAndar('${w.id}',this.value)">${andarSel}</select>
             </div>
             <div>
-              <div class="flabel">Atividades</div>
-              <div class="tags" id="mtags-${w.id}">${tags}</div>
+              <div class="field-label">Atividades</div>
+              <div class="activity-tags" id="mtags-${w.id}">${tags}</div>
               <div style="display:flex;gap:8px;margin-top:6px">
-                <select class="sel" id="mactsel-${w.id}" style="flex:1">
+                <select class="inline-select" id="mactsel-${w.id}" style="flex:1">
                   <option value="">+ Adicionar atividade</option>${tarefaOpts}
                 </select>
-                <button class="addbtn" onclick="EfPage.addTag('${w.id}')">+</button>
+                <button class="add-btn" onclick="EfPage.addTag('${w.id}')">+</button>
               </div>
             </div>`}
         </div>
@@ -1503,7 +1468,7 @@ const EfPage = (() => {
     const tagsEl = document.getElementById('mtags-'+wid);
     if (tagsEl) {
       tagsEl.innerHTML = tarefas.map(t2 =>
-        `<span class="tag">${Utils.esc(t2)}<button onclick="EfPage.rmTag('${wid}','${t2.replace(/'/g,"\\'")}')">×</button></span>`
+        `<span class="activity-tag">${Utils.esc(t2)}<button onclick="EfPage.rmTag('${wid}','${t2.replace(/'/g,"\\'")}')">×</button></span>`
       ).join('');
     }
     // Remove option from select
@@ -1522,7 +1487,7 @@ const EfPage = (() => {
     const tagsEl = document.getElementById('mtags-'+wid);
     if (tagsEl) {
       tagsEl.innerHTML = tarefas.map(t =>
-        `<span class="tag">${Utils.esc(t)}<button onclick="EfPage.rmTag('${wid}','${t.replace(/'/g,"\\'")}')">×</button></span>`
+        `<span class="activity-tag">${Utils.esc(t)}<button onclick="EfPage.rmTag('${wid}','${t.replace(/'/g,"\\'")}')">×</button></span>`
       ).join('');
     }
     // Restore option
