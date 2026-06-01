@@ -521,8 +521,27 @@ const State = (() => {
     try {
       localStorage.setItem(KEY, JSON.stringify(d));
       const el = document.getElementById('lastSaved');
-      if (el) { const n=new Date(); el.textContent=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`; }
+      if (el) { const n=new Date(); el.textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0'); }
+      // Push state to Sheets for cross-device sync
+      _syncToSheets();
     } catch(e) {}
+  }
+
+  let _syncTimer = null;
+  function _syncToSheets() {
+    // Debounce: wait 2s after last save before pushing
+    clearTimeout(_syncTimer);
+    _syncTimer = setTimeout(function() {
+      const gsUrl = d.gsUrl;
+      const gsSheetId = d.gsSheetId;
+      if (!gsUrl || !gsSheetId) return;
+      fetch(gsUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({action:'saveState', sheetId:gsSheetId, state:d})
+      }).catch(function(){});
+    }, 2000);
   }
 
   function _merge(t, s) {
@@ -614,32 +633,74 @@ const Utils = (() => {
 
 /* ═══ GOOGLE SHEETS ═══ */
 const Sheets = (() => {
-  const CODE = `// EFETIVO DE OBRA – Apps Script
-// Implantar → Nova implantação → App da Web → Qualquer pessoa
+  const CODE = `// EFETIVO DE OBRA – Apps Script v2
+// Implantar → Nova implantação → App da Web → Qualquer pessoa → Executar como: Eu mesmo
 function doPost(e) {
   try {
     const p = JSON.parse(e.postData.contents);
     const ss = SpreadsheetApp.openById(p.sheetId || '');
-    // Aba Efetivo
-    let sh = ss.getSheetByName('Efetivo') || ss.insertSheet('Efetivo');
-    if (sh.getLastRow()===0) { sh.appendRow(['Data','Obra','Nome','Função','Equipe','Presente','Motivo','Andar','Atividades','Timestamp']); sh.getRange(1,1,1,10).setFontWeight('bold').setBackground('#f0a500'); sh.setFrozenRows(1); }
-    (p.workers||[]).forEach(w => sh.appendRow([p.data,p.obra,w.nome,w.funcao,w.equipe,w.presente?'SIM':'NÃO',w.motivo||'',w.andar,w.tarefas,new Date().toISOString()]));
-    // Aba Relatórios
-    let sr = ss.getSheetByName('Relatórios') || ss.insertSheet('Relatórios');
-    if (sr.getLastRow()===0) { sr.appendRow(['Data','Obra','Total','Texto','Timestamp']); sr.getRange(1,1,1,5).setFontWeight('bold').setBackground('#f0a500'); sr.setFrozenRows(1); sr.setColumnWidth(4,600); }
-    sr.appendRow([p.data,p.obra,p.total,p.texto,new Date().toISOString()]);
-    // Aba Horas Extras
-    if (p.horasExtras) {
-      let he = ss.getSheetByName('Horas Extras') || ss.insertSheet('Horas Extras');
-      if (he.getLastRow()===0) { he.appendRow(['Data','Obra','Nome','Função','Horas','Tipo','Timestamp']); he.getRange(1,1,1,7).setFontWeight('bold').setBackground('#f0a500'); he.setFrozenRows(1); }
-      p.horasExtras.forEach(r => he.appendRow([p.data,p.obra,r.nome,r.funcao,r.horas,r.tipo,new Date().toISOString()]));
+    const action = p.action || 'log';
+
+    // ── Salvar estado completo ──
+    if (action === 'saveState') {
+      let sh = ss.getSheetByName('Estado') || ss.insertSheet('Estado');
+      sh.clearContents();
+      sh.getRange(1,1).setValue(JSON.stringify(p.state));
+      sh.getRange(1,2).setValue(new Date().toISOString());
+      return ok({msg:'Estado salvo'});
     }
-    return ContentService.createTextOutput(JSON.stringify({ok:true})).setMimeType(ContentService.MimeType.JSON);
-  } catch(err) {
-    return ContentService.createTextOutput(JSON.stringify({ok:false,error:err.toString()})).setMimeType(ContentService.MimeType.JSON);
-  }
+
+    // ── Log do efetivo (aba Efetivo) ──
+    let shEf = ss.getSheetByName('Efetivo') || ss.insertSheet('Efetivo');
+    if (shEf.getLastRow()===0) {
+      shEf.appendRow(['Data','Obra','Nome','Função','Equipe','Presente','Motivo','Andar','Atividades','Timestamp']);
+      shEf.getRange(1,1,1,10).setFontWeight('bold').setBackground('#f0a500');
+      shEf.setFrozenRows(1);
+    }
+    (p.workers||[]).forEach(w => shEf.appendRow([p.data,p.obra,w.nome,w.funcao,w.equipe,w.presente?'SIM':'NÃO',w.motivo||'',w.andar,w.tarefas,new Date().toISOString()]));
+
+    // ── Log do relatório (aba Relatórios) ──
+    let shRel = ss.getSheetByName('Relatórios') || ss.insertSheet('Relatórios');
+    if (shRel.getLastRow()===0) {
+      shRel.appendRow(['Data','Obra','Total','Texto','Timestamp']);
+      shRel.getRange(1,1,1,5).setFontWeight('bold').setBackground('#f0a500');
+      shRel.setFrozenRows(1); shRel.setColumnWidth(4,600);
+    }
+    if (p.texto) shRel.appendRow([p.data,p.obra,p.total,p.texto,new Date().toISOString()]);
+
+    // ── Log horas extras (aba Horas Extras) ──
+    if (p.horasExtras && p.horasExtras.length) {
+      let shHE = ss.getSheetByName('Horas Extras') || ss.insertSheet('Horas Extras');
+      if (shHE.getLastRow()===0) {
+        shHE.appendRow(['Data','Obra','Nome','Função','Horas','Tipo','Timestamp']);
+        shHE.getRange(1,1,1,7).setFontWeight('bold').setBackground('#f0a500');
+        shHE.setFrozenRows(1);
+      }
+      p.horasExtras.forEach(r => shHE.appendRow([r.data,p.obra,r.nome,r.funcao,r.horas,r.tipo,new Date().toISOString()]));
+    }
+
+    return ok({msg:'Dados salvos'});
+  } catch(err) { return err_(err); }
 }
-function doGet() { return ContentService.createTextOutput(JSON.stringify({ok:true,msg:'API ativa'})).setMimeType(ContentService.MimeType.JSON); }`;
+
+// ── Retorna estado salvo (para sincronização entre dispositivos) ──
+function doGet(e) {
+  try {
+    const sheetId = e&&e.parameter&&e.parameter.sheetId;
+    if (!sheetId) return ok({msg:'API ativa. Passe ?sheetId=SEU_ID para sincronizar.'});
+    const ss = SpreadsheetApp.openById(sheetId);
+    const sh = ss.getSheetByName('Estado');
+    if (!sh || sh.getLastRow()===0) return ok({state:null,msg:'Sem estado salvo ainda.'});
+    const raw = sh.getRange(1,1).getValue();
+    const ts  = sh.getRange(1,2).getValue();
+    return ContentService.createTextOutput(JSON.stringify({ok:true,state:JSON.parse(raw),savedAt:ts}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch(err) { return err_(err); }
+}
+
+function ok(data)  { return ContentService.createTextOutput(JSON.stringify({ok:true,...data})).setMimeType(ContentService.MimeType.JSON); }
+function err_(e)   { return ContentService.createTextOutput(JSON.stringify({ok:false,error:e.toString()})).setMimeType(ContentService.MimeType.JSON); }
+`;
 
   async function send(payload) {
     const s=State.get();
@@ -940,55 +1001,61 @@ const CfgPage = (() => {
 const HEPage = (() => {
   function render() {
     const s=State.get(); const obra=App.obra();
-    const entries=State.getHE(obra);
+    const entries=(s.horasExtras&&s.horasExtras[obra])||[];
     const el=document.getElementById('heContent');
     if(!el) return;
-    el.innerHTML=`
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-        <div><div style="font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1px">HORAS EXTRAS</div><div style="font-size:11px;color:var(--t3)">${obra}</div></div>
-        <div style="display:flex;gap:8px">
-          <button class="btn btn-ghost" onclick="HEPage.gerarRelatorio()">📋 Gerar Relatório</button>
-          <button class="btn btn-accent" onclick="HEPage.openAdd()">+ Lançar</button>
-        </div>
-      </div>
-      ${!entries.length?`<div class="empty">Nenhum lançamento ainda.</div>`:
-        `<div style="display:flex;flex-direction:column;gap:8px">
-          ${entries.map((e,i)=>`
-            <div style="background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:14px">
-              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-                <div>
-                  <span style="font-family:'Bebas Neue',sans-serif;font-size:18px;color:var(--ac)">${Utils.fmtPT(e.data)}</span>
-                  <span style="font-size:11px;color:var(--t3);margin-left:8px">${Utils.weekday(e.data)}${Utils.isSunday(e.data)?' 🔴 100%':' ⚪ 60%'}</span>
-                </div>
-                <button class="icon-btn danger" onclick="HEPage.remove('${e.id}')">✕</button>
-              </div>
-              <div style="display:flex;flex-direction:column;gap:4px">
-                ${e.registros.map(r=>{
-                  const w=State.getWorker(r.wid);
-                  return `<div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid var(--bd)">
-                    <span>${w?Utils.esc(w.nome):'?'} <span style="color:var(--t3);font-size:11px">${w?Utils.esc(w.funcao):''}</span></span>
-                    <span style="font-family:'JetBrains Mono',monospace;color:var(--ac);font-weight:700">${r.horas}h</span>
-                  </div>`;
-                }).join('')}
-                <div style="text-align:right;font-size:11px;color:var(--t3);margin-top:4px">Total: <strong style="color:var(--ac)">${e.registros.reduce((s,r)=>s+Number(r.horas),0)}h</strong></div>
-              </div>
-            </div>`).join('')}
-        </div>`}
-    `;
+    var html='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">'
+      +'<div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:28px;letter-spacing:1px">HORAS EXTRAS</div>'
+      +'<div style="font-size:11px;color:var(--t3)">'+obra+'</div></div>'
+      +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
+      +'<button class="btn btn-ghost" onclick="HEPage.gerarRelatorio()">&#x1F4CB; Relatório por Período</button>'
+      +'<button class="btn btn-accent" onclick="HEPage.openAdd()">+ Lançar Dia</button>'
+      +'</div></div>';
+    if(!entries.length){
+      html+='<div class="empty-state" style="padding:40px 0;text-align:center;color:var(--t3)">Nenhum lançamento ainda. Clique em <strong>+ Lançar Dia</strong>.</div>';
+    } else {
+      html+='<div style="display:flex;flex-direction:column;gap:10px">';
+      entries.forEach(function(e){
+        var tipo=Utils.isSunday(e.data)?'&#x1F534; 100% (domingo)':'&#x26AA; 60% (dia útil)';
+        var total=e.registros.reduce(function(s,r){return s+Number(r.horas);},0);
+        html+='<div style="background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:16px">'
+          +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
+          +'<div><span style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;color:var(--ac)">'+Utils.fmtPT(e.data)+'</span>'
+          +'<span style="font-size:11px;color:var(--t3);margin-left:10px">'+Utils.weekday(e.data)+'  '+tipo+'</span></div>'
+          +'<div style="display:flex;align-items:center;gap:10px">'
+          +'<span style="font-family:\'JetBrains Mono\',monospace;font-size:13px;color:var(--ac);font-weight:700">Total: '+total+'h</span>'
+          +'<button class="icon-btn danger" onclick="HEPage.remove(\''+e.id+'\')">'+'&#x2715;</button>'
+          +'</div></div>'
+          +'<div style="display:flex;flex-direction:column;gap:2px">';
+        e.registros.forEach(function(r){
+          var w=State.getWorker(r.wid);
+          html+='<div style="display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid var(--bd)">'
+            +'<span>'+(w?Utils.esc(w.nome):'?')+'<span style="color:var(--t3);font-size:11px"> '+(w?Utils.esc(w.funcao):'')+'</span></span>'
+            +'<span style="font-family:\'JetBrains Mono\',monospace;color:var(--ac);font-weight:700">'+r.horas+'h</span></div>';
+        });
+        html+='</div></div>';
+      });
+      html+='</div>';
+    }
+    el.innerHTML=html;
   }
 
   function openAdd() {
     const s=State.get(); const obra=App.obra();
-    const ws=s.workers.filter(w=>w.obra===obra).sort((a,b)=>a.nome.localeCompare(b.nome,'pt-BR'));
+    const ws=s.workers.filter(function(w){return w.obra===obra;}).sort(function(a,b){return a.nome.localeCompare(b.nome,'pt-BR');});
     document.getElementById('heDate').value=App.date();
-    document.getElementById('heRows').innerHTML=ws.map(w=>`
-      <div class="he-row" id="her-${w.id}">
-        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
-          <input type="checkbox" id="hec-${w.id}" style="width:18px;height:18px;cursor:pointer">
-          <span style="flex:1;font-size:13px">${Utils.esc(w.nome)} <span style="color:var(--t3);font-size:11px">${Utils.esc(w.funcao)}</span></span>
-        </label>
-        <input type="number" id="heh-${w.id}" min="0.5" max="24" step="0.5" placeholder="horas" style="width:80px;background:var(--sf2);border:1px solid var(--bd2);color:var(--t1);font-family:'JetBrains Mono',monospace;font-size:13px;padding:6px 8px;border-radius:6px;outline:none;text-align:center">
-      </div>`).join('');
+    var rows='';
+    ws.forEach(function(w){
+      rows+='<div class="he-row">'
+        +'<label style="flex:1;display:flex;align-items:center;gap:10px;cursor:pointer">'
+        +'<input type="checkbox" id="hec-'+w.id+'" style="width:18px;height:18px;cursor:pointer;flex-shrink:0">'
+        +'<div><div style="font-size:13px;font-weight:600">'+Utils.esc(w.nome)+'</div>'
+        +'<div style="font-size:11px;color:var(--t3)">'+Utils.esc(w.funcao)+'</div></div></label>'
+        +'<input type="number" id="heh-'+w.id+'" min="0.5" max="24" step="0.5" placeholder="h"'
+        +' style="width:70px;background:var(--sf2);border:1px solid var(--bd2);color:var(--t1);font-family:\'JetBrains Mono\',monospace;font-size:14px;padding:8px;border-radius:6px;outline:none;text-align:center">'
+        +'</div>';
+    });
+    document.getElementById('heRows').innerHTML=rows;
     Modals.open('modalHE');
   }
 
@@ -996,15 +1063,18 @@ const HEPage = (() => {
     const s=State.get(); const obra=App.obra();
     const date=document.getElementById('heDate').value;
     if(!date){Utils.toast('Selecione a data.','warn');return;}
-    const ws=s.workers.filter(w=>w.obra===obra);
-    const registros=[];
-    ws.forEach(w=>{
-      const cb=document.getElementById('hec-'+w.id);
-      const hi=document.getElementById('heh-'+w.id);
-      if(cb?.checked && hi?.value) registros.push({wid:w.id,horas:Number(hi.value)});
+    const ws=s.workers.filter(function(w){return w.obra===obra;});
+    var registros=[];
+    ws.forEach(function(w){
+      var cb=document.getElementById('hec-'+w.id);
+      var hi=document.getElementById('heh-'+w.id);
+      if(cb&&cb.checked&&hi&&hi.value&&Number(hi.value)>0) registros.push({wid:w.id,horas:Number(hi.value)});
     });
-    if(!registros.length){Utils.toast('Marque ao menos um funcionário.','warn');return;}
-    State.addHE(obra,{id:'he'+Date.now(),data:date,registros});
+    if(!registros.length){Utils.toast('Marque ao menos um funcionário e informe as horas.','warn');return;}
+    if(!s.horasExtras)s.horasExtras={};
+    if(!s.horasExtras[obra])s.horasExtras[obra]=[];
+    s.horasExtras[obra].unshift({id:'he'+Date.now(),data:date,registros:registros});
+    State.save();
     Modals.close('modalHE');
     render();
     Utils.toast('Lançamento salvo!','success');
@@ -1012,46 +1082,44 @@ const HEPage = (() => {
 
   function remove(id) {
     if(!confirm('Remover este lançamento?')) return;
-    State.removeHE(App.obra(),id); render();
+    const s=State.get(); const obra=App.obra();
+    if(s.horasExtras&&s.horasExtras[obra]) s.horasExtras[obra]=s.horasExtras[obra].filter(function(e){return e.id!==id;});
+    State.save(); render();
   }
 
   function gerarRelatorio() {
     const s=State.get(); const obra=App.obra();
-    const entries=State.getHE(obra);
+    const entries=(s.horasExtras&&s.horasExtras[obra])||[];
     if(!entries.length){Utils.toast('Nenhum lançamento.','warn');return;}
-
-    // Prompt periodo
-    const ini=prompt('Data início (AAAA-MM-DD):',entries[entries.length-1]?.data||App.date());
-    const fim=prompt('Data fim (AAAA-MM-DD):',App.date());
-    if(!ini||!fim) return;
-
-    const filtered=entries.filter(e=>e.data>=ini&&e.data<=fim);
+    var ini=prompt('Data início (AAAA-MM-DD):',entries.length?entries[entries.length-1].data:App.date());
+    if(!ini) return;
+    var fim=prompt('Data fim (AAAA-MM-DD):',App.date());
+    if(!fim) return;
+    var filtered=entries.filter(function(e){return e.data>=ini&&e.data<=fim;});
     if(!filtered.length){Utils.toast('Nenhum lançamento no período.','warn');return;}
-
-    // Consolidar por funcionário
-    const map={};
-    filtered.forEach(e=>{
-      const tipo=Utils.isSunday(e.data)?'100%':'60%';
-      e.registros.forEach(r=>{
-        if(!map[r.wid]) map[r.wid]={h60:0,h100:0};
-        if(tipo==='100%') map[r.wid].h100+=Number(r.horas);
-        else map[r.wid].h60+=Number(r.horas);
+    var map60={}, map100={};
+    filtered.forEach(function(e){
+      var p100=Utils.isSunday(e.data);
+      e.registros.forEach(function(r){
+        if(p100){if(!map100[r.wid])map100[r.wid]=0;map100[r.wid]+=Number(r.horas);}
+        else{if(!map60[r.wid])map60[r.wid]=0;map60[r.wid]+=Number(r.horas);}
       });
     });
-
-    let txt=`HORAS EXTRAS – ${obra.toUpperCase()}\n`;
-    txt+=`Período: ${Utils.fmtPT(ini)} a ${Utils.fmtPT(fim)}\n\n`;
-    Object.entries(map).sort((a,b)=>{
-      const wa=State.getWorker(a[0]); const wb=State.getWorker(b[0]);
-      return (wa?.nome||'').localeCompare(wb?.nome||'','pt-BR');
-    }).forEach(([wid,h])=>{
-      const w=State.getWorker(wid);
-      txt+=`${w?.nome||'?'} – ${w?.funcao||''}\n`;
-      if(h.h60) txt+=`  * ${h.h60}h a 60% (dias úteis)\n`;
-      if(h.h100) txt+=`  * ${h.h100}h a 100% (domingos/feriados)\n`;
-      txt+=`  Total: ${h.h60+h.h100}h\n\n`;
+    var allWids={};
+    Object.keys(map60).forEach(function(k){allWids[k]=1;});
+    Object.keys(map100).forEach(function(k){allWids[k]=1;});
+    allWids=Object.keys(allWids);
+    var txt='*HORAS EXTRAS – '+obra.toUpperCase()+'*\n*Período: '+Utils.fmtPT(ini)+' a '+Utils.fmtPT(fim)+'*\n\n';
+    allWids.sort(function(a,b){
+      var wa=State.getWorker(a), wb=State.getWorker(b);
+      return ((wa&&wa.nome)||'').localeCompare((wb&&wb.nome)||'','pt-BR');
+    }).forEach(function(wid){
+      var w=State.getWorker(wid);
+      txt+='*'+(w&&w.nome||'?')+'* – '+(w&&w.funcao||'')+'\n';
+      if(map60[wid]) txt+='  • '+map60[wid]+'h a 60% (dias úteis)\n';
+      if(map100[wid]) txt+='  • '+map100[wid]+'h a 100% (domingos/feriados)\n';
+      txt+='  Total: '+((map60[wid]||0)+(map100[wid]||0))+'h\n\n';
     });
-
     document.getElementById('previewText').textContent=txt;
     Modals.open('modalPreview');
   }
@@ -1064,114 +1132,93 @@ function buildReportText(obra, date) {
   const s = State.get();
   const ws = s.workers.filter(w => w.obra === obra);
   const dayMap = s.dailyData?.[obra]?.[date] || {};
+  const presentes = ws.filter(w => { const dd=dayMap[w.id]; return !dd||dd.presente; });
+  const ausentes  = ws.filter(w => { const dd=dayMap[w.id]; return dd&&!dd.presente; });
 
-  const presentes = ws.filter(w => {
-    const dd = dayMap[w.id];
-    return !dd || dd.presente;
-  });
-  const ausentes = ws.filter(w => {
-    const dd = dayMap[w.id];
-    return dd && !dd.presente;
-  });
+  let txt = '*' + obra.toUpperCase() + ' \u2013 ' + Utils.fmtLong(date) + '*\n\n';
 
-  let txt = `${obra.toUpperCase()} – ${Utils.fmtLong(date)}\n`;
-  txt += '\n';
-
-  // Informações gerais (producaoGeral)
   const pg = s.producaoGeral?.[obra] || {};
-  txt += 'INFORMAÇÕES GERAIS\n';
-  if (pg.areaAlv)   txt += `* Área Alvenaria Estrutural: ${pg.areaAlv} m²/andar\n`;
-  if (pg.areaLaje)  txt += `* Área da Laje: ${pg.areaLaje} m²\n`;
-  if (pg.volGraute) txt += `* Volume de Graute: ${pg.volGraute} m³/andar\n`;
-  if (pg.volArg)    txt += `* Volume de Argamassa: ${pg.volArg} m³/andar\n`;
-  if (pg.volConc)   txt += `* Volume de Concreto: ${pg.volConc} m³/andar\n`;
-  if (pg.acoAlv)    txt += `* Aço Alvenaria Estrutural: ${pg.acoAlv} kg\n`;
-  if (pg.acoLaje)   txt += `* Aço Lajes e Vigas: ${pg.acoLaje} kg\n`;
+  txt += '*INFORMA\u00c7\u00d5ES GERAIS*\n';
+  if (pg.areaAlv)   txt += '\u2022 \u00c1rea Alv. Estrutural: ' + pg.areaAlv + ' m\u00b2/andar\n';
+  if (pg.areaLaje)  txt += '\u2022 \u00c1rea da Laje: ' + pg.areaLaje + ' m\u00b2\n';
+  if (pg.volGraute) txt += '\u2022 Volume de Graute: ' + pg.volGraute + ' m\u00b3/andar\n';
+  if (pg.volArg)    txt += '\u2022 Volume de Argamassa: ' + pg.volArg + ' m\u00b3/andar\n';
+  if (pg.volConc)   txt += '\u2022 Volume de Concreto: ' + pg.volConc + ' m\u00b3/andar\n';
+  if (pg.acoAlv)    txt += '\u2022 A\u00e7o Alv. Estrutural: ' + pg.acoAlv + ' kg\n';
+  if (pg.acoLaje)   txt += '\u2022 A\u00e7o Lajes e Vigas: ' + pg.acoLaje + ' kg\n';
   txt += '\n';
 
-  // Produção diária
   const pd = s.producaoDiaria?.[obra]?.[date] || {};
-  txt += 'INFORMAÇÕES SOBRE PRODUÇÃO\n';
-  if (pd.alvEst?.vol !== undefined && pd.alvEst.vol !== '') {
-    const m2 = pd.alvEst.qtd ? (pd.alvEst.vol / pd.alvEst.qtd).toFixed(2) : '0';
-    txt += `* Alvenaria Estrutural: ${pd.alvEst.vol} m² executados`;
-    if (pd.alvEst.qtd) txt += ` – ${pd.alvEst.qtd} func. – ${m2} m²/func.`;
+  txt += '*INFORMA\u00c7\u00d5ES SOBRE PRODU\u00c7\u00c3O*\n';
+  if (pd.alvEst && pd.alvEst.vol) {
+    const m2 = pd.alvEst.qtd ? (pd.alvEst.vol/pd.alvEst.qtd).toFixed(2) : '\u2014';
+    txt += '\u2022 Alv. Estrutural: ' + pd.alvEst.vol + ' m\u00b2';
+    if (pd.alvEst.qtd) txt += ' | ' + pd.alvEst.qtd + ' func. | ' + m2 + ' m\u00b2/func.';
     txt += '\n';
   }
-  if (pd.alvVed?.vol !== undefined && pd.alvVed.vol !== '') {
-    const m2 = pd.alvVed.qtd ? (pd.alvVed.vol / pd.alvVed.qtd).toFixed(2) : '0';
-    txt += `* Alvenaria de Vedação: ${pd.alvVed.vol} m² executados`;
-    if (pd.alvVed.qtd) txt += ` – ${pd.alvVed.qtd} func. – ${m2} m²/func.`;
+  if (pd.alvVed && pd.alvVed.vol) {
+    const m2v = pd.alvVed.qtd ? (pd.alvVed.vol/pd.alvVed.qtd).toFixed(2) : '\u2014';
+    txt += '\u2022 Alv. de Veda\u00e7\u00e3o: ' + pd.alvVed.vol + ' m\u00b2';
+    if (pd.alvVed.qtd) txt += ' | ' + pd.alvVed.qtd + ' func. | ' + m2v + ' m\u00b2/func.';
     txt += '\n';
   }
   txt += '\n';
 
-  // Concretagens programadas
-  txt += 'CONCRETAGENS PROGRAMADAS\n';
+  txt += '*CONCRETAGENS PROGRAMADAS*\n';
   const conc = pd.concretagens || [];
-  if (conc.length) {
-    conc.forEach(c => { txt += `* ${c.local} – ${c.volume} m³\n`; });
-  } else {
-    txt += '* Não há concretagens programadas.\n';
+  if (conc.length) conc.forEach(function(c){ txt += '\u2022 ' + (c.data?Utils.fmtPT(c.data)+' \u2013 ':'') + c.local + ' \u2013 ' + c.volume + ' m\u00b3\n'; });
+  else txt += '\u2022 N\u00e3o h\u00e1 concretagens programadas.\n';
+  txt += '\n';
+
+  const eqAdm = s.equipes.find(function(e){ return e.nome === 'Administra\u00e7\u00e3o'; });
+  const admId = eqAdm ? eqAdm.id : 'eq1';
+  const admPresentes = presentes.filter(function(w){ return w.equipe === admId; });
+  if (admPresentes.length) {
+    txt += '*ADMINISTRA\u00c7\u00c3O E OPERACIONAL*\n';
+    admPresentes.sort(function(a,b){ return a.nome.localeCompare(b.nome,'pt-BR'); }).forEach(function(w){
+      txt += '\u2022 ' + w.nome + ' \u2013 ' + w.funcao + '\n';
+      const dd = dayMap[w.id] || {};
+      (dd.tarefas||[]).sort(function(a,b){ return a.localeCompare(b,'pt-BR'); }).forEach(function(t){ txt += '  \u25e6 ' + t + '\n'; });
+    });
+    txt += '\n';
   }
-  txt += '\n';
 
-  // Administração
-  txt += 'ADMINISTRAÇÃO E OPERACIONAL\n';
-  if (pg.mestre)         txt += `* Mestre de Obras – ${pg.mestre}\n`;
-  if (pg.engenheiro)     txt += `* Engenheiro de Obra – ${pg.engenheiro}\n`;
-  if (pg.encarregado)    txt += `* Encarregado Civil – ${pg.encarregado}\n`;
-  if (pg.almoxarife)     txt += `* Almoxarife – ${pg.almoxarife}\n`;
-  if (pg.assistente)     txt += `* Assistente Engenharia – ${pg.assistente}\n`;
-  if (pg.administrativo) txt += `* Administrativo – ${pg.administrativo}\n`;
-  txt += '\n';
-
-  // Agrupar por andar (ordem dos andares configurados)
+  const nonAdm = presentes.filter(function(w){ return w.equipe !== admId; });
   const byAndar = {};
-  presentes.forEach(w => {
+  nonAdm.forEach(function(w){
     const dd = dayMap[w.id] || {};
     const andar = dd.andar || 'SEM LOCAL DEFINIDO';
-    if (!byAndar[andar]) byAndar[andar] = { tarefas: new Set(), workers: [] };
+    if (!byAndar[andar]) byAndar[andar] = { tarefas: [], workers: [] };
     byAndar[andar].workers.push(w);
-    (dd.tarefas || []).forEach(t => byAndar[andar].tarefas.add(t));
+    (dd.tarefas||[]).forEach(function(t){ if(!byAndar[andar].tarefas.includes(t)) byAndar[andar].tarefas.push(t); });
   });
 
-  // Ordenar andares pela ordem configurada, depois alfabético
   const andaresCfg = s.andares;
-  const ordered = [
-    ...andaresCfg.filter(a => byAndar[a]),
-    ...Object.keys(byAndar).filter(a => !andaresCfg.includes(a)).sort(),
-  ];
+  const ordered = andaresCfg.filter(function(a){ return byAndar[a]; })
+    .concat(Object.keys(byAndar).filter(function(a){ return !andaresCfg.includes(a); }).sort());
 
-  ordered.forEach(andar => {
+  ordered.forEach(function(andar){
     const grp = byAndar[andar];
-    txt += `${andar.toUpperCase()}\n`;
-    // Tarefas em ordem alfabética
-    const tarefasOrdenadas = [...grp.tarefas].sort((a, b) => a.localeCompare(b, 'pt-BR'));
-    if (tarefasOrdenadas.length) {
-      tarefasOrdenadas.forEach(t => { txt += `* ${t}\n`; });
+    txt += '*' + andar.toUpperCase() + '*\n';
+    const tf = grp.tarefas.slice().sort(function(a,b){ return a.localeCompare(b,'pt-BR'); });
+    if (tf.length) {
+      txt += '*Tarefas:*\n';
+      tf.forEach(function(t){ txt += '\u2022 ' + t + '\n'; });
     }
-    // Funcionários em ordem alfabética, formato NOME – FUNÇÃO
-    grp.workers
-      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
-      .forEach(w => { txt += `${w.nome} – ${w.funcao}\n`; });
+    txt += '*Funcion\u00e1rios:*\n';
+    grp.workers.sort(function(a,b){ return a.nome.localeCompare(b.nome,'pt-BR'); })
+      .forEach(function(w){ txt += '\u2022 ' + w.nome + ' \u2013 ' + w.funcao + '\n'; });
     txt += '\n';
   });
 
-  txt += `TOTAL DE FUNCIONÁRIOS: ${presentes.length}\n\n`;
-
-  // Faltantes
+  txt += '*TOTAL DE FUNCION\u00c1RIOS: ' + presentes.length + '*\n';
   if (ausentes.length) {
-    txt += 'FALTANTES\n';
-    ausentes
-      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
-      .forEach(w => {
-        const dd = dayMap[w.id] || {};
-        const motivo = dd.motivo || 'Sem justificativa';
-        txt += `${w.nome} – ${motivo}\n`;
-      });
+    txt += '\n*FALTANTES*\n';
+    ausentes.sort(function(a,b){ return a.nome.localeCompare(b.nome,'pt-BR'); }).forEach(function(w){
+      const dd = dayMap[w.id] || {};
+      txt += '\u2022 ' + w.nome + ' \u2013 ' + (dd.motivo||'Sem justificativa') + '\n';
+    });
   }
-
   return txt;
 }
 
@@ -1179,35 +1226,25 @@ function buildReportText(obra, date) {
 /* ═══ PRODUÇÃO PAGE ═══ */
 const ProdPage = (() => {
   function render() {
-    const s = State.get(); const obra = App.obra(); const date = App.date();
-    const pg = s.producaoGeral?.[obra] || {};
-    const pd = s.producaoDiaria?.[obra]?.[date] || {};
-    const el = document.getElementById('prodContent');
-    if (!el) return;
+    const s=State.get(); const obra=App.obra(); const date=App.date();
+    const pg=s.producaoGeral?.[obra]||{};
+    const pd=s.producaoDiaria?.[obra]?.[date]||{};
+    const el=document.getElementById('prodContent');
+    if(!el) return;
+    const conc=pd.concretagens||[];
 
-    const conc = pd.concretagens || [];
-
-    el.innerHTML = `
-      <!-- Informações Gerais (fixas por obra) -->
+    el.innerHTML=`
+      <!-- Informações Gerais fixas por obra -->
       <div class="prod-section">
-        <div class="prod-section-title">📐 Informações Gerais da Obra (fixas)</div>
+        <div class="prod-section-title">📐 Informações Gerais da Obra <span style="font-size:11px;color:var(--t3)">(salvo por obra, não muda todo dia)</span></div>
         <div class="prod-grid">
-          <div class="form-group"><label>Área Alv. Estrutural (m²/andar)</label><input class="form-input" id="pgAreaAlv" value="${Utils.esc(pg.areaAlv||'')}" placeholder="554,75" style="font-family:'JetBrains Mono',monospace"></div>
-          <div class="form-group"><label>Área da Laje (m²)</label><input class="form-input" id="pgAreaLaje" value="${Utils.esc(pg.areaLaje||'')}" placeholder="557,58" style="font-family:'JetBrains Mono',monospace"></div>
-          <div class="form-group"><label>Vol. Graute (m³/andar)</label><input class="form-input" id="pgVolGraute" value="${Utils.esc(pg.volGraute||'')}" placeholder="17,67" style="font-family:'JetBrains Mono',monospace"></div>
-          <div class="form-group"><label>Vol. Argamassa (m³/andar)</label><input class="form-input" id="pgVolArg" value="${Utils.esc(pg.volArg||'')}" placeholder="1,89" style="font-family:'JetBrains Mono',monospace"></div>
-          <div class="form-group"><label>Vol. Concreto (m³/andar)</label><input class="form-input" id="pgVolConc" value="${Utils.esc(pg.volConc||'')}" placeholder="103,49" style="font-family:'JetBrains Mono',monospace"></div>
-          <div class="form-group"><label>Aço Alv. Estrutural (kg)</label><input class="form-input" id="pgAcoAlv" value="${Utils.esc(pg.acoAlv||'')}" placeholder="2.789" style="font-family:'JetBrains Mono',monospace"></div>
-          <div class="form-group"><label>Aço Lajes e Vigas (kg)</label><input class="form-input" id="pgAcoLaje" value="${Utils.esc(pg.acoLaje||'')}" placeholder="4.051" style="font-family:'JetBrains Mono',monospace"></div>
-        </div>
-        <div class="prod-section-title" style="margin-top:14px">👷 Administração e Operacional (fixo)</div>
-        <div class="prod-grid">
-          <div class="form-group"><label>Mestre de Obras</label><input class="form-input" id="pgMestre" value="${Utils.esc(pg.mestre||'')}"></div>
-          <div class="form-group"><label>Engenheiro de Obra</label><input class="form-input" id="pgEngenheiro" value="${Utils.esc(pg.engenheiro||'')}"></div>
-          <div class="form-group"><label>Encarregado Civil</label><input class="form-input" id="pgEncarregado" value="${Utils.esc(pg.encarregado||'')}"></div>
-          <div class="form-group"><label>Almoxarife</label><input class="form-input" id="pgAlmoxarife" value="${Utils.esc(pg.almoxarife||'')}"></div>
-          <div class="form-group"><label>Assistente Engenharia</label><input class="form-input" id="pgAssistente" value="${Utils.esc(pg.assistente||'')}"></div>
-          <div class="form-group"><label>Administrativo</label><input class="form-input" id="pgAdministrativo" value="${Utils.esc(pg.administrativo||'')}"></div>
+          <div class="form-group"><label>Área Alv. Estrutural (m²/andar)</label><input class="form-input" id="pgAreaAlv" value="${Utils.esc(pg.areaAlv||'')}" placeholder="554,75"></div>
+          <div class="form-group"><label>Área da Laje (m²)</label><input class="form-input" id="pgAreaLaje" value="${Utils.esc(pg.areaLaje||'')}" placeholder="557,58"></div>
+          <div class="form-group"><label>Vol. Graute (m³/andar)</label><input class="form-input" id="pgVolGraute" value="${Utils.esc(pg.volGraute||'')}" placeholder="17,67"></div>
+          <div class="form-group"><label>Vol. Argamassa (m³/andar)</label><input class="form-input" id="pgVolArg" value="${Utils.esc(pg.volArg||'')}" placeholder="1,89"></div>
+          <div class="form-group"><label>Vol. Concreto (m³/andar)</label><input class="form-input" id="pgVolConc" value="${Utils.esc(pg.volConc||'')}" placeholder="103,49"></div>
+          <div class="form-group"><label>Aço Alv. Estrutural (kg)</label><input class="form-input" id="pgAcoAlv" value="${Utils.esc(pg.acoAlv||'')}" placeholder="2.789"></div>
+          <div class="form-group"><label>Aço Lajes e Vigas (kg)</label><input class="form-input" id="pgAcoLaje" value="${Utils.esc(pg.acoLaje||'')}" placeholder="4.051"></div>
         </div>
         <button class="btn btn-accent" onclick="ProdPage.saveGeral()" style="margin-top:10px">Salvar Informações Gerais</button>
       </div>
@@ -1216,50 +1253,48 @@ const ProdPage = (() => {
       <div class="prod-section">
         <div class="prod-section-title">📅 Produção do Dia — ${Utils.fmtPT(date)}</div>
 
-        <div class="prod-section-title" style="font-size:13px;color:var(--t2);margin-bottom:8px">🧱 Alvenaria Estrutural</div>
-        <div class="prod-grid" style="margin-bottom:8px">
+        <div style="font-size:13px;font-weight:600;color:var(--t2);margin-bottom:8px">🧱 Alvenaria Estrutural</div>
+        <div class="prod-grid" style="margin-bottom:12px">
           <div class="form-group"><label>Volume executado (m²)</label><input class="form-input" type="number" id="pdAlvEstVol" value="${pd.alvEst?.vol||''}" placeholder="0" oninput="ProdPage.calcAlvEst()"></div>
           <div class="form-group"><label>Nº de funcionários</label><input class="form-input" type="number" id="pdAlvEstQtd" value="${pd.alvEst?.qtd||''}" placeholder="0" oninput="ProdPage.calcAlvEst()"></div>
-          <div class="form-group"><label>m² por funcionário (calculado)</label><input class="form-input" id="pdAlvEstM2" readonly style="opacity:.6" value="${pd.alvEst?.vol&&pd.alvEst?.qtd?(pd.alvEst.vol/pd.alvEst.qtd).toFixed(2):''}"></div>
+          <div class="form-group"><label>m² por funcionário (auto)</label><input class="form-input" id="pdAlvEstM2" readonly style="opacity:.6;background:var(--sf3)" value="${pd.alvEst?.vol&&pd.alvEst?.qtd?(pd.alvEst.vol/pd.alvEst.qtd).toFixed(2):''}"></div>
         </div>
 
-        <div class="prod-section-title" style="font-size:13px;color:var(--t2);margin-bottom:8px">🏗 Alvenaria de Vedação</div>
-        <div class="prod-grid" style="margin-bottom:8px">
+        <div style="font-size:13px;font-weight:600;color:var(--t2);margin-bottom:8px">🏗 Alvenaria de Vedação</div>
+        <div class="prod-grid" style="margin-bottom:12px">
           <div class="form-group"><label>Volume executado (m²)</label><input class="form-input" type="number" id="pdAlvVedVol" value="${pd.alvVed?.vol||''}" placeholder="0" oninput="ProdPage.calcAlvVed()"></div>
           <div class="form-group"><label>Nº de funcionários</label><input class="form-input" type="number" id="pdAlvVedQtd" value="${pd.alvVed?.qtd||''}" placeholder="0" oninput="ProdPage.calcAlvVed()"></div>
-          <div class="form-group"><label>m² por funcionário (calculado)</label><input class="form-input" id="pdAlvVedM2" readonly style="opacity:.6" value="${pd.alvVed?.vol&&pd.alvVed?.qtd?(pd.alvVed.vol/pd.alvVed.qtd).toFixed(2):''}"></div>
+          <div class="form-group"><label>m² por funcionário (auto)</label><input class="form-input" id="pdAlvVedM2" readonly style="opacity:.6;background:var(--sf3)" value="${pd.alvVed?.vol&&pd.alvVed?.qtd?(pd.alvVed.vol/pd.alvVed.qtd).toFixed(2):''}"></div>
         </div>
 
-        <div class="prod-section-title" style="font-size:13px;color:var(--t2);margin-bottom:8px">🚧 Concretagens Programadas</div>
-        <div id="concList" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px">
+        <button class="btn btn-accent" onclick="ProdPage.saveDaily()" style="margin-bottom:16px">Salvar Produção do Dia</button>
+      </div>
+
+      <!-- Concretagens — separado -->
+      <div class="prod-section">
+        <div class="prod-section-title">🚧 Concretagens Programadas — ${Utils.fmtPT(date)}</div>
+        <div id="concList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">
           ${conc.map((c,i)=>`
-            <div style="display:flex;gap:8px;align-items:center">
-              <input class="form-input" value="${Utils.esc(c.local)}" placeholder="Local" style="flex:1" onchange="ProdPage.updConc(${i},'local',this.value)">
-              <input class="form-input" type="number" value="${c.volume}" placeholder="m³" style="width:90px;font-family:'JetBrains Mono',monospace" onchange="ProdPage.updConc(${i},'volume',this.value)">
+            <div style="display:flex;gap:8px;align-items:center;background:var(--sf2);border:1px solid var(--bd2);border-radius:var(--rs);padding:10px 12px">
+              <div style="display:flex;flex-direction:column;gap:6px;flex:1">
+                <input class="form-input" value="${Utils.esc(c.data||'')}" type="date" placeholder="Data" style="max-width:180px" onchange="ProdPage.updConc(${i},'data',this.value)">
+                <input class="form-input" value="${Utils.esc(c.local||'')}" placeholder="Local (ex: 14º Pavimento)" onchange="ProdPage.updConc(${i},'local',this.value)">
+                <input class="form-input" type="number" value="${c.volume||''}" placeholder="Volume (m³)" style="max-width:160px;font-family:'JetBrains Mono',monospace" onchange="ProdPage.updConc(${i},'volume',this.value)">
+              </div>
               <button class="icon-btn danger" onclick="ProdPage.rmConc(${i})">✕</button>
             </div>`).join('')}
         </div>
-        <button class="btn btn-ghost" onclick="ProdPage.addConc()" style="margin-bottom:10px">+ Adicionar concretagem</button>
-
-        <div><button class="btn btn-accent" onclick="ProdPage.saveDaily()">Salvar Produção do Dia</button></div>
+        <button class="btn btn-ghost" onclick="ProdPage.addConc()">+ Adicionar concretagem</button>
       </div>
     `;
   }
 
-  function calcAlvEst() {
-    const v=Number(document.getElementById('pdAlvEstVol').value);
-    const q=Number(document.getElementById('pdAlvEstQtd').value);
-    document.getElementById('pdAlvEstM2').value = v&&q?(v/q).toFixed(2):'';
-  }
-  function calcAlvVed() {
-    const v=Number(document.getElementById('pdAlvVedVol').value);
-    const q=Number(document.getElementById('pdAlvVedQtd').value);
-    document.getElementById('pdAlvVedM2').value = v&&q?(v/q).toFixed(2):'';
-  }
+  function calcAlvEst(){const v=Number(document.getElementById('pdAlvEstVol').value),q=Number(document.getElementById('pdAlvEstQtd').value);document.getElementById('pdAlvEstM2').value=v&&q?(v/q).toFixed(2):'';}
+  function calcAlvVed(){const v=Number(document.getElementById('pdAlvVedVol').value),q=Number(document.getElementById('pdAlvVedQtd').value);document.getElementById('pdAlvVedM2').value=v&&q?(v/q).toFixed(2):'';}
 
-  function saveGeral() {
-    const s=State.get(); const obra=App.obra();
-    if(!s.producaoGeral) s.producaoGeral={};
+  function saveGeral(){
+    const s=State.get();const obra=App.obra();
+    if(!s.producaoGeral)s.producaoGeral={};
     s.producaoGeral[obra]={
       areaAlv:document.getElementById('pgAreaAlv').value,
       areaLaje:document.getElementById('pgAreaLaje').value,
@@ -1268,57 +1303,30 @@ const ProdPage = (() => {
       volConc:document.getElementById('pgVolConc').value,
       acoAlv:document.getElementById('pgAcoAlv').value,
       acoLaje:document.getElementById('pgAcoLaje').value,
-      mestre:document.getElementById('pgMestre').value,
-      engenheiro:document.getElementById('pgEngenheiro').value,
-      encarregado:document.getElementById('pgEncarregado').value,
-      almoxarife:document.getElementById('pgAlmoxarife').value,
-      assistente:document.getElementById('pgAssistente').value,
-      administrativo:document.getElementById('pgAdministrativo').value,
     };
-    State.save();
-    Utils.toast('Informações gerais salvas!','success');
+    State.save();Utils.toast('Informações gerais salvas!','success');
   }
 
-  function addConc() {
-    const s=State.get(); const obra=App.obra(); const date=App.date();
-    if(!s.producaoDiaria) s.producaoDiaria={};
-    if(!s.producaoDiaria[obra]) s.producaoDiaria[obra]={};
-    if(!s.producaoDiaria[obra][date]) s.producaoDiaria[obra][date]={};
-    if(!s.producaoDiaria[obra][date].concretagens) s.producaoDiaria[obra][date].concretagens=[];
-    s.producaoDiaria[obra][date].concretagens.push({local:'',volume:0});
-    State.save();
-    render();
+  function _getDailyData(){
+    const s=State.get();const obra=App.obra();const date=App.date();
+    if(!s.producaoDiaria)s.producaoDiaria={};
+    if(!s.producaoDiaria[obra])s.producaoDiaria[obra]={};
+    if(!s.producaoDiaria[obra][date])s.producaoDiaria[obra][date]={concretagens:[]};
+    return s.producaoDiaria[obra][date];
   }
 
-  function rmConc(i) {
-    const s=State.get(); const obra=App.obra(); const date=App.date();
-    s.producaoDiaria?.[obra]?.[date]?.concretagens?.splice(i,1);
-    State.save();
-    render();
+  function saveDaily(){
+    const pd=_getDailyData();
+    pd.alvEst={vol:Number(document.getElementById('pdAlvEstVol').value)||0,qtd:Number(document.getElementById('pdAlvEstQtd').value)||0};
+    pd.alvVed={vol:Number(document.getElementById('pdAlvVedVol').value)||0,qtd:Number(document.getElementById('pdAlvVedQtd').value)||0};
+    State.save();Utils.toast('Produção do dia salva!','success');
   }
 
-  function updConc(i,field,val) {
-    const s=State.get(); const obra=App.obra(); const date=App.date();
-    if(s.producaoDiaria?.[obra]?.[date]?.concretagens?.[i]) {
-      s.producaoDiaria[obra][date].concretagens[i][field]=val;
-      State.save();
-    }
-  }
+  function addConc(){const pd=_getDailyData();if(!pd.concretagens)pd.concretagens=[];pd.concretagens.push({data:'',local:'',volume:''});State.save();render();}
+  function rmConc(i){const pd=_getDailyData();pd.concretagens?.splice(i,1);State.save();render();}
+  function updConc(i,field,val){const pd=_getDailyData();if(pd.concretagens?.[i])pd.concretagens[i][field]=val;State.save();}
 
-  function saveDaily() {
-    const s=State.get(); const obra=App.obra(); const date=App.date();
-    if(!s.producaoDiaria) s.producaoDiaria={};
-    if(!s.producaoDiaria[obra]) s.producaoDiaria[obra]={};
-    if(!s.producaoDiaria[obra][date]) s.producaoDiaria[obra][date]={};
-    const d=s.producaoDiaria[obra][date];
-    d.alvEst={vol:Number(document.getElementById('pdAlvEstVol').value)||0,qtd:Number(document.getElementById('pdAlvEstQtd').value)||0};
-    d.alvVed={vol:Number(document.getElementById('pdAlvVedVol').value)||0,qtd:Number(document.getElementById('pdAlvVedQtd').value)||0};
-    // concretagens already saved inline
-    State.save();
-    Utils.toast('Produção do dia salva!','success');
-  }
-
-  return {render,calcAlvEst,calcAlvVed,saveGeral,addConc,rmConc,updConc,saveDaily};
+  return {render,calcAlvEst,calcAlvVed,saveGeral,saveDaily,addConc,rmConc,updConc};
 })();
 
 
@@ -1406,7 +1414,7 @@ const EfPage = (() => {
           <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:${absent?'0':'5px'}">${tags}</div>
           ${!absent?`<div style="display:flex;gap:5px;align-items:center">
             <select class="inline-select" id="dactsel-${w.id}" style="min-width:180px">
-              <option value="">+ Adicionar atividade</option>${tarefaOpts}
+              <option value="">Selecionar atividade existente</option>${tarefaOpts}
             </select>
             <button class="add-btn" onclick="EfPage.addTag('${w.id}')">+</button>
           </div>`:''}
@@ -1444,6 +1452,23 @@ const EfPage = (() => {
     const tarefas = [...(dd.tarefas||[])];
     if (!tarefas.includes(t)) { tarefas.push(t); State.setDayField(obra,date,wid,'tarefas',tarefas); }
     renderTable();
+  }
+
+  function addNewTag(wid) {
+    const inp = document.getElementById('newact-'+wid);
+    if (!inp||!inp.value.trim()) { Utils.toast('Digite a nova atividade.','warn'); return; }
+    const tarefa = inp.value.trim();
+    const obra=App.obra(); const date=App.date();
+    const dd = State.getDayData(obra, date, wid);
+    const tarefas = [...(dd.tarefas||[])];
+    if (!tarefas.includes(tarefa)) {
+      tarefas.push(tarefa);
+      State.setDayField(obra, date, wid, 'tarefas', tarefas);
+      if (!State.get().tarefas.includes(tarefa)) State.addTarefa(tarefa);
+    }
+    inp.value = '';
+    renderTable();
+    Utils.toast('"'+tarefa+'" adicionada!','success');
   }
 
   function rmTag(wid, tarefa) {
@@ -1490,7 +1515,7 @@ const EfPage = (() => {
     App.updateTopbar();
   }
 
-  return { render, renderFilters, setTeam, setSort, togglePres, setAndar, setMotivo, addTag, rmTag, preview, copyReport, gerar };
+  return { render, renderFilters, setTeam, setSort, togglePres, setAndar, setMotivo, addTag, addNewTag, rmTag, preview, copyReport, gerar };
 })();
 
 
@@ -1514,6 +1539,30 @@ const App = (() => {
     updateGSIndicator();
     if (typeof EfPage !== 'undefined') EfPage.render();
     _updateTopbar();
+    // Try to load fresh state from Sheets (cross-device sync)
+    _loadFromSheets();
+  }
+
+  async function _loadFromSheets() {
+    const s = State.get();
+    if (!s.gsUrl || !s.gsSheetId) return;
+    try {
+      const res = await fetch(s.gsUrl + '?sheetId=' + s.gsSheetId, {method:'GET', mode:'cors'});
+      const json = await res.json();
+      if (!json.ok || !json.state) return;
+      // Only use if sheets version is newer (has more data)
+      const sheetState = json.state;
+      // Merge: prefer sheets version for shared data
+      const local = State.get();
+      // Use sheets version as base, but keep local daily edits if same date
+      localStorage.setItem('efetivo_v3', JSON.stringify(sheetState));
+      State.load();
+      if (typeof EfPage !== 'undefined') EfPage.render();
+      if (typeof FuncPage !== 'undefined' && document.getElementById('funcList')?.offsetParent !== null) FuncPage.render();
+      Utils.toast('Dados sincronizados!', 'info');
+    } catch(e) {
+      // No internet or sheets not configured - use localStorage
+    }
   }
 
   function obra() { return _obra; }
