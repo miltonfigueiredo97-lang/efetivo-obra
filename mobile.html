@@ -544,16 +544,21 @@ const State = (() => {
   }
 
   let _syncTimer = null;
-  function _syncToSheets() {
+  let _pendingCtx = {};
+
+  function _syncToSheets(context) {
+    if (context) _pendingCtx[context] = true;
     clearTimeout(_syncTimer);
-    _syncTimer = setTimeout(function() {
-      const gsUrl = d.gsUrl;
-      const gsSheetId = d.gsSheetId;
-      if (!gsUrl || !gsSheetId) return;
-      const payload = JSON.stringify({action:'saveState', sheetId:gsSheetId, state:d});
-      fetch(gsUrl, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'}, body:payload})
-        .catch(function(){});
-    }, 2000);
+    _syncTimer = setTimeout(async function() {
+      const ctx = Object.assign({}, _pendingCtx);
+      _pendingCtx = {};
+      const s = d;
+      if (!s.gsUrl || !s.gsSheetId) return;
+      try {
+        if (ctx.workers) await Sheets.saveWorkers();
+        if (ctx.config)  await Sheets.saveConfig();
+      } catch(e) {}
+    }, 1500);
   }
 
   function _merge(t, s) {
@@ -1013,14 +1018,34 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
   async function _post(payload) {
     const s = State.get();
     if (!s.gsUrl || !s.gsSheetId) return false;
-    try {
-      await fetch(s.gsUrl, {
-        method: 'POST', mode: 'no-cors',
-        headers: {'Content-Type': 'text/plain'},
-        body: JSON.stringify({...payload, sheetId: s.gsSheetId})
-      });
-      return true;
-    } catch(e) { return false; }
+    const body = JSON.stringify({...payload, sheetId: s.gsSheetId});
+    return new Promise((resolve) => {
+      // Usa iframe oculto + form para contornar CORS do Apps Script
+      const iframe = document.createElement('iframe');
+      iframe.name = '_gspost_' + Date.now();
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+      const form = document.createElement('form');
+      form.method = 'POST';
+      form.action = s.gsUrl;
+      form.target = iframe.name;
+      form.style.display = 'none';
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'payload';
+      input.value = body;
+      form.appendChild(input);
+      document.body.appendChild(form);
+      iframe.onload = () => {
+        setTimeout(() => {
+          document.body.removeChild(form);
+          document.body.removeChild(iframe);
+        }, 1000);
+        resolve(true);
+      };
+      form.submit();
+      setTimeout(() => resolve(true), 3000);
+    });
   }
 
   // Carrega estado completo do Sheets (ao abrir o app)
@@ -1338,7 +1363,9 @@ const CfgPage = (() => {
          <div class="form-g"><label>ID da Planilha</label><input class="finput" id="gsSheetId" placeholder="1BxiMVs0XRA5…" value="${Utils.esc(s.gsSheetId)}" style="font-family:'JetBrains Mono',monospace"></div>
          <div style="display:flex;gap:8px;margin-top:6px">
            <button class="btn btn-accent" onclick="CfgPage.saveGS()">Salvar</button>
-           <button class="btn btn-ghost" onclick="CfgPage.testGS()">Testar</button>
+           <button class="btn btn-ghost" onclick="CfgPage.testGS()">🔌 Testar</button>
+           <button class="btn btn-ghost" onclick="App.syncNow()">🔄 Sincronizar</button>
+           <button class="btn btn-accent" style="background:#22c55e" onclick="App.pushAllToSheets()">⬆️ Enviar tudo ao Sheets</button>
            <button class="btn btn-ghost" onclick="CfgPage.showScript()">Ver código Script</button>
          </div>`,
         '')}
@@ -2047,8 +2074,35 @@ const App = (() => {
     });
   }
 
+  async function syncNow() {
+    await _loadFromSheets();
+  }
+
+  async function pushAllToSheets() {
+    const s = State.get();
+    if (!s.gsUrl || !s.gsSheetId) { Utils.toast('Configure o Google Sheets primeiro.','warn'); return; }
+    _setSyncStatus('syncing');
+    Utils.toast('Enviando dados para o Sheets…','info');
+    try {
+      await Sheets.saveWorkers();
+      await Sheets.saveConfig();
+      _setSyncStatus('ok');
+      Utils.toast('✅ Todos os dados enviados ao Sheets!','success');
+    } catch(e) {
+      _setSyncStatus('error');
+      Utils.toast('Erro: '+e.message,'error');
+    }
+  }
+
+  function _setSyncStatus(status) {
+    const el = document.getElementById('syncStatusDot');
+    if (!el) return;
+    el.style.background = status === 'syncing' ? '#f0a500' : status === 'ok' ? '#22c55e' : '#ef4444';
+    el.style.animation = status === 'syncing' ? 'pulse 1s infinite' : 'none';
+  }
+
   return { init, obra, date, setObra, showPage, openDrawer, closeDrawer,
-           addObra, rebuildObraSelects, updateTopbar, updateGSIndicator };
+           addObra, rebuildObraSelects, updateTopbar, updateGSIndicator, syncNow, pushAllToSheets };
 })();
 
 document.addEventListener('DOMContentLoaded', App.init);
