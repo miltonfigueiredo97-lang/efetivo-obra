@@ -45,6 +45,8 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
   padding-bottom:calc(var(--bn) + 70px + env(safe-area-inset-bottom,0px));
   padding-left:12px;padding-right:12px;
   min-height:100dvh;
+  width:100%;
+  overflow-x:hidden;
 }
 .page{display:none;}.page.active{display:block;}
 
@@ -97,7 +99,7 @@ input[type=date]:focus{border-color:var(--ac);}
 .filter-chip.active{border-color:var(--ac);color:var(--ac);background:var(--acd);}
 
 /* WORKER CARDS */
-.worker-list-mobile{display:flex;flex-direction:column;gap:10px;}
+.worker-list-mobile{display:flex;flex-direction:column;gap:10px;min-height:100px;}
 .worker-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);overflow:hidden;}
 .worker-card.absent{opacity:.55;border-style:dashed;}
 
@@ -1454,6 +1456,9 @@ const EfPage = (() => {
   }
 
   function addTag(wid) {
+    // Auto-open card if closed
+    const body = document.getElementById('wbody-'+wid);
+    if (body && !body.classList.contains('open')) toggleCard(wid);
     const sel = document.getElementById('mactsel-'+wid);
     if (!sel||!sel.value) return;
     const t = sel.value;

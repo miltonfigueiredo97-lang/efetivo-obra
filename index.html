@@ -1,6 +1,11 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+<script>
+  if (window.innerWidth < 768) {
+    window.location.replace('mobile.html');
+  }
+</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Efetivo de Obra</title>
@@ -287,11 +292,9 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
     </div>
     <div class="section-header">
       <div><div class="section-title">EFETIVO DE OBRA</div><div class="section-sub" id="obraLabel">–</div></div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-        <div class="team-filter-scroll" id="teamFilters"></div>
-        <button class="btn btn-ghost" onclick="Modals.openWorker()">+ Funcionário</button>
-      </div>
+      <button class="btn btn-ghost" onclick="Modals.openWorker()">+ Funcionário</button>
     </div>
+    <div class="team-filter-scroll" id="teamFilters" style="margin-bottom:14px"></div>
     <div class="worker-table-wrap">
       <table class="data-table">
         <thead><tr>
