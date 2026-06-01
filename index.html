@@ -528,13 +528,12 @@ const State = (() => {
     } catch(e) { d = JSON.parse(JSON.stringify(DEF)); }
   }
 
-  function save() {
+  function save(context) {
     try {
       localStorage.setItem(KEY, JSON.stringify(d));
       const el = document.getElementById('lastSaved');
       if (el) { const n=new Date(); el.textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0'); }
-      // Push state to Sheets for cross-device sync
-      _syncToSheets();
+      _syncToSheets(context || 'general');
     } catch(e) {}
   }
 

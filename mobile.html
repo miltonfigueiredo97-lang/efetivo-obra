@@ -94,7 +94,9 @@ input[type=date]:focus{border-color:var(--ac);}
 
 /* TEAM FILTERS */
 .team-filter-scroll{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
-.team-filter-scroll::-webkit-scrollbar{display:none;}
+.team-filter-scroll.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--t3);flex-shrink:0;transition:background .3s;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+::-webkit-scrollbar{display:none;}
 .filter-chip{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;border:1px solid var(--bd2);background:var(--sf2);color:var(--t2);flex-shrink:0;-webkit-tap-highlight-color:transparent;}
 .filter-chip.active{border-color:var(--ac);color:var(--ac);background:var(--acd);}
 
@@ -281,6 +283,8 @@ select.form-input{cursor:pointer;}
 .empty-state svg{opacity:.2;}
 .gs-indicator{width:7px;height:7px;border-radius:50%;background:var(--t3);flex-shrink:0;}
 .gs-indicator.connected{background:var(--gn);box-shadow:0 0 6px var(--gn);}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--t3);flex-shrink:0;transition:background .3s;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
 ::-webkit-scrollbar{width:3px;height:3px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px;}
 code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
 
@@ -530,25 +534,25 @@ const State = (() => {
     } catch(e) { d = JSON.parse(JSON.stringify(DEF)); }
   }
 
-  function save() {
+  function save(context) {
     try {
       localStorage.setItem(KEY, JSON.stringify(d));
       const el = document.getElementById('lastSaved');
       if (el) { const n=new Date(); el.textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0'); }
-      // Push state to Sheets for cross-device sync
-      _syncToSheets();
+      _syncToSheets(context || 'general');
     } catch(e) {}
   }
 
   let _syncTimer = null;
   function _syncToSheets() {
-    // Debounce: wait 2s after last save before pushing
     clearTimeout(_syncTimer);
     _syncTimer = setTimeout(function() {
       const gsUrl = d.gsUrl;
       const gsSheetId = d.gsSheetId;
       if (!gsUrl || !gsSheetId) return;
-      var _x=new XMLHttpRequest();_x.open('POST',gsUrl,true);_x.setRequestHeader('Content-Type','text/plain');_x.send(JSON.stringify({action:'saveState',sheetId:gsSheetId,state:d}));
+      const payload = JSON.stringify({action:'saveState', sheetId:gsSheetId, state:d});
+      fetch(gsUrl, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'}, body:payload})
+        .catch(function(){});
     }, 2000);
   }
 
@@ -577,17 +581,17 @@ const State = (() => {
 
   function getEquipe(id) { return d.equipes.find(e=>e.id===id||e.nome===id); }
   function getWorker(id) { return d.workers.find(w=>w.id===id); }
-  function addWorker(w) { w.id='w'+Date.now(); d.workers.push(w); save(); return w; }
-  function updateWorker(id,f) { const w=d.workers.find(x=>x.id===id); if(w) Object.assign(w,f); save(); }
-  function removeWorker(id) { d.workers=d.workers.filter(w=>w.id!==id); save(); }
+  function addWorker(w) { w.id='w'+Date.now(); d.workers.push(w); save('workers'); return w; }
+  function updateWorker(id,f) { const w=d.workers.find(x=>x.id===id); if(w) Object.assign(w,f); save('workers'); }
+  function removeWorker(id) { d.workers=d.workers.filter(w=>w.id!==id); save('workers'); }
   function addObra(n) { if(!d.obras.includes(n)){d.obras.push(n);save();} }
   function removeObra(n) { d.obras=d.obras.filter(o=>o!==n); save(); }
-  function addAndar(v) { d.andares.push(v); save(); }
-  function removeAndar(i) { d.andares.splice(i,1); save(); }
-  function addTarefa(v) { d.tarefas.push(v); save(); }
-  function removeTarefa(i) { d.tarefas.splice(i,1); save(); }
-  function addEquipe(e) { e.id='eq'+Date.now(); d.equipes.push(e); save(); return e; }
-  function removeEquipe(id) { d.equipes=d.equipes.filter(e=>e.id!==id); save(); }
+  function addAndar(v) { d.andares.push(v); save('config'); }
+  function removeAndar(i) { d.andares.splice(i,1); save('config'); }
+  function addTarefa(v) { d.tarefas.push(v); save('config'); }
+  function removeTarefa(i) { d.tarefas.splice(i,1); save('config'); }
+  function addEquipe(e) { e.id='eq'+Date.now(); d.equipes.push(e); save('config'); return e; }
+  function removeEquipe(id) { d.equipes=d.equipes.filter(e=>e.id!==id); save('config'); }
   function addHistorico(h) { d.historico.unshift(h); if(d.historico.length>200) d.historico=d.historico.slice(0,200); save(); }
 
   // Horas extras
@@ -641,89 +645,444 @@ const Utils = (() => {
 
 /* ═══ GOOGLE SHEETS ═══ */
 const Sheets = (() => {
-  const CODE = `// EFETIVO DE OBRA – Apps Script v2
+  const CODE = `// EFETIVO DE OBRA – Apps Script v4
 // Implantar → Nova implantação → App da Web → Qualquer pessoa → Executar como: Eu mesmo
-function doPost(e) {
-  try {
-    const p = JSON.parse(e.postData.contents);
-    const ss = SpreadsheetApp.openById(p.sheetId || '');
-    const action = p.action || 'log';
 
-    // ── Salvar estado completo ──
-    if (action === 'saveState') {
-      let sh = ss.getSheetByName('Estado') || ss.insertSheet('Estado');
-      sh.clearContents();
-      sh.getRange(1,1).setValue(JSON.stringify(p.state));
-      sh.getRange(1,2).setValue(new Date().toISOString());
-      return ok({msg:'Estado salvo'});
-    }
+var ABA_FUNC   = '👷 Funcionários';
+var ABA_EFET   = '📅 Efetivo Diário';
+var ABA_REL    = '📊 Relatórios';
+var ABA_ASSID  = '👷 Assiduidade';
+var ABA_CFG    = '⚙️ Configurações';
+var ABA_PROD   = '📐 Prod. Técnica';
+var ABA_HE     = '⏰ Horas Extras';
 
-    // ── Log do efetivo (aba Efetivo) ──
-    let shEf = ss.getSheetByName('Efetivo') || ss.insertSheet('Efetivo');
-    if (shEf.getLastRow()===0) {
-      shEf.appendRow(['Data','Obra','Nome','Função','Equipe','Presente','Motivo','Andar','Atividades','Timestamp']);
-      shEf.getRange(1,1,1,10).setFontWeight('bold').setBackground('#f0a500');
-      shEf.setFrozenRows(1);
-    }
-    (p.workers||[]).forEach(w => shEf.appendRow([p.data,p.obra,w.nome,w.funcao,w.equipe,w.presente?'SIM':'NÃO',w.motivo||'',w.andar,w.tarefas,new Date().toISOString()]));
-
-    // ── Log do relatório (aba Relatórios) ──
-    let shRel = ss.getSheetByName('Relatórios') || ss.insertSheet('Relatórios');
-    if (shRel.getLastRow()===0) {
-      shRel.appendRow(['Data','Obra','Total','Texto','Timestamp']);
-      shRel.getRange(1,1,1,5).setFontWeight('bold').setBackground('#f0a500');
-      shRel.setFrozenRows(1); shRel.setColumnWidth(4,600);
-    }
-    if (p.texto) shRel.appendRow([p.data,p.obra,p.total,p.texto,new Date().toISOString()]);
-
-    // ── Log horas extras (aba Horas Extras) ──
-    if (p.horasExtras && p.horasExtras.length) {
-      let shHE = ss.getSheetByName('Horas Extras') || ss.insertSheet('Horas Extras');
-      if (shHE.getLastRow()===0) {
-        shHE.appendRow(['Data','Obra','Nome','Função','Horas','Tipo','Timestamp']);
-        shHE.getRange(1,1,1,7).setFontWeight('bold').setBackground('#f0a500');
-        shHE.setFrozenRows(1);
-      }
-      p.horasExtras.forEach(r => shHE.appendRow([r.data,p.obra,r.nome,r.funcao,r.horas,r.tipo,new Date().toISOString()]));
-    }
-
-    return ok({msg:'Dados salvos'});
-  } catch(err) { return err_(err); }
-}
-
-// ── Retorna estado salvo (para sincronização entre dispositivos) ──
+// ═══════════════════════════════════════════════
+// GET – carrega estado completo para o dashboard
+// ═══════════════════════════════════════════════
 function doGet(e) {
   try {
-    const sheetId = e&&e.parameter&&e.parameter.sheetId;
-    if (!sheetId) return ok({msg:'API ativa. Passe ?sheetId=SEU_ID para sincronizar.'});
-    const ss = SpreadsheetApp.openById(sheetId);
-    const sh = ss.getSheetByName('Estado');
-    if (!sh || sh.getLastRow()===0) return ok({state:null,msg:'Sem estado salvo ainda.'});
-    const raw = sh.getRange(1,1).getValue();
-    const ts  = sh.getRange(1,2).getValue();
-    return ContentService.createTextOutput(JSON.stringify({ok:true,state:JSON.parse(raw),savedAt:ts}))
+    var sheetId = e && e.parameter && e.parameter.sheetId;
+    if (!sheetId) return _ok({msg: 'API ativa.'});
+
+    var ss = SpreadsheetApp.openById(sheetId);
+    var state = _buildState(ss);
+
+    return ContentService
+      .createTextOutput(JSON.stringify({ok: true, state: state}))
       .setMimeType(ContentService.MimeType.JSON);
-  } catch(err) { return err_(err); }
+  } catch(err) { return _err(err); }
 }
 
-function ok(data)  { return ContentService.createTextOutput(JSON.stringify({ok:true,...data})).setMimeType(ContentService.MimeType.JSON); }
-function err_(e)   { return ContentService.createTextOutput(JSON.stringify({ok:false,error:e.toString()})).setMimeType(ContentService.MimeType.JSON); }
+// ═══════════════════════════════════════════════
+// POST – recebe ações do dashboard
+// ═══════════════════════════════════════════════
+function doPost(e) {
+  try {
+    var p   = JSON.parse(e.postData.contents);
+    var ss  = SpreadsheetApp.openById(p.sheetId || '');
+    var act = p.action || '';
+
+    if (act === 'saveWorkers')   { _saveWorkers(ss, p.workers);          return _ok({msg:'Funcionários salvos'}); }
+    if (act === 'saveEfetivo')   { _saveEfetivo(ss, p); _syncAssid(ss, p); return _ok({msg:'Efetivo salvo'}); }
+    if (act === 'saveRelatorio') { _saveRelatorio(ss, p);                return _ok({msg:'Relatório salvo'}); }
+    if (act === 'saveConfig')    { _saveConfig(ss, p);                   return _ok({msg:'Config salva'}); }
+    if (act === 'saveProd')      { _saveProd(ss, p);                     return _ok({msg:'Produção salva'}); }
+    if (act === 'saveHE')        { _saveHE(ss, p);                       return _ok({msg:'HE salvas'}); }
+    if (act === 'deleteHE')      { _deleteHE(ss, p);                     return _ok({msg:'HE removida'}); }
+
+    return _ok({msg: 'Ação desconhecida: ' + act});
+  } catch(err) { return _err(err); }
+}
+
+// ═══════════════════════════════════════════════
+// BUILD STATE – monta o objeto state do zero lendo as abas
+// ═══════════════════════════════════════════════
+function _buildState(ss) {
+  var state = {
+    workers: [], equipes: [], andares: [], tarefas: [], obras: [],
+    dailyData: {}, historico: [], horasExtras: {}, producaoGeral: {}, producaoDiaria: {},
+    gsUrl: '', gsSheetId: '', activeObra: ''
+  };
+
+  // Funcionários
+  var shF = ss.getSheetByName(ABA_FUNC);
+  if (shF && shF.getLastRow() > 3) {
+    var rows = shF.getRange(4, 1, shF.getLastRow()-3, 7).getValues();
+    rows.forEach(function(r) {
+      if (!r[0] || !r[1]) return;
+      state.workers.push({id: String(r[0]), nome: r[1], funcao: r[2], equipe: r[3], obra: r[4], ativo: r[5] !== 'NÃO'});
+    });
+  }
+
+  // Configurações (andares, atividades, equipes, obras)
+  var shC = ss.getSheetByName(ABA_CFG);
+  if (shC && shC.getLastRow() > 4) {
+    var maxR = shC.getLastRow();
+    // Col A=andares, C=atividades, E=equipes(nome|cor), G=obras
+    var cfgData = shC.getRange(5, 1, maxR-4, 8).getValues();
+    var eqId = 1;
+    cfgData.forEach(function(r) {
+      if (r[0]) state.andares.push(String(r[0]).trim());
+      if (r[2]) state.tarefas.push(String(r[2]).trim());
+      if (r[4]) {
+        var parts = String(r[4]).split('|');
+        state.equipes.push({id: 'eq'+(eqId++), nome: parts[0].trim(), cor: parts[1] ? parts[1].trim() : '#8b92b0'});
+      }
+      if (r[6]) {
+        var obra = String(r[6]).trim();
+        if (obra && state.obras.indexOf(obra) === -1) state.obras.push(obra);
+      }
+    });
+  }
+  if (!state.obras.length) state.obras = ['Essence Residence'];
+  if (!state.andares.length) state.andares = ['Térreo'];
+  state.activeObra = state.obras[0];
+
+  // Efetivo Diário → dailyData
+  var shE = ss.getSheetByName(ABA_EFET);
+  if (shE && shE.getLastRow() > 3) {
+    var efRows = shE.getRange(4, 1, shE.getLastRow()-3, 9).getValues();
+    efRows.forEach(function(r) {
+      if (!r[0] || !r[2]) return;
+      var dateStr = _toISO(r[0]);
+      var obra = String(r[1]);
+      var nome = String(r[2]);
+      // Encontrar worker pelo nome
+      var w = state.workers.find(function(x){ return x.nome === nome; });
+      if (!w) return;
+      if (!state.dailyData[obra]) state.dailyData[obra] = {};
+      if (!state.dailyData[obra][dateStr]) state.dailyData[obra][dateStr] = {};
+      state.dailyData[obra][dateStr][w.id] = {
+        presente: String(r[5]) === 'SIM',
+        andar: String(r[6] || ''),
+        tarefas: r[7] ? String(r[7]).split('; ').filter(Boolean) : [],
+        motivo: ''
+      };
+    });
+  }
+
+  // Relatórios → historico
+  var shR = ss.getSheetByName(ABA_REL);
+  if (shR && shR.getLastRow() > 3) {
+    var relRows = shR.getRange(4, 1, shR.getLastRow()-3, 5).getValues();
+    relRows.forEach(function(r) {
+      if (!r[0] || !r[3]) return;
+      state.historico.push({
+        data: _toISO(r[0]), obra: String(r[1]),
+        total: Number(r[2]) || 0, texto: String(r[3])
+      });
+    });
+    state.historico.reverse(); // mais recente primeiro
+  }
+
+  // Horas Extras
+  var shHE = ss.getSheetByName(ABA_HE);
+  if (shHE && shHE.getLastRow() > 3) {
+    var heRows = shHE.getRange(4, 1, shHE.getLastRow()-3, 8).getValues();
+    heRows.forEach(function(r) {
+      if (!r[0] || !r[1]) return;
+      var obra = String(r[2]);
+      if (!state.horasExtras[obra]) state.horasExtras[obra] = [];
+      // Encontrar worker pelo nome
+      var w = state.workers.find(function(x){ return x.nome === String(r[3]); });
+      state.horasExtras[obra].push({
+        id: String(r[0]), data: _toISO(r[1]),
+        wid: w ? w.id : '', nome: String(r[3]), funcao: String(r[4]),
+        horas: Number(r[5]) || 0, tipo: String(r[6] || 'Normal')
+      });
+    });
+  }
+
+  return state;
+}
+
+// ═══════════════════════════════════════════════
+// SAVE WORKERS – reescreve aba Funcionários
+// ═══════════════════════════════════════════════
+function _saveWorkers(ss, workers) {
+  var sh = _getOrCreate(ss, ABA_FUNC,
+    ['ID','Nome','Função / Cargo','Equipe','Obra','Ativo','Timestamp'], 3);
+
+  var last = sh.getLastRow();
+  if (last > 3) sh.deleteRows(4, last-3);
+
+  var ts = _ts();
+  var rows = workers.map(function(w) {
+    return [w.id, w.nome, w.funcao, w.equipe, w.obra, w.ativo === false ? 'NÃO' : 'SIM', ts];
+  });
+  if (rows.length) sh.getRange(4, 1, rows.length, 7).setValues(rows);
+}
+
+// ═══════════════════════════════════════════════
+// SAVE EFETIVO – upsert por data+obra
+// ═══════════════════════════════════════════════
+function _saveEfetivo(ss, p) {
+  var sh = _getOrCreate(ss, ABA_EFET,
+    ['Data','Obra','Nome','Função','Equipe','Presente','Andar / Local','Atividades','Timestamp'], 3);
+
+  // Remover linhas antigas do mesmo dia+obra
+  var last = sh.getLastRow();
+  if (last > 3) {
+    var vals = sh.getRange(4, 1, last-3, 2).getValues();
+    for (var i = vals.length-1; i >= 0; i--) {
+      var d = _toISO(vals[i][0]);
+      if (d === p.data && String(vals[i][1]) === p.obra) sh.deleteRow(i+4);
+    }
+  }
+
+  var ts = _ts(); var datePT = _toPT(p.data);
+  var rows = (p.workers||[]).map(function(w) {
+    return [datePT, p.obra, w.nome, w.funcao, w.equipe,
+      w.presente ? 'SIM' : 'NÃO', w.andar||'–',
+      (w.tarefas||[]).join('; ')||'–', ts];
+  });
+  if (rows.length) sh.getRange(sh.getLastRow()+1, 1, rows.length, 9).setValues(rows);
+
+  // Colorir coluna Presente
+  var newLast = sh.getLastRow();
+  if (newLast >= 4) {
+    var presRange = sh.getRange(newLast-rows.length+1, 6, rows.length, 1);
+    rows.forEach(function(r, i) {
+      var c = presRange.getCell(i+1, 1);
+      c.setFontColor(r[5]==='SIM' ? '#22c55e' : '#ef4444');
+      c.setFontWeight('bold');
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════
+// SAVE RELATÓRIO
+// ═══════════════════════════════════════════════
+function _saveRelatorio(ss, p) {
+  var sh = _getOrCreate(ss, ABA_REL,
+    ['Data','Obra','Total Trabalhadores','Texto Completo','Timestamp'], 3);
+  sh.appendRow([_toPT(p.data), p.obra, p.total||0, p.texto, _ts()]);
+  sh.setColumnWidth(4, 600);
+}
+
+// ═══════════════════════════════════════════════
+// SYNC ASSIDUIDADE – recalcula tudo
+// ═══════════════════════════════════════════════
+function _syncAssid(ss, p) {
+  if (!p.state) return;
+  var sh = _getOrCreate(ss, ABA_ASSID,
+    ['Nome','Função','Equipe','Obra','Dias Presentes','Total Registrado','Assiduidade %','Status'], 3);
+
+  var last = sh.getLastRow();
+  if (last > 3) sh.deleteRows(4, last-3);
+
+  var state = p.state;
+  var att = {};
+  Object.keys(state.dailyData||{}).forEach(function(obra) {
+    Object.keys(state.dailyData[obra]).forEach(function(date) {
+      var dayMap = state.dailyData[obra][date];
+      Object.keys(dayMap).forEach(function(wid) {
+        if (!att[wid]) att[wid] = {dias:0, total:0};
+        att[wid].total++;
+        if (dayMap[wid].presente !== false) att[wid].dias++;
+      });
+    });
+  });
+
+  var rows = (state.workers||[]).map(function(w) {
+    var a = att[w.id]||{dias:0,total:0};
+    var pct = a.total > 0 ? Math.round(a.dias/a.total*100) : 100;
+    var eq = (state.equipes||[]).find(function(e){return e.id===w.equipe;});
+    var status = pct>=90 ? '✅ Regular' : pct>=75 ? '⚠️ Atenção' : '❌ Crítico';
+    return [w.nome, w.funcao, eq?eq.nome:w.equipe, w.obra, a.dias, a.total, pct+'%', status];
+  });
+
+  if (rows.length) {
+    sh.getRange(4, 1, rows.length, 8).setValues(rows);
+    // Colorir status
+    rows.forEach(function(r, i) {
+      var c = sh.getRange(i+4, 8);
+      c.setFontColor(r[7].includes('Regular') ? '#22c55e' : r[7].includes('Atenção') ? '#f59e0b' : '#ef4444');
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════
+// SAVE CONFIG – reescreve andares/atividades/equipes/obras
+// ═══════════════════════════════════════════════
+function _saveConfig(ss, p) {
+  var sh = ss.getSheetByName(ABA_CFG);
+  if (!sh) return;
+
+  var last = sh.getLastRow();
+  if (last > 4) sh.deleteRows(5, last-4);
+
+  var andares   = p.andares   || [];
+  var tarefas   = p.tarefas   || [];
+  var equipes   = p.equipes   || [];
+  var obras     = p.obras     || [];
+  var maxLen = Math.max(andares.length, tarefas.length, equipes.length, obras.length);
+
+  for (var i = 0; i < maxLen; i++) {
+    sh.appendRow([
+      andares[i]||'', '',
+      tarefas[i]||'', '',
+      equipes[i] ? equipes[i].nome+'|'+equipes[i].cor : '', '',
+      obras[i]||'', ''
+    ]);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// SAVE PRODUÇÃO
+// ═══════════════════════════════════════════════
+function _saveProd(ss, p) {
+  var sh = _getOrCreate(ss, ABA_PROD,
+    ['Data','Obra','Área Alv. Est. m²/andar','Área Laje m²','Vol. Graute m³','Vol. Argamassa m³','Vol. Concreto m³',
+     'Aço Alv. Est. kg','Aço Lajes/Vigas kg','Alv. Est. Data Ref.','Alv. Est. m² Exec.','Alv. Est. m²/Bloqueiro',
+     'Alv. Ved. Data Ref.','Alv. Ved. m² Exec.','Alv. Ved. m²/Pedreiro','Concretagens',
+     'Mestre','Engenheiro','Encarregado','Almoxarife','Assistente Eng.','Administrativo','Timestamp'], 3);
+  var g=p.geral||{}, d=p.diario||{};
+  sh.appendRow([_toPT(p.data), p.obra,
+    g.areaAlv||0, g.areaLaje||0, g.volGraute||0, g.volArg||0, g.volConc||0,
+    g.acoAlv||0, g.acoLaje||0,
+    d.alvEst&&d.alvEst.dataRef||'', d.alvEst&&d.alvEst.exec||0, d.alvEst&&d.alvEst.m2porBloqueiro||0,
+    d.alvVed&&d.alvVed.dataRef||'', d.alvVed&&d.alvVed.exec||0, d.alvVed&&d.alvVed.m2porPedreiro||0,
+    d.concretagens||'',
+    g.mestre||'', g.engenheiro||'', g.encarregado||'', g.almoxarife||'', g.assistente||'', g.administrativo||'',
+    _ts()
+  ]);
+}
+
+// ═══════════════════════════════════════════════
+// SAVE / DELETE HORAS EXTRAS
+// ═══════════════════════════════════════════════
+function _saveHE(ss, p) {
+  var sh = _getOrCreate(ss, ABA_HE,
+    ['ID Lançamento','Data','Obra','Nome','Função','Horas','Tipo','Timestamp'], 3);
+  (p.registros||[]).forEach(function(r) {
+    sh.appendRow([r.id, _toPT(r.data), p.obra, r.nome, r.funcao, r.horas, r.tipo||'Normal', _ts()]);
+  });
+}
+
+function _deleteHE(ss, p) {
+  var sh = ss.getSheetByName(ABA_HE);
+  if (!sh || sh.getLastRow() < 4) return;
+  var vals = sh.getRange(4, 1, sh.getLastRow()-3, 1).getValues();
+  for (var i = vals.length-1; i >= 0; i--) {
+    if (String(vals[i][0]) === String(p.id)) sh.deleteRow(i+4);
+  }
+}
+
+// ═══════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════
+function _getOrCreate(ss, name, headers, headerRow) {
+  var sh = ss.getSheetByName(name);
+  if (!sh) {
+    sh = ss.insertSheet(name);
+    var hRow = sh.getRange(headerRow, 1, 1, headers.length);
+    hRow.setValues([headers]);
+    hRow.setFontWeight('bold').setBackground('#f0a500').setFontColor('#000000');
+    sh.setFrozenRows(headerRow);
+  }
+  return sh;
+}
+
+function _toISO(val) {
+  if (!val) return '';
+  if (val instanceof Date) return Utilities.formatDate(val, 'America/Sao_Paulo', 'yyyy-MM-dd');
+  var s = String(val);
+  if (s.match(/^\d{4}-\d{2}-\d{2}/)) return s.substring(0,10);
+  var p = s.split('/');
+  if (p.length === 3) return p[2]+'-'+p[1]+'-'+p[0];
+  return s;
+}
+
+function _toPT(iso) {
+  if (!iso) return '';
+  var p = String(iso).split('-');
+  return p.length === 3 ? p[2]+'/'+p[1]+'/'+p[0] : iso;
+}
+
+function _ts() {
+  return Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'dd/MM/yyyy HH:mm');
+}
+
+function _ok(data)  { return ContentService.createTextOutput(JSON.stringify(Object.assign({ok:true},data))).setMimeType(ContentService.MimeType.JSON); }
+function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:false,error:e.toString()})).setMimeType(ContentService.MimeType.JSON); }
 `;
 
-  async function send(payload) {
-    const s=State.get();
-    if (!s.gsUrl) return;
+  let _busy = false;
+
+  async function _post(payload) {
+    const s = State.get();
+    if (!s.gsUrl || !s.gsSheetId) return false;
     try {
-      await fetch(s.gsUrl,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify({...payload,sheetId:s.gsSheetId})});
-      Utils.toast('Enviado ao Google Sheets!','success');
-    } catch(e) { Utils.toast('Erro ao enviar: '+e.message,'error'); }
+      await fetch(s.gsUrl, {
+        method: 'POST', mode: 'no-cors',
+        headers: {'Content-Type': 'text/plain'},
+        body: JSON.stringify({...payload, sheetId: s.gsSheetId})
+      });
+      return true;
+    } catch(e) { return false; }
+  }
+
+  // Carrega estado completo do Sheets (ao abrir o app)
+  async function loadState() {
+    const s = State.get();
+    if (!s.gsUrl || !s.gsSheetId) return null;
+    try {
+      const res = await fetch(s.gsUrl + '?sheetId=' + s.gsSheetId, {method:'GET', mode:'cors'});
+      const json = await res.json();
+      return json.ok ? json.state : null;
+    } catch(e) { return null; }
+  }
+
+  // Salva workers ao criar/editar/remover
+  async function saveWorkers() {
+    const s = State.get();
+    await _post({action:'saveWorkers', workers: s.workers});
+  }
+
+  // Salva efetivo do dia (presença, andar, atividades)
+  async function saveEfetivo(date, obra) {
+    const s = State.get();
+    const dayMap = s.dailyData?.[obra]?.[date] || {};
+    const workers = s.workers.filter(w => w.obra === obra).map(w => {
+      const dd = dayMap[w.id] || {presente:true, andar:'', tarefas:[], motivo:''};
+      const eq = s.equipes.find(e => e.id === w.equipe);
+      return {...w, equipe: eq ? eq.nome : w.equipe, ...dd};
+    });
+    await _post({action:'saveEfetivo', data: date, obra, workers, state: s});
+  }
+
+  // Salva relatório gerado
+  async function saveRelatorio(date, obra, total, texto) {
+    await _post({action:'saveRelatorio', data: date, obra, total, texto});
+  }
+
+  // Salva configurações (andares, atividades, equipes, obras)
+  async function saveConfig() {
+    const s = State.get();
+    await _post({action:'saveConfig', andares: s.andares, tarefas: s.tarefas, equipes: s.equipes, obras: s.obras});
+  }
+
+  // Salva produção técnica
+  async function saveProd(date, obra, geral, diario) {
+    await _post({action:'saveProd', data: date, obra, geral, diario});
+  }
+
+  // Salva horas extras
+  async function saveHE(obra, registros) {
+    await _post({action:'saveHE', obra, registros});
+  }
+
+  // Remove hora extra
+  async function deleteHE(id) {
+    await _post({action:'deleteHE', id});
   }
 
   async function ping(url) {
     try { const r=await fetch(url,{method:'GET',mode:'cors'}); const j=await r.json(); return j.ok===true; } catch { return false; }
   }
 
-  return { CODE, send, ping };
+  return { CODE, loadState, saveWorkers, saveEfetivo, saveRelatorio, saveConfig, saveProd, saveHE, deleteHE, ping };
 })();
 
 
@@ -1534,6 +1893,8 @@ const EfPage = (() => {
     const presentes = ws.filter(w=>{ const dd=dayMap[w.id]; return !dd||dd.presente; });
 
     State.addHistorico({ts:Date.now(),data:date,obra,texto:txt,total:presentes.length});
+    Sheets.saveEfetivo(date, obra);
+    Sheets.saveRelatorio(date, obra, presentes.length, txt);
     document.getElementById('previewText').textContent = txt;
     Modals.open('modalPreview');
     Utils.toast('Relatório salvo!','success');
@@ -1585,23 +1946,20 @@ const App = (() => {
   async function _loadFromSheets() {
     const s = State.get();
     if (!s.gsUrl || !s.gsSheetId) return;
+    _setSyncStatus('syncing');
     try {
-      const res = await fetch(s.gsUrl + '?sheetId=' + s.gsSheetId, {method:'GET', mode:'cors'});
-      const json = await res.json();
-      if (!json.ok || !json.state) return;
-      // Only use if sheets version is newer (has more data)
-      const sheetState = json.state;
-      // Merge: prefer sheets version for shared data
-      const local = State.get();
-      // Use sheets version as base, but keep local daily edits if same date
-      localStorage.setItem('efetivo_v3', JSON.stringify(sheetState));
+      const state = await Sheets.loadState();
+      if (!state) { _setSyncStatus('ok'); return; }
+      state.gsUrl = s.gsUrl;
+      state.gsSheetId = s.gsSheetId;
+      localStorage.setItem('efetivo_v3', JSON.stringify(state));
       State.load();
+      App.rebuildObraSelects();
       if (typeof EfPage !== 'undefined') EfPage.render();
-      if (typeof FuncPage !== 'undefined' && document.getElementById('funcList')?.offsetParent !== null) FuncPage.render();
-      Utils.toast('Dados sincronizados!', 'info');
-    } catch(e) {
-      // No internet or sheets not configured - use localStorage
-    }
+      if (typeof FuncPage !== 'undefined') FuncPage.render();
+      _setSyncStatus('ok');
+      Utils.toast('✅ Sincronizado com Google Sheets!', 'success');
+    } catch(e) { _setSyncStatus('error'); }
   }
 
   function obra() { return _obra; }
