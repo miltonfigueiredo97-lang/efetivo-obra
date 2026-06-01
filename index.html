@@ -1,11 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<script>
-  if (window.innerWidth < 768) {
-    window.location.replace('mobile.html');
-  }
-</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Efetivo de Obra</title>
@@ -186,7 +181,7 @@ select.form-input{cursor:pointer;}
 .func-info{flex:1;min-width:0;}
 .func-name{font-weight:600;font-size:13px;}
 .func-meta{font-size:11px;color:var(--t3);margin-top:3px;}
-.func-actions{display:flex;gap:5px;flex-shrink:0;}
+.func-actions{display:flex;gap:5px;flex-shrink:0;margin-left:auto;}
 
 /* ATT */
 .att-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:12px 14px;}
@@ -260,7 +255,15 @@ select.form-input{cursor:pointer;}
 .gs-indicator.connected{background:var(--gn);box-shadow:0 0 6px var(--gn);}
 ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px;}
 code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
-</style>
+
+/* HE rows */
+.he-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd2);font-size:13px;}
+.he-row:last-child{border-bottom:none;}
+.he-row label{display:flex;align-items:center;gap:8px;flex:1;cursor:pointer;}
+.he-row input[type=number]{width:80px;background:var(--sf2);border:1px solid var(--bd2);color:var(--t1);font-family:'JetBrains Mono',monospace;font-size:13px;padding:6px 8px;border-radius:6px;outline:none;text-align:center;}
+
+.empty{text-align:center;padding:40px 20px;color:var(--t3);font-size:13px;}</style>
+<script>if(window.innerWidth<768){window.location.replace('mobile.html');}</script>
 </head>
 <body>
 <aside class="sidebar-desktop">
@@ -1433,7 +1436,8 @@ const EfPage = (() => {
 
   function addTag(wid) {
     const sel = document.getElementById('dactsel-'+wid);
-    if (!sel||!sel.value) return;
+    if (!sel) return;
+    if (!sel.value) { Utils.toast('Selecione uma atividade primeiro.','warn'); return; }
     const t = sel.value;
     const obra=App.obra(); const date=App.date();
     const dd = State.getDayData(obra, date, wid);
