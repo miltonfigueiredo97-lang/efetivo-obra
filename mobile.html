@@ -530,26 +530,28 @@ const State = (() => {
     } catch(e) { d = JSON.parse(JSON.stringify(DEF)); }
   }
 
-  function save() {
+  function save(context) {
     try {
       localStorage.setItem(KEY, JSON.stringify(d));
       const el = document.getElementById('lastSaved');
       if (el) { const n=new Date(); el.textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0'); }
-      // Push state to Sheets for cross-device sync
-      _syncToSheets();
+      _syncToSheets(context);
     } catch(e) {}
   }
 
   let _syncTimer = null;
-  function _syncToSheets() {
-    // Debounce: wait 2s after last save before pushing
+  let _pendingCtx = {};
+
+  function _syncToSheets(context) {
+    if (context) _pendingCtx[context] = true;
     clearTimeout(_syncTimer);
-    _syncTimer = setTimeout(function() {
-      const gsUrl = d.gsUrl;
-      const gsSheetId = d.gsSheetId;
-      if (!gsUrl || !gsSheetId) return;
-      var _x=new XMLHttpRequest();_x.open('POST',gsUrl,true);_x.setRequestHeader('Content-Type','text/plain');_x.send(JSON.stringify({action:'saveState',sheetId:gsSheetId,state:d}));
-    }, 2000);
+    _syncTimer = setTimeout(async function() {
+      const ctx = Object.assign({}, _pendingCtx);
+      _pendingCtx = {};
+      if (!d.gsUrl || !d.gsSheetId) return;
+      if (ctx.workers) await Sheets.saveWorkers();
+      if (ctx.config)  await Sheets.saveConfig();
+    }, 1500);
   }
 
   function _merge(t, s) {
