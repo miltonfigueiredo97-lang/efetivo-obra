@@ -1012,34 +1012,16 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
   async function _post(payload) {
     const s = State.get();
     if (!s.gsUrl || !s.gsSheetId) return false;
-    const body = JSON.stringify({...payload, sheetId: s.gsSheetId});
-    return new Promise((resolve) => {
-      // Usa iframe oculto + form para contornar CORS do Apps Script
-      const iframe = document.createElement('iframe');
-      iframe.name = '_gspost_' + Date.now();
-      iframe.style.display = 'none';
-      document.body.appendChild(iframe);
-      const form = document.createElement('form');
-      form.method = 'POST';
-      form.action = s.gsUrl;
-      form.target = iframe.name;
-      form.style.display = 'none';
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = 'payload';
-      input.value = body;
-      form.appendChild(input);
-      document.body.appendChild(form);
-      iframe.onload = () => {
-        setTimeout(() => {
-          document.body.removeChild(form);
-          document.body.removeChild(iframe);
-        }, 1000);
-        resolve(true);
-      };
-      form.submit();
-      setTimeout(() => resolve(true), 3000);
-    });
+    try {
+      const body = JSON.stringify({...payload, sheetId: s.gsSheetId});
+      await fetch(s.gsUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {'Content-Type': 'text/plain;charset=utf-8'},
+        body: body
+      });
+      return true;
+    } catch(e) { return false; }
   }
 
   // Carrega estado completo do Sheets (ao abrir o app)
@@ -2094,6 +2076,14 @@ const App = (() => {
       const el=document.getElementById(id);
       if(el) el.className='gs-ind'+(s.gsUrl?' on':'');
     });
+  }
+
+
+  function _setSyncStatus(status) {
+    const el = document.getElementById('syncStatusDot');
+    if (!el) return;
+    el.style.background = status === 'syncing' ? '#f0a500' : status === 'ok' ? '#22c55e' : '#ef4444';
+    el.style.animation = status === 'syncing' ? 'pulse 1s infinite' : 'none';
   }
 
   return { init, obra, date, setObra, showPage, openDrawer, closeDrawer,
