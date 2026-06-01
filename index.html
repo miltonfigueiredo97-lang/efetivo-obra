@@ -77,8 +77,8 @@ input[type=date]:focus{border-color:var(--ac);}
 .pill.orange{background:var(--acd);color:var(--ac);}
 
 /* SECTION HEADER */
-.section-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap;}
-.section-title{font-size:28px;letter-spacing:1px;line-height:1;}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;}
+.section-title{font-size:14px;letter-spacing:1px;line-height:1;}
 .section-sub{font-size:11px;color:var(--t3);margin-top:3px;}
 
 /* TEAM FILTERS */
@@ -321,14 +321,17 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
   </section>
 
   <section class="page" id="page-funcionarios">
-    <div style="padding:12px 0 14px 0;border-bottom:1px solid var(--bd);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between">
-      <div style="color:#e2e6f3;font-size:18px;font-weight:700;letter-spacing:1px">FUNCIONÁRIOS <span style="font-size:11px;color:#454d6a;font-weight:400" id="funcSubtitle"></span></div>
-      <div style="display:flex;gap:8px">
-        <button style="background:#171b28;color:#8b93b5;border:1px solid #2a3060;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px" onclick="Modals.openImport()">↑ Importar</button>
-        <button style="background:#f0a500;color:#000;border:none;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:700" onclick="Modals.openWorker()">+ Novo</button>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px">
+      <div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;line-height:1">FUNCIONÁRIOS</div>
+        <div class="section-sub" id="funcSubtitle">–</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0">
+        <button class="btn btn-ghost" onclick="Modals.openImport()">↑ Importar</button>
+        <button class="btn btn-accent" onclick="Modals.openWorker()">+ Novo</button>
       </div>
     </div>
-    class="search-bar">
+    <div class="search-bar">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input type="text" id="funcSearch" placeholder="Buscar nome ou função…" oninput="FuncPage.render()">
     </div>
