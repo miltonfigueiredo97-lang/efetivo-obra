@@ -541,7 +541,6 @@ const State = (() => {
 
   let _syncTimer = null;
   let _pendingCtx = {};
-
   function _syncToSheets(context) {
     if (context) _pendingCtx[context] = true;
     clearTimeout(_syncTimer);
@@ -1569,11 +1568,11 @@ const App = (() => {
 
   function init() {
     State.load();
-    // Garantir URL e ID do Sheets em qualquer dispositivo
     (function(){
       const s = State.get();
-      if (!s.gsUrl) { s.gsUrl = 'https://script.google.com/macros/s/AKfycbz2WSboxUbnfKM_hp_91DIu04b2WFWfHSXdj6RG2ITkyLq7W9eDAtVdpN3ogcFUa-JM/exec'; State.save(); }
-      if (!s.gsSheetId) { s.gsSheetId = '1Zilh_8iKHIaiXqOg8OwHW6HUUjVERxYuLzUA6LoC6rQ'; State.save(); }
+      if (!s.gsUrl) { s.gsUrl = 'https://script.google.com/macros/s/AKfycbz2WSboxUbnfKM_hp_91DIu04b2WFWfHSXdj6RG2ITkyLq7W9eDAtVdpN3ogcFUa-JM/exec'; }
+      if (!s.gsSheetId) { s.gsSheetId = '1Zilh_8iKHIaiXqOg8OwHW6HUUjVERxYuLzUA6LoC6rQ'; }
+      localStorage.setItem('efetivo_v3', JSON.stringify(s));
     })();
     _date = Utils.todayStr();
     _obra = State.get().activeObra || State.get().obras[0];
@@ -1595,20 +1594,17 @@ const App = (() => {
   async function _loadFromSheets() {
     const s = State.get();
     if (!s.gsUrl || !s.gsSheetId) return;
-    const dot = document.getElementById('syncStatusDot');
-    if (dot) { dot.style.background='#f0a500'; dot.style.animation='pulse 1s infinite'; }
     try {
       const state = await Sheets.loadState();
-      if (!state) { if(dot){dot.style.background='#22c55e';dot.style.animation='none';} return; }
+      if (!state) return;
       state.gsUrl = s.gsUrl;
       state.gsSheetId = s.gsSheetId;
       localStorage.setItem('efetivo_v3', JSON.stringify(state));
       State.load();
       if (typeof EfPage !== 'undefined') EfPage.render();
       if (typeof FuncPage !== 'undefined') FuncPage.render();
-      if (dot) { dot.style.background='#22c55e'; dot.style.animation='none'; }
       Utils.toast('✅ Sincronizado!', 'success');
-    } catch(e) { if(dot){dot.style.background='#ef4444';dot.style.animation='none';} }
+    } catch(e) {}
   }
 
   function obra() { return _obra; }
