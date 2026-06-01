@@ -521,8 +521,27 @@ const State = (() => {
     try {
       localStorage.setItem(KEY, JSON.stringify(d));
       const el = document.getElementById('lastSaved');
-      if (el) { const n=new Date(); el.textContent=`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}`; }
+      if (el) { const n=new Date(); el.textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0'); }
+      // Push state to Sheets for cross-device sync
+      _syncToSheets();
     } catch(e) {}
+  }
+
+  let _syncTimer = null;
+  function _syncToSheets() {
+    // Debounce: wait 2s after last save before pushing
+    clearTimeout(_syncTimer);
+    _syncTimer = setTimeout(function() {
+      const gsUrl = d.gsUrl;
+      const gsSheetId = d.gsSheetId;
+      if (!gsUrl || !gsSheetId) return;
+      fetch(gsUrl, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({action:'saveState', sheetId:gsSheetId, state:d})
+      }).catch(function(){});
+    }, 2000);
   }
 
   function _merge(t, s) {
@@ -614,32 +633,74 @@ const Utils = (() => {
 
 /* ═══ GOOGLE SHEETS ═══ */
 const Sheets = (() => {
-  const CODE = `// EFETIVO DE OBRA – Apps Script
-// Implantar → Nova implantação → App da Web → Qualquer pessoa
+  const CODE = `// EFETIVO DE OBRA – Apps Script v2
+// Implantar → Nova implantação → App da Web → Qualquer pessoa → Executar como: Eu mesmo
 function doPost(e) {
   try {
     const p = JSON.parse(e.postData.contents);
     const ss = SpreadsheetApp.openById(p.sheetId || '');
-    // Aba Efetivo
-    let sh = ss.getSheetByName('Efetivo') || ss.insertSheet('Efetivo');
-    if (sh.getLastRow()===0) { sh.appendRow(['Data','Obra','Nome','Função','Equipe','Presente','Motivo','Andar','Atividades','Timestamp']); sh.getRange(1,1,1,10).setFontWeight('bold').setBackground('#f0a500'); sh.setFrozenRows(1); }
-    (p.workers||[]).forEach(w => sh.appendRow([p.data,p.obra,w.nome,w.funcao,w.equipe,w.presente?'SIM':'NÃO',w.motivo||'',w.andar,w.tarefas,new Date().toISOString()]));
-    // Aba Relatórios
-    let sr = ss.getSheetByName('Relatórios') || ss.insertSheet('Relatórios');
-    if (sr.getLastRow()===0) { sr.appendRow(['Data','Obra','Total','Texto','Timestamp']); sr.getRange(1,1,1,5).setFontWeight('bold').setBackground('#f0a500'); sr.setFrozenRows(1); sr.setColumnWidth(4,600); }
-    sr.appendRow([p.data,p.obra,p.total,p.texto,new Date().toISOString()]);
-    // Aba Horas Extras
-    if (p.horasExtras) {
-      let he = ss.getSheetByName('Horas Extras') || ss.insertSheet('Horas Extras');
-      if (he.getLastRow()===0) { he.appendRow(['Data','Obra','Nome','Função','Horas','Tipo','Timestamp']); he.getRange(1,1,1,7).setFontWeight('bold').setBackground('#f0a500'); he.setFrozenRows(1); }
-      p.horasExtras.forEach(r => he.appendRow([p.data,p.obra,r.nome,r.funcao,r.horas,r.tipo,new Date().toISOString()]));
+    const action = p.action || 'log';
+
+    // ── Salvar estado completo ──
+    if (action === 'saveState') {
+      let sh = ss.getSheetByName('Estado') || ss.insertSheet('Estado');
+      sh.clearContents();
+      sh.getRange(1,1).setValue(JSON.stringify(p.state));
+      sh.getRange(1,2).setValue(new Date().toISOString());
+      return ok({msg:'Estado salvo'});
     }
-    return ContentService.createTextOutput(JSON.stringify({ok:true})).setMimeType(ContentService.MimeType.JSON);
-  } catch(err) {
-    return ContentService.createTextOutput(JSON.stringify({ok:false,error:err.toString()})).setMimeType(ContentService.MimeType.JSON);
-  }
+
+    // ── Log do efetivo (aba Efetivo) ──
+    let shEf = ss.getSheetByName('Efetivo') || ss.insertSheet('Efetivo');
+    if (shEf.getLastRow()===0) {
+      shEf.appendRow(['Data','Obra','Nome','Função','Equipe','Presente','Motivo','Andar','Atividades','Timestamp']);
+      shEf.getRange(1,1,1,10).setFontWeight('bold').setBackground('#f0a500');
+      shEf.setFrozenRows(1);
+    }
+    (p.workers||[]).forEach(w => shEf.appendRow([p.data,p.obra,w.nome,w.funcao,w.equipe,w.presente?'SIM':'NÃO',w.motivo||'',w.andar,w.tarefas,new Date().toISOString()]));
+
+    // ── Log do relatório (aba Relatórios) ──
+    let shRel = ss.getSheetByName('Relatórios') || ss.insertSheet('Relatórios');
+    if (shRel.getLastRow()===0) {
+      shRel.appendRow(['Data','Obra','Total','Texto','Timestamp']);
+      shRel.getRange(1,1,1,5).setFontWeight('bold').setBackground('#f0a500');
+      shRel.setFrozenRows(1); shRel.setColumnWidth(4,600);
+    }
+    if (p.texto) shRel.appendRow([p.data,p.obra,p.total,p.texto,new Date().toISOString()]);
+
+    // ── Log horas extras (aba Horas Extras) ──
+    if (p.horasExtras && p.horasExtras.length) {
+      let shHE = ss.getSheetByName('Horas Extras') || ss.insertSheet('Horas Extras');
+      if (shHE.getLastRow()===0) {
+        shHE.appendRow(['Data','Obra','Nome','Função','Horas','Tipo','Timestamp']);
+        shHE.getRange(1,1,1,7).setFontWeight('bold').setBackground('#f0a500');
+        shHE.setFrozenRows(1);
+      }
+      p.horasExtras.forEach(r => shHE.appendRow([r.data,p.obra,r.nome,r.funcao,r.horas,r.tipo,new Date().toISOString()]));
+    }
+
+    return ok({msg:'Dados salvos'});
+  } catch(err) { return err_(err); }
 }
-function doGet() { return ContentService.createTextOutput(JSON.stringify({ok:true,msg:'API ativa'})).setMimeType(ContentService.MimeType.JSON); }`;
+
+// ── Retorna estado salvo (para sincronização entre dispositivos) ──
+function doGet(e) {
+  try {
+    const sheetId = e&&e.parameter&&e.parameter.sheetId;
+    if (!sheetId) return ok({msg:'API ativa. Passe ?sheetId=SEU_ID para sincronizar.'});
+    const ss = SpreadsheetApp.openById(sheetId);
+    const sh = ss.getSheetByName('Estado');
+    if (!sh || sh.getLastRow()===0) return ok({state:null,msg:'Sem estado salvo ainda.'});
+    const raw = sh.getRange(1,1).getValue();
+    const ts  = sh.getRange(1,2).getValue();
+    return ContentService.createTextOutput(JSON.stringify({ok:true,state:JSON.parse(raw),savedAt:ts}))
+      .setMimeType(ContentService.MimeType.JSON);
+  } catch(err) { return err_(err); }
+}
+
+function ok(data)  { return ContentService.createTextOutput(JSON.stringify({ok:true,...data})).setMimeType(ContentService.MimeType.JSON); }
+function err_(e)   { return ContentService.createTextOutput(JSON.stringify({ok:false,error:e.toString()})).setMimeType(ContentService.MimeType.JSON); }
+``;
 
   async function send(payload) {
     const s=State.get();
@@ -1054,7 +1115,7 @@ const HEPage = (() => {
 ';
     allWids.sort(function(a,b){
       var wa=State.getWorker(a), wb=State.getWorker(b);
-      return ((wa&&wa.nome)||''). localeCompare((wb&&wb.nome)||'pt-BR');
+      return ((wa&&wa.nome)||'').localeCompare((wb&&wb.nome)||'','pt-BR');
     }).forEach(function(wid){
       var w=State.getWorker(wid);
       txt+='*'+(w&&w.nome||'?')+'* – '+(w&&w.funcao||'')+'
@@ -1486,6 +1547,30 @@ const App = (() => {
     updateGSIndicator();
     if (typeof EfPage !== 'undefined') EfPage.render();
     _updateTopbar();
+    // Try to load fresh state from Sheets (cross-device sync)
+    _loadFromSheets();
+  }
+
+  async function _loadFromSheets() {
+    const s = State.get();
+    if (!s.gsUrl || !s.gsSheetId) return;
+    try {
+      const res = await fetch(s.gsUrl + '?sheetId=' + s.gsSheetId, {method:'GET', mode:'cors'});
+      const json = await res.json();
+      if (!json.ok || !json.state) return;
+      // Only use if sheets version is newer (has more data)
+      const sheetState = json.state;
+      // Merge: prefer sheets version for shared data
+      const local = State.get();
+      // Use sheets version as base, but keep local daily edits if same date
+      localStorage.setItem('efetivo_v3', JSON.stringify(sheetState));
+      State.load();
+      if (typeof EfPage !== 'undefined') EfPage.render();
+      if (typeof FuncPage !== 'undefined' && document.getElementById('funcList')?.offsetParent !== null) FuncPage.render();
+      Utils.toast('Dados sincronizados!', 'info');
+    } catch(e) {
+      // No internet or sheets not configured - use localStorage
+    }
   }
 
   function obra() { return _obra; }
