@@ -77,8 +77,8 @@ input[type=date]:focus{border-color:var(--ac);}
 .pill.orange{background:var(--acd);color:var(--ac);}
 
 /* SECTION HEADER */
-.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px;}
-.section-title{font-size:16px;letter-spacing:1px;line-height:1;}
+.section-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap;}
+.section-title{font-size:28px;letter-spacing:1px;line-height:1;}
 .section-sub{font-size:11px;color:var(--t3);margin-top:3px;}
 
 /* TEAM FILTERS */
@@ -293,9 +293,12 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
       <div class="date-bar-left"><label>DATA DO EFETIVO</label><input type="date" id="datePicker"><span class="weekday-label" id="weekdayLabel"></span></div>
       <div class="pills-row"><span class="pill green" id="pillPresentes">0 presentes</span><span class="pill red" id="pillAusentes">0 ausentes</span><span class="pill orange" id="pillTotal">0 total</span></div>
     </div>
-    <div class="section-header">
-      <div><div class="section-title">EFETIVO DE OBRA</div><div class="section-sub" id="obraLabel">–</div></div>
-      <button class="btn btn-ghost" onclick="Modals.openWorker()">+ Funcionário</button>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px">
+      <div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;line-height:1">EFETIVO DE OBRA</div>
+        <div class="section-sub" id="obraLabel">–</div>
+      </div>
+      <button class="btn btn-ghost" style="flex-shrink:0" onclick="Modals.openWorker()">+ Funcionário</button>
     </div>
     <div class="team-filter-scroll" id="teamFilters" style="margin-bottom:14px"></div>
     <div class="worker-table-wrap">
@@ -318,9 +321,12 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
   </section>
 
   <section class="page" id="page-funcionarios">
-    <div class="section-header">
-      <div><div class="section-title">FUNCIONÁRIOS</div><div class="section-sub" id="funcSubtitle">–</div></div>
-      <div style="display:flex;gap:8px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px">
+      <div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;line-height:1">FUNCIONÁRIOS</div>
+        <div class="section-sub" id="funcSubtitle">–</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0">
         <button class="btn btn-ghost" onclick="Modals.openImport()">↑ Importar</button>
         <button class="btn btn-accent" onclick="Modals.openWorker()">+ Novo</button>
       </div>
