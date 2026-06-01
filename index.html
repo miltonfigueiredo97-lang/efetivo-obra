@@ -18,7 +18,7 @@
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{font-size:14px;}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);display:flex;height:100vh;overflow:hidden;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);display:flex;min-height:100vh;}
 
 /* FONTS */
 .section-title,.modal-title,.stat-value,.weekday-label,.hist-day,.topbar-name,.logo-tag-d,.nav-badge-d,.pill,.att-pct{
@@ -26,13 +26,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
 }
 .report-preview,.bar-label,code,pre{font-family:'JetBrains Mono','Courier New',monospace;}
 
-/* LAYOUT DIREITO */
-.layout-right{display:flex;flex-direction:column;flex:1;min-width:0;height:100vh;overflow:hidden;}
-
 /* SIDEBAR */
 .sidebar-desktop{
   width:var(--sw);background:var(--sf);border-right:1px solid var(--bd);
-  height:100vh;display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;
+  height:100vh;display:flex;flex-direction:column;
+  position:fixed;left:0;top:0;z-index:200;
 }
 .sidebar-logo-d{display:flex;align-items:center;gap:10px;padding:18px 16px 14px;border-bottom:1px solid var(--bd);}
 .logo-tag-d{font-size:20px;letter-spacing:2px;color:var(--ac);line-height:1;}
@@ -51,7 +49,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
 .sidebar-footer-d{padding:10px 16px;border-top:1px solid var(--bd);display:flex;justify-content:space-between;font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace;}
 
 /* TOPBAR */
-.topbar{height:var(--th);flex-shrink:0;background:var(--sf);border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;padding:0 24px;gap:12px;}
+.topbar{position:fixed;top:0;left:var(--sw);right:0;height:var(--th);background:var(--sf);border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;padding:0 24px;gap:12px;z-index:300;}
 .topbar-left{display:flex;align-items:center;gap:8px;}
 .topbar-name{font-size:18px;letter-spacing:2px;color:var(--ac);line-height:1;}
 .topbar-divider{color:var(--bd2);font-size:16px;}
@@ -62,7 +60,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);displ
 .obra-pill{background:var(--acd);border:1px solid rgba(240,165,0,.3);color:var(--ac);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 /* MAIN */
-.main-content{flex:1;overflow-y:auto;padding:22px 26px 26px;min-width:0;}
+.main-content{margin-left:var(--sw);flex:1;height:100vh;overflow-y:auto;padding:calc(var(--th)+22px) 26px 26px;}
 .page{display:none;}.page.active{display:block;}
 
 /* DATE BAR */
@@ -255,6 +253,8 @@ select.form-input{cursor:pointer;}
 .empty-state svg{opacity:.2;}
 .gs-indicator{width:7px;height:7px;border-radius:50%;background:var(--t3);flex-shrink:0;}
 .gs-indicator.connected{background:var(--gn);box-shadow:0 0 6px var(--gn);}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--t3);flex-shrink:0;transition:background .3s;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
 ::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px;}
 code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
 
@@ -285,10 +285,9 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
   </nav>
   <div class="sidebar-footer-d"><span>v3.0</span><span id="lastSaved">–</span></div>
 </aside>
-<div class="layout-right">
 <header class="topbar">
   <div class="topbar-left"><span style="font-size:18px;line-height:1">&#9874;</span><span class="topbar-name">EFETIVO</span><span class="topbar-divider">|</span><span class="topbar-title" id="topbarTitle">DO DIA</span></div>
-  <div class="topbar-right"><div class="topbar-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><strong id="topbarPresentes">0</strong></div><div class="obra-pill" id="obraPill" onclick="Modals.open('modalObra')">–</div></div>
+  <div class="topbar-right"><div class="topbar-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><strong id="topbarPresentes">0</strong></div><button onclick="App.syncNow()" title="Sincronizar com Google Sheets" style="background:var(--sf2);border:1px solid var(--bd2);color:var(--t2);padding:5px 10px;border-radius:20px;cursor:pointer;font-size:12px;display:flex;align-items:center;gap:6px"><span id="syncStatusDot" class="sync-dot"></span>Sync</button><div class="obra-pill" id="obraPill" onclick="Modals.open('modalObra')">–</div></div>
 </header>
 <main class="main-content">
   <section class="page active" id="page-efetivo">
@@ -371,7 +370,6 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
     <div style="height:80px"></div>
   </section>
 </main>
-</div><!-- /layout-right -->
 <div id="modalBackdrop" class="modal-backdrop" onclick="Modals.closeAll(event)">
   <div class="modal" id="modalObra">
     <div class="modal-handle"></div>
@@ -539,14 +537,15 @@ const State = (() => {
 
   let _syncTimer = null;
   function _syncToSheets() {
-    // Debounce: wait 2s after last save before pushing
     clearTimeout(_syncTimer);
     _syncTimer = setTimeout(function() {
       const gsUrl = d.gsUrl;
       const gsSheetId = d.gsSheetId;
       if (!gsUrl || !gsSheetId) return;
-      var _x=new XMLHttpRequest();_x.open('POST',gsUrl,true);_x.setRequestHeader('Content-Type','text/plain');_x.send(JSON.stringify({action:'saveState',sheetId:gsSheetId,state:d}));
-    }, 2000);
+      const payload = JSON.stringify({action:'saveState', sheetId:gsSheetId, state:d});
+      fetch(gsUrl, {method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'}, body:payload})
+        .catch(function(){});
+    }, 1500);
   }
 
   function _merge(t, s) {
@@ -638,73 +637,206 @@ const Utils = (() => {
 
 /* ═══ GOOGLE SHEETS ═══ */
 const Sheets = (() => {
-  const CODE = `// EFETIVO DE OBRA – Apps Script v2
+  const CODE = `// EFETIVO DE OBRA – Apps Script v3
 // Implantar → Nova implantação → App da Web → Qualquer pessoa → Executar como: Eu mesmo
+
+var SHEET_EFETIVO   = '📅 Efetivo Diário';
+var SHEET_RELAT     = '📊 Relatórios';
+var SHEET_ASSID     = '👷 Assiduidade';
+var SHEET_CFG       = '⚙️ Configurações';
+var SHEET_PROD      = '📐 Prod. Técnica';
+var SHEET_STATE     = '_Estado';
+
+// ─────────────────────────────────────────────
+// POST – recebe ações do dashboard
+// ─────────────────────────────────────────────
 function doPost(e) {
   try {
-    const p = JSON.parse(e.postData.contents);
-    const ss = SpreadsheetApp.openById(p.sheetId || '');
-    const action = p.action || 'log';
+    var p = JSON.parse(e.postData.contents);
+    var ss = SpreadsheetApp.openById(p.sheetId || '');
+    var action = p.action || '';
 
-    // ── Salvar estado completo ──
+    // Salvar estado completo (workers, configurações, dailyData, etc.)
     if (action === 'saveState') {
-      let sh = ss.getSheetByName('Estado') || ss.insertSheet('Estado');
-      sh.clearContents();
-      sh.getRange(1,1).setValue(JSON.stringify(p.state));
-      sh.getRange(1,2).setValue(new Date().toISOString());
-      return ok({msg:'Estado salvo'});
-    }
-
-    // ── Log do efetivo (aba Efetivo) ──
-    let shEf = ss.getSheetByName('Efetivo') || ss.insertSheet('Efetivo');
-    if (shEf.getLastRow()===0) {
-      shEf.appendRow(['Data','Obra','Nome','Função','Equipe','Presente','Motivo','Andar','Atividades','Timestamp']);
-      shEf.getRange(1,1,1,10).setFontWeight('bold').setBackground('#f0a500');
-      shEf.setFrozenRows(1);
-    }
-    (p.workers||[]).forEach(w => shEf.appendRow([p.data,p.obra,w.nome,w.funcao,w.equipe,w.presente?'SIM':'NÃO',w.motivo||'',w.andar,w.tarefas,new Date().toISOString()]));
-
-    // ── Log do relatório (aba Relatórios) ──
-    let shRel = ss.getSheetByName('Relatórios') || ss.insertSheet('Relatórios');
-    if (shRel.getLastRow()===0) {
-      shRel.appendRow(['Data','Obra','Total','Texto','Timestamp']);
-      shRel.getRange(1,1,1,5).setFontWeight('bold').setBackground('#f0a500');
-      shRel.setFrozenRows(1); shRel.setColumnWidth(4,600);
-    }
-    if (p.texto) shRel.appendRow([p.data,p.obra,p.total,p.texto,new Date().toISOString()]);
-
-    // ── Log horas extras (aba Horas Extras) ──
-    if (p.horasExtras && p.horasExtras.length) {
-      let shHE = ss.getSheetByName('Horas Extras') || ss.insertSheet('Horas Extras');
-      if (shHE.getLastRow()===0) {
-        shHE.appendRow(['Data','Obra','Nome','Função','Horas','Tipo','Timestamp']);
-        shHE.getRange(1,1,1,7).setFontWeight('bold').setBackground('#f0a500');
-        shHE.setFrozenRows(1);
+      _saveState(ss, p.state);
+      if (p.state) {
+        _syncAssiduidade(ss, p.state);
       }
-      p.horasExtras.forEach(r => shHE.appendRow([r.data,p.obra,r.nome,r.funcao,r.horas,r.tipo,new Date().toISOString()]));
+      return _ok({msg:'Estado salvo'});
     }
 
-    return ok({msg:'Dados salvos'});
-  } catch(err) { return err_(err); }
+    // Gravar efetivo do dia + relatório
+    if (action === 'saveEfetivo') {
+      _saveEfetivo(ss, p);
+      if (p.texto) _saveRelatorio(ss, p);
+      _syncAssiduidade(ss, p.state);
+      return _ok({msg:'Efetivo salvo'});
+    }
+
+    // Salvar produção técnica
+    if (action === 'saveProd') {
+      _saveProd(ss, p);
+      return _ok({msg:'Produção salva'});
+    }
+
+    return _ok({msg:'Ação desconhecida'});
+  } catch(err) { return _err(err); }
 }
 
-// ── Retorna estado salvo (para sincronização entre dispositivos) ──
+// ─────────────────────────────────────────────
+// GET – retorna estado completo para sincronizar
+// ─────────────────────────────────────────────
 function doGet(e) {
   try {
-    const sheetId = e&&e.parameter&&e.parameter.sheetId;
-    if (!sheetId) return ok({msg:'API ativa. Passe ?sheetId=SEU_ID para sincronizar.'});
-    const ss = SpreadsheetApp.openById(sheetId);
-    const sh = ss.getSheetByName('Estado');
-    if (!sh || sh.getLastRow()===0) return ok({state:null,msg:'Sem estado salvo ainda.'});
-    const raw = sh.getRange(1,1).getValue();
-    const ts  = sh.getRange(1,2).getValue();
-    return ContentService.createTextOutput(JSON.stringify({ok:true,state:JSON.parse(raw),savedAt:ts}))
+    var sheetId = e && e.parameter && e.parameter.sheetId;
+    if (!sheetId) return _ok({msg:'API ativa.'});
+    var ss = SpreadsheetApp.openById(sheetId);
+    var sh = ss.getSheetByName(SHEET_STATE);
+    if (!sh || sh.getLastRow() === 0) return _ok({state: null, msg:'Sem estado.'});
+    var raw = sh.getRange(1,1).getValue();
+    var ts  = sh.getRange(1,2).getValue();
+    return ContentService
+      .createTextOutput(JSON.stringify({ok:true, state:JSON.parse(raw), savedAt:String(ts)}))
       .setMimeType(ContentService.MimeType.JSON);
-  } catch(err) { return err_(err); }
+  } catch(err) { return _err(err); }
 }
 
-function ok(data)  { return ContentService.createTextOutput(JSON.stringify({ok:true,...data})).setMimeType(ContentService.MimeType.JSON); }
-function err_(e)   { return ContentService.createTextOutput(JSON.stringify({ok:false,error:e.toString()})).setMimeType(ContentService.MimeType.JSON); }
+// ─────────────────────────────────────────────
+// Salvar estado JSON (aba oculta _Estado)
+// ─────────────────────────────────────────────
+function _saveState(ss, state) {
+  var sh = ss.getSheetByName(SHEET_STATE) || ss.insertSheet(SHEET_STATE);
+  sh.hideSheet();
+  sh.clearContents();
+  sh.getRange(1,1).setValue(JSON.stringify(state));
+  sh.getRange(1,2).setValue(new Date().toISOString());
+}
+
+// ─────────────────────────────────────────────
+// Salvar efetivo diário na aba 📅 Efetivo Diário
+// ─────────────────────────────────────────────
+function _saveEfetivo(ss, p) {
+  var sh = ss.getSheetByName(SHEET_EFETIVO);
+  if (!sh) {
+    sh = ss.insertSheet(SHEET_EFETIVO);
+    sh.appendRow(['Data','Obra','Nome','Função','Equipe','Presente','Andar / Local','Atividades','Timestamp']);
+    sh.getRange(1,1,1,9).setFontWeight('bold').setBackground('#f0a500');
+    sh.setFrozenRows(1);
+    sh.setColumnWidth(3,200); sh.setColumnWidth(8,300);
+  }
+  // Remover registros anteriores do mesmo dia+obra para evitar duplicatas
+  var data = p.data; var obra = p.obra;
+  var last = sh.getLastRow();
+  if (last > 1) {
+    var vals = sh.getRange(2, 1, last-1, 2).getValues();
+    var toDelete = [];
+    for (var i = vals.length-1; i >= 0; i--) {
+      var rowDate = vals[i][0] instanceof Date
+        ? Utilities.formatDate(vals[i][0], 'America/Sao_Paulo', 'yyyy-MM-dd')
+        : String(vals[i][0]).split('T')[0];
+      if (rowDate === data && String(vals[i][1]) === obra) toDelete.push(i+2);
+    }
+    toDelete.forEach(function(r){ sh.deleteRow(r); });
+  }
+  // Inserir registros atuais
+  var ts = Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'dd/MM/yyyy HH:mm');
+  var datePT = data.split('-').reverse().join('/');
+  (p.workers || []).forEach(function(w) {
+    sh.appendRow([datePT, obra, w.nome, w.funcao, w.equipe,
+      w.presente ? 'SIM' : 'NÃO', w.andar || '–',
+      (w.tarefas || []).join('; ') || '–', ts]);
+  });
+}
+
+// ─────────────────────────────────────────────
+// Salvar relatório na aba 📊 Relatórios
+// ─────────────────────────────────────────────
+function _saveRelatorio(ss, p) {
+  var sh = ss.getSheetByName(SHEET_RELAT);
+  if (!sh) {
+    sh = ss.insertSheet(SHEET_RELAT);
+    sh.appendRow(['Data','Obra','Total Trabalhadores','Texto Completo','Timestamp']);
+    sh.getRange(1,1,1,5).setFontWeight('bold').setBackground('#f0a500');
+    sh.setFrozenRows(1); sh.setColumnWidth(4,600);
+  }
+  var ts = Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'dd/MM/yyyy HH:mm');
+  var datePT = p.data.split('-').reverse().join('/');
+  sh.appendRow([datePT, p.obra, p.total || 0, p.texto, ts]);
+}
+
+// ─────────────────────────────────────────────
+// Recalcular assiduidade na aba 👷 Assiduidade
+// ─────────────────────────────────────────────
+function _syncAssiduidade(ss, state) {
+  if (!state || !state.workers || !state.dailyData) return;
+  var sh = ss.getSheetByName(SHEET_ASSID);
+  if (!sh) {
+    sh = ss.insertSheet(SHEET_ASSID);
+    sh.appendRow(['Nome','Função','Equipe','Obra','Dias Presentes','Total Registrado','Assiduidade %','Status']);
+    sh.getRange(1,1,1,8).setFontWeight('bold').setBackground('#f0a500');
+    sh.setFrozenRows(1);
+  }
+  // Calcular frequência de cada worker
+  var att = {};
+  Object.keys(state.dailyData).forEach(function(obra) {
+    Object.keys(state.dailyData[obra]).forEach(function(date) {
+      var dayMap = state.dailyData[obra][date];
+      Object.keys(dayMap).forEach(function(wid) {
+        if (!att[wid]) att[wid] = {dias:0, total:0};
+        att[wid].total++;
+        if (dayMap[wid].presente !== false) att[wid].dias++;
+      });
+    });
+  });
+  // Montar linhas
+  var rows = state.workers.map(function(w) {
+    var a = att[w.id] || {dias:0, total:0};
+    var pct = a.total > 0 ? Math.round(a.dias/a.total*100) : 100;
+    var eq = (state.equipes||[]).find(function(e){return e.id===w.equipe;});
+    var eqNome = eq ? eq.nome : w.equipe;
+    var status = pct >= 90 ? '✅ Regular' : pct >= 75 ? '⚠️ Atenção' : '❌ Crítico';
+    return [w.nome, w.funcao, eqNome, w.obra, a.dias, a.total, pct+'%', status];
+  });
+  // Limpar e reescrever
+  var last = sh.getLastRow();
+  if (last > 1) sh.deleteRows(2, last-1);
+  if (rows.length > 0) sh.getRange(2,1,rows.length,8).setValues(rows);
+}
+
+// ─────────────────────────────────────────────
+// Salvar produção técnica na aba 📐 Prod. Técnica
+// ─────────────────────────────────────────────
+function _saveProd(ss, p) {
+  var sh = ss.getSheetByName(SHEET_PROD);
+  if (!sh) {
+    sh = ss.insertSheet(SHEET_PROD);
+    var hdr = ['Data','Obra','Área Alv. Est. m2/andar','Área Laje m2','Vol. Graute m3/andar',
+      'Vol. Argamassa m3/andar','Vol. Concreto m3/andar','Aço Alv. Est. kg','Aço Lajes/Vigas kg',
+      'Alv. Est. Data Ref.','Alv. Est. m2 Exec.','Alv. Est. m2/Bloqueiro',
+      'Alv. Ved. Data Ref.','Alv. Ved. m2 Exec.','Alv. Ved. m2/Pedreiro',
+      'Concretagens Programadas','Mestre de Obras','Engenheiro','Encarregado',
+      'Almoxarife','Assistente Eng.','Administrativo','Timestamp'];
+    sh.appendRow(hdr);
+    sh.getRange(1,1,1,hdr.length).setFontWeight('bold').setBackground('#f0a500');
+    sh.setFrozenRows(1);
+  }
+  var ts = Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'dd/MM/yyyy HH:mm');
+  var datePT = p.data.split('-').reverse().join('/');
+  var g = p.geral || {}; var d = p.diario || {};
+  sh.appendRow([
+    datePT, p.obra,
+    g.areaAlv||0, g.areaLaje||0, g.volGraute||0, g.volArg||0, g.volConc||0,
+    g.acoAlv||0, g.acoLaje||0,
+    d.alvEst&&d.alvEst.dataRef||'', d.alvEst&&d.alvEst.exec||0, d.alvEst&&d.alvEst.m2porBloqueiro||0,
+    d.alvVed&&d.alvVed.dataRef||'', d.alvVed&&d.alvVed.exec||0, d.alvVed&&d.alvVed.m2porPedreiro||0,
+    d.concretagens||'',
+    g.mestre||'', g.engenheiro||'', g.encarregado||'', g.almoxarife||'', g.assistente||'', g.administrativo||'',
+    ts
+  ]);
+}
+
+function _ok(data)  { return ContentService.createTextOutput(JSON.stringify(Object.assign({ok:true},data))).setMimeType(ContentService.MimeType.JSON); }
+function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:false,error:e.toString()})).setMimeType(ContentService.MimeType.JSON); }
 `;
 
   async function send(payload) {
@@ -972,11 +1104,15 @@ const CfgPage = (() => {
         s.obras.map((o,i)=>`<div class="settings-item"><span style="flex:1">${Utils.esc(o)}</span>${i===0?'<span style="font-size:10px;color:var(--t3)">principal</span>':`<button class="icon-btn danger" onclick="CfgPage.rmObra('${Utils.esc(o)}')">✕</button>`}</div>`).join(''),
         `<div class="add-item-row"><input id="newObra" placeholder="Nova obra"><button class="btn btn-accent" onclick="CfgPage.addObra()">Add</button></div>`)}
       ${blk('🔗 Google Sheets',
-        `<div class="form-g"><label>URL do Web App</label><input class="finput" id="gsUrl" placeholder="https://script.google.com/macros/s/…/exec" value="${Utils.esc(s.gsUrl)}" style="font-size:11px;font-family:'JetBrains Mono',monospace"></div>
-         <div class="form-g"><label>ID da Planilha</label><input class="finput" id="gsSheetId" placeholder="1BxiMVs0XRA5…" value="${Utils.esc(s.gsSheetId)}" style="font-family:'JetBrains Mono',monospace"></div>
-         <div style="display:flex;gap:8px;margin-top:6px">
+        `<div class="form-group"><label>URL do Web App</label><input class="form-input" id="gsUrl" placeholder="https://script.google.com/macros/s/…/exec" value="${Utils.esc(s.gsUrl)}" style="font-size:11px;font-family:'JetBrains Mono',monospace"></div>
+         <div class="form-group"><label>ID da Planilha</label><input class="form-input" id="gsSheetId" placeholder="1BxiMVs0XRA5…" value="${Utils.esc(s.gsSheetId)}" style="font-family:'JetBrains Mono',monospace"></div>
+         <div id="gsStatus" style="font-size:12px;padding:8px 10px;border-radius:6px;margin:8px 0;background:var(--sf3);color:var(--t2);font-family:'JetBrains Mono',monospace">
+           ${s.gsUrl ? '🟡 URL configurada – clique Testar para verificar' : '⚪ Não configurado'}
+         </div>
+         <div style="display:flex;gap:8px;flex-wrap:wrap">
            <button class="btn btn-accent" onclick="CfgPage.saveGS()">Salvar</button>
-           <button class="btn btn-ghost" onclick="CfgPage.testGS()">Testar</button>
+           <button class="btn btn-ghost" onclick="CfgPage.testGS()">🔌 Testar Conexão</button>
+           <button class="btn btn-ghost" onclick="CfgPage.syncNow()">🔄 Sincronizar Agora</button>
            <button class="btn btn-ghost" onclick="CfgPage.showScript()">Ver código Script</button>
          </div>`,
         '')}
@@ -996,10 +1132,43 @@ const CfgPage = (() => {
   function rmEquipe(id){State.removeEquipe(id);render();if(typeof EfPage!=='undefined')EfPage.renderFilters();}
   function addObra(){const v=document.getElementById('newObra').value.trim();if(!v)return;State.addObra(v);document.getElementById('newObra').value='';render();App.rebuildObraSelects();}
   function rmObra(n){if(n===App.obra()){Utils.toast('Não pode remover a obra ativa.','warn');return;}if(!confirm(`Remover "${n}"?`))return;State.removeObra(n);render();App.rebuildObraSelects();}
-  function saveGS(){const s=State.get();s.gsUrl=document.getElementById('gsUrl').value.trim();s.gsSheetId=document.getElementById('gsSheetId').value.trim();State.save();Utils.toast('Salvo!','success');App.updateGSIndicator();}
-  async function testGS(){const url=document.getElementById('gsUrl').value.trim();if(!url){Utils.toast('Configure a URL.','warn');return;}Utils.toast('Testando…','info');const ok=await Sheets.ping(url);ok?Utils.toast('OK!','success'):Utils.toast('Falhou.','error');}
+  function saveGS(){
+    const s=State.get();
+    s.gsUrl=document.getElementById('gsUrl').value.trim();
+    s.gsSheetId=document.getElementById('gsSheetId').value.trim();
+    State.save();
+    App.updateGSIndicator();
+    Utils.toast('Configuração salva!','success');
+    const el=document.getElementById('gsStatus');
+    if(el) el.innerHTML='🟡 URL configurada – clique Testar para verificar';
+  }
+  async function testGS(){
+    const url=document.getElementById('gsUrl').value.trim();
+    if(!url){Utils.toast('Configure a URL primeiro.','warn');return;}
+    const el=document.getElementById('gsStatus');
+    if(el) el.innerHTML='⏳ Testando conexão…';
+    Utils.toast('Testando…','info');
+    try {
+      const res = await fetch(url, {method:'GET', mode:'cors'});
+      const json = await res.json();
+      if(json.ok){
+        Utils.toast('✅ Conexão OK!','success');
+        if(el) el.innerHTML='✅ Conectado e funcionando!';
+      } else {
+        Utils.toast('❌ Script respondeu mas retornou erro','error');
+        if(el) el.innerHTML='❌ Erro: ' + (json.error||JSON.stringify(json));
+      }
+    } catch(e) {
+      Utils.toast('❌ Falhou: '+e.message,'error');
+      if(el) el.innerHTML='❌ Falha de conexão: ' + e.message + ' — verifique se reimplantou como "Qualquer pessoa"';
+    }
+  }
+  async function syncNow(){
+    Utils.toast('Sincronizando…','info');
+    await App.syncNow();
+  }
   function showScript(){document.getElementById('scriptCode').textContent=Sheets.CODE;Modals.open('modalScript');}
-  return {render,addAndar,rmAndar,addTarefa,rmTarefa,addEquipe,rmEquipe,addObra,rmObra,saveGS,testGS,showScript};
+  return {render,addAndar,rmAndar,addTarefa,rmTarefa,addEquipe,rmEquipe,addObra,rmObra,saveGS,testGS,showScript,syncNow};
 })();
 
 /* ═══ HORAS EXTRAS PAGE ═══ */
@@ -1551,23 +1720,34 @@ const App = (() => {
   async function _loadFromSheets() {
     const s = State.get();
     if (!s.gsUrl || !s.gsSheetId) return;
+    _setSyncStatus('syncing');
     try {
       const res = await fetch(s.gsUrl + '?sheetId=' + s.gsSheetId, {method:'GET', mode:'cors'});
       const json = await res.json();
-      if (!json.ok || !json.state) return;
-      // Only use if sheets version is newer (has more data)
-      const sheetState = json.state;
-      // Merge: prefer sheets version for shared data
-      const local = State.get();
-      // Use sheets version as base, but keep local daily edits if same date
-      localStorage.setItem('efetivo_v3', JSON.stringify(sheetState));
+      if (!json.ok || !json.state) { _setSyncStatus('ok'); return; }
+      // Usar versão do Sheets como fonte de verdade
+      localStorage.setItem('efetivo_v3', JSON.stringify(json.state));
       State.load();
+      App.rebuildObraSelects();
       if (typeof EfPage !== 'undefined') EfPage.render();
-      if (typeof FuncPage !== 'undefined' && document.getElementById('funcList')?.offsetParent !== null) FuncPage.render();
-      Utils.toast('Dados sincronizados!', 'info');
+      if (typeof FuncPage !== 'undefined') FuncPage.render();
+      _setSyncStatus('ok');
+      Utils.toast('✅ Sincronizado com Google Sheets!', 'success');
     } catch(e) {
-      // No internet or sheets not configured - use localStorage
+      _setSyncStatus('error');
     }
+  }
+
+  function _setSyncStatus(status) {
+    const el = document.getElementById('syncStatusDot');
+    if (!el) return;
+    el.title = status === 'syncing' ? 'Sincronizando…' : status === 'ok' ? 'Sincronizado' : 'Erro de sincronização';
+    el.style.background = status === 'syncing' ? '#f0a500' : status === 'ok' ? '#22c55e' : '#ef4444';
+    el.style.animation = status === 'syncing' ? 'pulse 1s infinite' : 'none';
+  }
+
+  async function syncNow() {
+    await _loadFromSheets();
   }
 
   function obra() { return _obra; }
@@ -1656,7 +1836,7 @@ const App = (() => {
   }
 
   return { init, obra, date, setObra, showPage, openDrawer, closeDrawer,
-           addObra, rebuildObraSelects, updateTopbar, updateGSIndicator };
+           addObra, rebuildObraSelects, updateTopbar, updateGSIndicator, syncNow };
 })();
 
 document.addEventListener('DOMContentLoaded', App.init);
