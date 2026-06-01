@@ -77,8 +77,8 @@ input[type=date]:focus{border-color:var(--ac);}
 .pill.orange{background:var(--acd);color:var(--ac);}
 
 /* SECTION HEADER */
-.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;}
-.section-title{font-size:18px;letter-spacing:1px;line-height:1;}
+.section-header{display:flex;align-items:center;margin-bottom:14px;gap:12px;}
+.section-title{font-size:16px;letter-spacing:1px;line-height:1;}
 .section-sub{font-size:11px;color:var(--t3);margin-top:3px;}
 
 /* TEAM FILTERS */
@@ -262,7 +262,10 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
 .he-row label{display:flex;align-items:center;gap:8px;flex:1;cursor:pointer;}
 .he-row input[type=number]{width:80px;background:var(--sf2);border:1px solid var(--bd2);color:var(--t1);font-family:'JetBrains Mono',monospace;font-size:13px;padding:6px 8px;border-radius:6px;outline:none;text-align:center;}
 
-.empty{text-align:center;padding:40px 20px;color:var(--t3);font-size:13px;}</style>
+.empty{text-align:center;padding:40px 20px;color:var(--t3);font-size:13px;}
+.section-header > div:first-child { min-width:0; flex:1; }
+.section-header > div:last-child, .section-header > button { flex-shrink:0; margin-left:auto; }
+</style>
 <script>if(window.innerWidth<768){window.location.replace('mobile.html');}</script>
 </head>
 <body>
