@@ -1309,6 +1309,17 @@ const CfgPage = (() => {
   function rmAndar(i){State.removeAndar(i);render();if(typeof EfPage!=='undefined')EfPage.renderFilters();}
   function addTarefa(){const v=document.getElementById('newTarefa').value.trim();if(!v)return;State.addTarefa(v);document.getElementById('newTarefa').value='';render();}
   function rmTarefa(i){State.removeTarefa(i);render();}
+  function editTarefa(i){
+    const s=State.get();
+    const t=s.tarefas[i];
+    const nome=typeof t==='string'?t:t.nome;
+    const novo=prompt('Editar atividade:',nome);
+    if(!novo||!novo.trim()||novo.trim()===nome) return;
+    if(typeof t==='string') s.tarefas[i]={nome:novo.trim(),equipes:[]};
+    else t.nome=novo.trim();
+    State.save('config');
+    render();
+  }
   function setTarefaEqs(i, sel) {
     const s = State.get();
     const t = s.tarefas[i];
@@ -1338,7 +1349,7 @@ const CfgPage = (() => {
   function saveGS(){const s=State.get();s.gsUrl=document.getElementById('gsUrl').value.trim();s.gsSheetId=document.getElementById('gsSheetId').value.trim();State.save();Utils.toast('Salvo!','success');App.updateGSIndicator();}
   async function testGS(){const url=document.getElementById('gsUrl').value.trim();if(!url){Utils.toast('Configure a URL.','warn');return;}Utils.toast('Testando…','info');const ok=await Sheets.ping(url);ok?Utils.toast('OK!','success'):Utils.toast('Falhou.','error');}
   function showScript(){document.getElementById('scriptCode').textContent=Sheets.CODE;Modals.open('modalScript');}
-  return {render,addAndar,rmAndar,addTarefa,rmTarefa,setTarefaEqs,toggleTarefaEq,addEquipe,rmEquipe,addObra,rmObra,saveGS,testGS,showScript};
+  return {render,addAndar,rmAndar,addTarefa,rmTarefa,editTarefa,setTarefaEqs,toggleTarefaEq,addEquipe,rmEquipe,addObra,rmObra,saveGS,testGS,showScript};
 })();
 
 /* ═══ HORAS EXTRAS PAGE ═══ */
@@ -1604,10 +1615,13 @@ function buildReportText(obra, date) {
   const byAndar = {};
   nonAdm.forEach(function(w){
     const dd = dayMap[w.id] || {};
-    const andar = dd.andar || 'SEM LOCAL DEFINIDO';
-    if (!byAndar[andar]) byAndar[andar] = { tarefas: [], workers: [] };
-    byAndar[andar].workers.push(w);
-    (dd.tarefas||[]).forEach(function(t){ if(!byAndar[andar].tarefas.includes(t)) byAndar[andar].tarefas.push(t); });
+    // Suporte a múltiplos andares (string separada por vírgula)
+    const andares = dd.andar ? dd.andar.split(',').map(function(a){return a.trim();}).filter(Boolean) : ['SEM LOCAL DEFINIDO'];
+    andares.forEach(function(andar){
+      if (!byAndar[andar]) byAndar[andar] = { tarefas: [], workers: [] };
+      if (!byAndar[andar].workers.find(function(x){return x.id===w.id;})) byAndar[andar].workers.push(w);
+      (dd.tarefas||[]).forEach(function(t){ if(!byAndar[andar].tarefas.includes(t)) byAndar[andar].tarefas.push(t); });
+    });
   });
 
   const andaresCfg = s.andares;
