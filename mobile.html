@@ -1266,15 +1266,16 @@ const CfgPage = (() => {
   function itmTarefa(t, i, equipes) {
     const nome = typeof t==='string' ? t : (t.nome||'');
     const eqsVinc = typeof t==='string' ? [] : (t.equipes||[]);
-    const opts = equipes.map(e =>
-      `<option value="${Utils.esc(e.nome)}" ${eqsVinc.includes(e.nome)?'selected':''}>${Utils.esc(e.nome)}</option>`
-    ).join('');
-    return `<div class="settings-item" style="flex-wrap:wrap;gap:6px">
-      <span style="flex:1;min-width:140px">${Utils.esc(nome)}</span>
-      <select multiple style="font-size:11px;background:var(--sf2);border:1px solid var(--bd2);color:var(--t1);border-radius:6px;padding:2px 6px;max-width:200px;min-height:28px" onchange="CfgPage.setTarefaEqs(${i},this)">
-        <option disabled style="color:var(--t3);font-size:10px">Equipes (multi)</option>${opts}
-      </select>
-      <button class="icon-btn danger" style="width:24px;height:24px;font-size:11px" onclick="CfgPage.rmTarefa(${i})">✕</button>
+    const chips = equipes.map(e => {
+      const sel = eqsVinc.includes(e.nome);
+      return `<span onclick="CfgPage.toggleTarefaEq(${i},'${Utils.esc(e.nome)}')" style="cursor:pointer;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;border:1px solid ${sel?e.cor+'88':'var(--bd2)'};background:${sel?e.cor+'22':'transparent'};color:${sel?e.cor:'var(--t3)'};transition:all .15s">${Utils.esc(e.nome)}</span>`;
+    }).join('');
+    return `<div class="settings-item" style="flex-direction:column;align-items:flex-start;gap:6px;padding:10px 12px">
+      <div style="display:flex;width:100%;align-items:center;gap:8px">
+        <span style="flex:1;font-size:13px">${Utils.esc(nome)}</span>
+        <button class="icon-btn danger" style="width:24px;height:24px;font-size:11px;flex-shrink:0" onclick="CfgPage.rmTarefa(${i})">✕</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">${chips || '<span style="font-size:10px;color:var(--t3)">Global (todas as equipes)</span>'}</div>
     </div>`;
   }
   function addAndar(){const v=document.getElementById('newAndar').value.trim();if(!v)return;State.addAndar(v);document.getElementById('newAndar').value='';render();if(typeof EfPage!=='undefined')EfPage.renderFilters();}
@@ -1290,6 +1291,19 @@ const CfgPage = (() => {
     else t.equipes = eqs;
     State.save('config');
   }
+  function toggleTarefaEq(i, eqNome) {
+    const s = State.get();
+    const t = s.tarefas[i];
+    if (!t) return;
+    if (typeof t === 'string') s.tarefas[i] = {nome:t, equipes:[eqNome]};
+    else {
+      const idx = t.equipes.indexOf(eqNome);
+      if (idx >= 0) t.equipes.splice(idx,1);
+      else t.equipes.push(eqNome);
+    }
+    State.save('config');
+    render();
+  }
   function addEquipe(){const n=document.getElementById('newEquipe').value.trim();const c=document.getElementById('newEquipeCor').value;if(!n)return;State.addEquipe({nome:n,cor:c});document.getElementById('newEquipe').value='';render();if(typeof EfPage!=='undefined')EfPage.renderFilters();}
   function rmEquipe(id){State.removeEquipe(id);render();if(typeof EfPage!=='undefined')EfPage.renderFilters();}
   function addObra(){const v=document.getElementById('newObra').value.trim();if(!v)return;State.addObra(v);document.getElementById('newObra').value='';render();App.rebuildObraSelects();}
@@ -1297,7 +1311,7 @@ const CfgPage = (() => {
   function saveGS(){const s=State.get();s.gsUrl=document.getElementById('gsUrl').value.trim();s.gsSheetId=document.getElementById('gsSheetId').value.trim();State.save();Utils.toast('Salvo!','success');App.updateGSIndicator();}
   async function testGS(){const url=document.getElementById('gsUrl').value.trim();if(!url){Utils.toast('Configure a URL.','warn');return;}Utils.toast('Testando…','info');const ok=await Sheets.ping(url);ok?Utils.toast('OK!','success'):Utils.toast('Falhou.','error');}
   function showScript(){document.getElementById('scriptCode').textContent=Sheets.CODE;Modals.open('modalScript');}
-  return {render,addAndar,rmAndar,addTarefa,rmTarefa,setTarefaEqs,addEquipe,rmEquipe,addObra,rmObra,saveGS,testGS,showScript};
+  return {render,addAndar,rmAndar,addTarefa,rmTarefa,setTarefaEqs,toggleTarefaEq,addEquipe,rmEquipe,addObra,rmObra,saveGS,testGS,showScript};
 })();
 
 /* ═══ HORAS EXTRAS PAGE ═══ */
