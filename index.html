@@ -285,7 +285,7 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
 </aside>
 <header class="topbar">
   <div class="topbar-left"><span style="font-size:18px;line-height:1">&#9874;</span><span class="topbar-name">EFETIVO</span><span class="topbar-divider">|</span><span class="topbar-title" id="topbarTitle">DO DIA</span></div>
-  <div class="topbar-right"><div class="topbar-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><strong id="topbarPresentes">0</strong></div><div class="obra-pill" id="obraPill" onclick="Modals.open('modalObra')">–</div></div>
+  <div class="topbar-right"><div class="topbar-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><strong id="topbarPresentes">0</strong></div><button onclick="App.syncNow()" title="Sincronizar com Sheets" style="background:var(--sf2);border:1px solid var(--bd2);color:var(--t2);padding:4px 10px;border-radius:20px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px"><span id="syncStatusDot" style="width:7px;height:7px;border-radius:50%;background:var(--gn);display:inline-block"></span>Sync</button><div class="obra-pill" id="obraPill" onclick="Modals.open('modalObra')">–</div></div>
 </header>
 <main class="main-content">
   <section class="page active" id="page-efetivo">
@@ -972,11 +972,15 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
     return _post({action:'deleteHE', id});
   }
 
+  async function saveProd(date, obra, geral, diario) {
+    return _post({action:'saveProd', data:date, obra, geral, diario});
+  }
+
   async function ping(url) {
     try { const r=await fetch(url,{method:'GET',mode:'cors'}); const j=await r.json(); return j.ok===true; } catch { return false; }
   }
 
-  return { CODE, loadState, saveWorkers, saveEfetivo, saveRelatorio, saveConfig, saveHE, deleteHE, ping };
+  return { CODE, loadState, saveWorkers, saveEfetivo, saveRelatorio, saveConfig, saveProd, saveHE, deleteHE, ping };
 })();
 
 
