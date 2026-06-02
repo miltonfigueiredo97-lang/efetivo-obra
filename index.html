@@ -1835,7 +1835,6 @@ const EfPage = (() => {
         return eqs.includes(_eqNome);
       }).map(t => typeof t === 'string' ? t : t.nome);
       const tarefaOpts = _tarFiltradas.filter(t=>!(dd.tarefas||[]).includes(t)).map(t=>`<option value="${Utils.esc(t)}">${Utils.esc(t)}</option>`).join('');
-      const andarSel = andarOpts.replace(`value="${Utils.esc(dd.andar)}"`,`value="${Utils.esc(dd.andar)}" selected`);
 
       return `<tr id="drow-${w.id}" class="${absent?'absent':''}">
         <td>
@@ -1850,7 +1849,7 @@ const EfPage = (() => {
           ${absent?`<div style="margin-top:4px"><input class="finput" placeholder="Motivo da falta" value="${Utils.esc(dd.motivo||'')}" onchange="EfPage.setMotivo('${w.id}',this.value)" style="font-size:11px;padding:4px 8px;width:100%"></div>`:''}
         </td>
         <td><span class="team-badge" style="background:${cor}22;color:${cor};border:1px solid ${cor}44">${Utils.esc(eq?eq.nome:w.equipe)}</span></td>
-        <td><select class="inline-select" ${absent?'disabled':''} onchange="EfPage.setAndar('${w.id}',this.value)" style="min-width:160px">${andarSel}</select></td>
+        <td><div style="display:flex;flex-wrap:wrap;max-width:220px;max-height:72px;overflow-y:auto">${andarChips}</div></td>
         <td>
           <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:${absent?'0':'5px'}">${tags}</div>
           ${!absent?`<div style="display:flex;gap:5px;align-items:center">
@@ -1885,6 +1884,14 @@ const EfPage = (() => {
   }
 
   function setAndar(wid, val) { State.setDayField(App.obra(), App.date(), wid, 'andar', val); }
+  function toggleAndar(wid, val) {
+    const obra=App.obra(), date=App.date();
+    const dd=State.getDayData(obra,date,wid);
+    const cur=(dd.andar||'').split(',').map(s=>s.trim()).filter(Boolean);
+    const idx=cur.indexOf(val);
+    if(idx>=0) cur.splice(idx,1); else cur.push(val);
+    State.setDayField(obra,date,wid,'andar',cur.join(', '));
+  }
   function setMotivo(wid, val) { State.setDayField(App.obra(), App.date(), wid, 'motivo', val); }
 
   function addTag(wid) {
@@ -1977,7 +1984,7 @@ const EfPage = (() => {
     App.updateTopbar();
   }
 
-  return { render, renderFilters, setTeam, setSort, togglePres, setAndar, setMotivo, addTag, addNewTag, rmTag, preview, copyReport, salvarRelatorio, gerar };
+  return { render, renderFilters, setTeam, setSort, togglePres, setAndar, setMotivo, addTag, addNewTag, rmTag, preview, copyReport, salvarRelatorio, gerar, toggleAndar };
 })();
 
 

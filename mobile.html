@@ -1848,7 +1848,6 @@ const EfPage = (() => {
         return eqs.includes(_eqNome);
       }).map(t => typeof t === 'string' ? t : t.nome);
       const tarefaOpts = _tarFiltradas.filter(t=>!(dd.tarefas||[]).includes(t)).map(t=>`<option value="${Utils.esc(t)}">${Utils.esc(t)}</option>`).join('');
-      const andarSel = andarOpts.replace(`value="${Utils.esc(dd.andar)}"`,`value="${Utils.esc(dd.andar)}" selected`);
 
       return `<div class="worker-card ${absent?'absent':''}" id="wcard-${w.id}">
         <div class="worker-card-top">
@@ -1881,7 +1880,12 @@ const EfPage = (() => {
             </div>` : `
             <div>
               <div class="field-label">Andar / Local</div>
-              <select class="inline-select" onchange="EfPage.setAndar('${w.id}',this.value)">${andarSel}</select>
+              <details style="width:100%">
+                <summary style="cursor:pointer;padding:8px 12px;background:var(--sf2);border:1px solid var(--bd2);border-radius:8px;font-size:13px;color:${_curAndares.length?'var(--t1)':'var(--t3)'};list-style:none;display:flex;justify-content:space-between;align-items:center">
+                  <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${andarLabel}</span><span style="font-size:10px;margin-left:6px">▼</span>
+                </summary>
+                <div style="padding:8px;background:var(--sf2);border:1px solid var(--bd2);border-top:none;border-radius:0 0 8px 8px;display:flex;flex-wrap:wrap;max-height:140px;overflow-y:auto">${andarChips}</div>
+              </details>
             </div>
             <div>
               <div class="field-label">Atividades</div>
@@ -2039,7 +2043,7 @@ const EfPage = (() => {
     App.updateTopbar();
   }
 
-  return { render, renderFilters, setTeam, toggleCard, togglePres, setAndar, setMotivo, addTag, addNewTag, rmTag, preview, copyReport, salvarRelatorio, gerar };
+  return { render, renderFilters, setTeam, toggleCard, togglePres, setAndar, setMotivo, addTag, addNewTag, rmTag, preview, copyReport, salvarRelatorio, gerar, toggleAndar };
 })();
 
 
