@@ -1856,7 +1856,7 @@ const EfPage = (() => {
         <td><span class="team-badge" style="background:${cor}22;color:${cor};border:1px solid ${cor}44">${Utils.esc(eq?eq.nome:w.equipe)}</span></td>
         <td style="position:relative">
           <div onclick="(function(e){e.stopPropagation();var d=document.getElementById('adrop-${w.id}');var open=d.style.display==='flex';document.querySelectorAll('[id^=adrop-]').forEach(function(x){x.style.display='none';});if(!open)d.style.display='flex';})(event)" style="cursor:pointer;padding:5px 10px;background:var(--sf2);border:1px solid var(--bd2);border-radius:8px;font-size:12px;color:${_curAndares.length?'var(--t1)':'var(--t3)'};display:flex;justify-content:space-between;align-items:center;min-width:140px;user-select:none">
-            <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${_curAndares.length?_curAndares.join(', '):'— Local —'}</span><span style="margin-left:6px;font-size:9px;flex-shrink:0">▼</span>
+            <span id="alabel-${w.id}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${_curAndares.length?_curAndares.join(', '):'— Local —'}</span><span style="margin-left:6px;font-size:9px;flex-shrink:0">▼</span>
           </div>
           <div id="adrop-${w.id}" style="display:none;position:absolute;z-index:200;background:var(--sf);border:1px solid var(--bd2);border-radius:8px;padding:8px;flex-wrap:wrap;gap:4px;max-width:300px;max-height:200px;overflow-y:auto;box-shadow:0 4px 20px rgba(0,0,0,.5);top:100%;left:0;margin-top:4px">${andarChips}</div>
         </td>
