@@ -307,6 +307,16 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
       <div><div class="section-title">EFETIVO</div><div class="section-sub" id="obraLabel">–</div></div>
       <button class="btn btn-ghost" onclick="Modals.openWorker()" style="padding:8px 12px">+ Add</button>
     </div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
+      <select id="efSort" class="form-input" style="flex:1;font-size:12px" onchange="EfPage.render()">
+        <option value="nome">Nome A-Z</option>
+        <option value="nome_z">Nome Z-A</option>
+        <option value="equipe">Equipe</option>
+        <option value="cargo">Cargo</option>
+        <option value="presentes">Presentes primeiro</option>
+        <option value="ausentes">Ausentes primeiro</option>
+      </select>
+    </div>
     <div class="team-filter-scroll" id="teamFilters"></div>
     <div class="worker-list-mobile" id="workerList"></div>
     <div class="action-bar">
@@ -1688,6 +1698,16 @@ const EfPage = (() => {
     const q=(document.getElementById('efSearch')?.value||'').toLowerCase();
     let ws = s.workers.filter(w => w.obra===obra);
     if (activeTeam !== 'all') ws = ws.filter(w => w.equipe===activeTeam);
+    const efSort = document.getElementById('efSort')?.value || 'nome';
+    const dayMap2 = s.dailyData?.[obra]?.[date] || {};
+    ws.sort((a,b) => {
+      if (efSort==='nome_z') return String(b.nome||'').localeCompare(String(a.nome||''),'pt-BR');
+      if (efSort==='equipe') { const ea=(State.getEquipe(a.equipe)||{}).nome||''; const eb=(State.getEquipe(b.equipe)||{}).nome||''; return ea.localeCompare(eb,'pt-BR'); }
+      if (efSort==='cargo') return String(a.funcao||'').localeCompare(String(b.funcao||''),'pt-BR');
+      if (efSort==='presentes') { const pa=dayMap2[a.id]?.presente!==false; const pb=dayMap2[b.id]?.presente!==false; return (pb?1:0)-(pa?1:0); }
+      if (efSort==='ausentes') { const pa=dayMap2[a.id]?.presente!==false; const pb=dayMap2[b.id]?.presente!==false; return (pa?1:0)-(pb?1:0); }
+      return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR');
+    });
     if (q) ws = ws.filter(w => w.nome.toLowerCase().includes(q)||w.funcao.toLowerCase().includes(q)||((State.getEquipe(w.equipe)||{}).nome||'').toLowerCase().includes(q));
 
     const list = document.getElementById('workerList');
@@ -1729,9 +1749,9 @@ const EfPage = (() => {
           <div class="wc-row2">
               <span class="team-badge" style="background:${cor}22;color:${cor};border:1px solid ${cor}44">${Utils.esc(eq?eq.nome:w.equipe)}</span>
               ${absent?`<span style="font-size:11px;color:var(--rd)">Ausente</span>`:''}
-              <div class="worker-card-actions" style="margin-left:auto">
-                <button class="icon-btn" onclick="Modals.openWorker('${w.id}')">✏️</button>
-                <button class="icon-btn danger" onclick="FuncPage.remove('${w.id}')">✕</button>
+              <div class="worker-card-actions" style="margin-left:auto;gap:8px">
+                <button class="icon-btn" style="width:36px;height:36px;font-size:16px" onclick="Modals.openWorker('${w.id}')">✏️</button>
+                <button class="icon-btn danger" style="width:36px;height:36px;font-size:16px" onclick="FuncPage.remove('${w.id}')">✕</button>
               </div>
             </div>
           </div>
@@ -1754,11 +1774,11 @@ const EfPage = (() => {
                 <select class="inline-select" id="mactsel-${w.id}" style="flex:1">
                   <option value="">+ Adicionar atividade</option>${tarefaOpts}
                 </select>
-                <button class="add-btn" onclick="EfPage.addTag('${w.id}')">+</button>
+                <button class="add-btn" style="width:40px;height:40px;font-size:20px" onclick="EfPage.addTag('${w.id}')">+</button>
               </div>
               <div style="display:flex;gap:8px;margin-top:6px">
                 <input class="inline-select" id="mnewact-${w.id}" placeholder="Nova atividade…" style="flex:1" onkeydown="if(event.key==='Enter'){EfPage.addNewTag('${w.id}');event.preventDefault();}">
-                <button class="add-btn" style="background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.4);color:var(--gn)" onclick="EfPage.addNewTag('${w.id}')">✚</button>
+                <button class="add-btn" style="width:40px;height:40px;font-size:20px;background:rgba(34,197,94,.15);border-color:rgba(34,197,94,.4);color:var(--gn)" onclick="EfPage.addNewTag('${w.id}')">✚</button>
               </div>
             </div>`}
         </div>
