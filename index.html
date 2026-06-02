@@ -1835,6 +1835,11 @@ const EfPage = (() => {
         return eqs.includes(_eqNome);
       }).map(t => typeof t === 'string' ? t : t.nome);
       const tarefaOpts = _tarFiltradas.filter(t=>!(dd.tarefas||[]).includes(t)).map(t=>`<option value="${Utils.esc(t)}">${Utils.esc(t)}</option>`).join('');
+      const _curAndares = (dd.andar||'').split(',').map(s=>s.trim()).filter(Boolean);
+      const andarChips = s.andares.map(a=>{
+        const sel=_curAndares.includes(a);
+        return `<span onclick="EfPage.toggleAndar('${w.id}','${Utils.esc(a)}')" style="cursor:pointer;display:inline-block;padding:2px 8px;margin:2px;border-radius:10px;font-size:11px;border:1px solid ${sel?'var(--ac)':'var(--bd2)'};background:${sel?'var(--acd)':'transparent'};color:${sel?'var(--ac)':'var(--t3)'};white-space:nowrap">${Utils.esc(a)}</span>`;
+      }).join('');
 
       return `<tr id="drow-${w.id}" class="${absent?'absent':''}">
         <td>
