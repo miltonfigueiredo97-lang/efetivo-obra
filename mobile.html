@@ -1853,21 +1853,25 @@ const App = (() => {
 
   async function _loadFromSheets() {
     const s = State.get();
-    if (!s.gsUrl || !s.gsSheetId) return;
+    if (!s.gsUrl || !s.gsSheetId) {
+      Utils.toast('⚠️ URL/ID não configurado','warn'); return;
+    }
+    Utils.toast('🔄 Conectando ao Sheets...','info');
     try {
       const state = await Sheets.loadState();
-      if (!state) return;
+      if (!state) { Utils.toast('⚠️ Sheets retornou vazio','warn'); return; }
       state.gsUrl = s.gsUrl;
       state.gsSheetId = s.gsSheetId;
-      // Normalizar nomes de obras (evitar ALL CAPS vindo do Sheets)
       if (state.obras) state.obras = state.obras.map(o => o === o.toUpperCase() ? o.charAt(0)+o.slice(1).toLowerCase() : o);
-      if (state.workers) state.workers.forEach(w => { if (w.obra === w.obra.toUpperCase()) w.obra = w.obra.charAt(0)+w.obra.slice(1).toLowerCase(); });
+      if (state.workers) state.workers.forEach(w => { if (w.obra && w.obra === w.obra.toUpperCase()) w.obra = w.obra.charAt(0)+w.obra.slice(1).toLowerCase(); });
       localStorage.setItem('efetivo_v3', JSON.stringify(state));
       State.load();
       if (typeof EfPage !== 'undefined') EfPage.render();
       if (typeof FuncPage !== 'undefined') FuncPage.render();
-      Utils.toast('✅ Sincronizado!', 'success');
-    } catch(e) {}
+      Utils.toast('✅ Sincronizado! '+state.workers.length+' func.','success');
+    } catch(e) {
+      Utils.toast('❌ Erro: '+e.message,'error');
+    }
   }
 
   function obra() { return _obra; }
