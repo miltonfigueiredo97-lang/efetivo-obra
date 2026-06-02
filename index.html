@@ -140,6 +140,8 @@ input[type=date]:focus{border-color:var(--ac);}
 /* MODALS */
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:500;display:none;align-items:center;justify-content:center;}
 .modal-backdrop.open{display:flex;}
+#modalHE{padding:0;}
+#heListScroll,#heListScroll2{overflow-y:auto;max-height:50vh;}
 .modal{background:var(--sf);border:1px solid var(--bd2);border-radius:14px;padding:24px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;animation:fadeIn .2s ease;}
 .modal-large{max-width:700px;}
 @keyframes fadeIn{from{opacity:0;transform:scale(.97);}to{opacity:1;transform:scale(1);}}
@@ -426,7 +428,7 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
     <pre class="report-preview" id="scriptCode" style="font-size:10px;line-height:1.6"></pre>
     <div class="modal-footer"><button class="btn btn-ghost" onclick="Modals.close('modalScript')">Fechar</button><button class="btn btn-accent" onclick="Utils.copy(document.getElementById('scriptCode').textContent,'Copiado!')">Copiar</button></div>
   </div>
-  <div class="modal" id="modalHE" style="width:560px;max-width:95vw;height:80vh;display:flex;flex-direction:column;padding:0;overflow:hidden">
+  <div class="modal" id="modalHE">
     <div class="modal-handle" style="flex-shrink:0;padding-top:6px"></div>
     <div class="modal-header" style="flex-shrink:0;padding:0 16px 12px">
       <div class="modal-title" id="heModalTitle">Lançar Horas Extras</div>
@@ -472,227 +474,8 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
       <button class="btn btn-accent" id="heBtnLancar" onclick="HEPage.goStep2()">Próximo →</button>
       <button class="btn btn-accent" id="heBtnSalvar" style="display:none" onclick="HEPage.saveAdd()">💾 Salvar</button>
     </div>
-  </div>PE html>
-<html lang="pt-BR">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Efetivo de Obra</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9874;</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<script>if(window.innerWidth<768){window.location.replace('mobile.html');}</script>
-</head>
-<body>
-<aside class="sidebar-desktop">
-  <div class="sidebar-logo-d"><span style="font-size:22px;line-height:1">&#9874;</span><div><div class="logo-tag-d">EFETIVO</div><div class="logo-sub-d">GESTÃO DE OBRA</div></div></div>
-  <div class="obra-selector-d"><label>OBRA ATIVA</label><select id="obraSelectDesktop" onchange="App.setObra(this.value)"></select></div>
-  <nav class="nav-d">
-    <div class="nav-section-d">PRINCIPAL</div>
-    <div class="nav-item-d active" data-page="efetivo" onclick="App.showPage('efetivo',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Efetivo do Dia</span><span class="nav-badge-d" id="dNavPresentes">0</span></div>
-    <div class="nav-item-d" data-page="producao" onclick="App.showPage('producao',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg><span>Rel. de Execução</span></div>
-    <div class="nav-section-d">GESTÃO</div>
-    <div class="nav-item-d" data-page="funcionarios" onclick="App.showPage('funcionarios',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Funcionários</span><span class="nav-badge-d sec" id="dNavTotal">0</span></div>
-    <div class="nav-item-d" data-page="relatorios" onclick="App.showPage('relatorios',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Desempenho</span></div>
-    <div class="nav-item-d" data-page="historico" onclick="App.showPage('historico',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Histórico</span></div>
-    <div class="nav-item-d" data-page="horasextras" onclick="App.showPage('horasextras',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/><path d="M16 14h2"/></svg><span>Horas Extras</span></div>
-    <div class="nav-section-d">SISTEMA</div>
-    <div class="nav-item-d" data-page="configuracoes" onclick="App.showPage('configuracoes',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M2 12h2M20 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/></svg><span>Configurações</span></div>
-  </nav>
-  <div class="sidebar-footer-d"><span>v3.0</span><span id="lastSaved">–</span></div>
-</aside>
-<div class="layout-right">
-<header class="topbar">
-  <div class="topbar-left"><span style="font-size:18px;line-height:1">&#9874;</span><span class="topbar-name">EFETIVO</span><span class="topbar-divider">|</span><span class="topbar-title" id="topbarTitle">DO DIA</span></div>
-  <div class="topbar-right"><div class="topbar-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><strong id="topbarPresentes">0</strong></div><button onclick="App.syncNow()" title="Sincronizar com Sheets" style="background:var(--sf2);border:1px solid var(--bd2);color:var(--t2);padding:4px 10px;border-radius:20px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px"><span id="syncStatusDot" style="width:7px;height:7px;border-radius:50%;background:var(--gn);display:inline-block"></span>Sync</button><div class="obra-pill" id="obraPill" onclick="Modals.open('modalObra')">–</div></div>
-</header>
-<main class="main-content">
-  <section class="page active" id="page-efetivo">
-    <div class="date-bar">
-      <div class="date-bar-left"><label>DATA DO EFETIVO</label><input type="date" id="datePicker"><span class="weekday-label" id="weekdayLabel"></span></div>
-      <div class="pills-row"><span class="pill green" id="pillPresentes">0 presentes</span><span class="pill red" id="pillAusentes">0 ausentes</span><span class="pill orange" id="pillTotal">0 total</span></div>
-    </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px">
-      <div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;line-height:1">EFETIVO DE OBRA</div>
-        <div class="section-sub" id="obraLabel">–</div>
-      </div>
-      <button class="btn btn-ghost" style="flex-shrink:0" onclick="Modals.openWorker()">+ Funcionário</button>
-    </div>
-    <div class="team-filter-scroll" id="teamFilters" style="margin-bottom:14px"></div>
-    <div class="worker-table-wrap">
-      <table class="data-table">
-        <thead><tr>
-          <th style="width:54px" data-col="pres" onclick="EfPage.setSort('pres')" class="th-sort">Pres.<span class="sort-arrow"> ⇅</span></th>
-          <th data-col="nome" onclick="EfPage.setSort('nome')" class="th-sort">Nome<span class="sort-arrow"> ⇅</span></th>
-          <th style="width:170px" data-col="equipe" onclick="EfPage.setSort('equipe')" class="th-sort">Equipe<span class="sort-arrow"> ⇅</span></th>
-          <th style="width:185px" data-col="andar" onclick="EfPage.setSort('andar')" class="th-sort">Andar / Local<span class="sort-arrow"> ⇅</span></th>
-          <th>Atividade(s)</th>
-          <th style="width:100px">Ações</th>
-        </tr></thead>
-        <tbody id="workerTableBody"></tbody>
-      </table>
-    </div>
-    <div class="action-bar">
-      <button class="btn btn-ghost" onclick="EfPage.preview()">👁 Pré-visualizar</button>
-      <button class="btn btn-accent" onclick="EfPage.gerar()">📄 Gerar Relatório</button>
-    </div>
-  </section>
-
-  <section class="page" id="page-funcionarios">
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px;gap:10px">
-      <div style="flex:1;min-width:0">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;line-height:1">FUNCIONÁRIOS</div>
-        <div class="section-sub" id="funcSubtitle">–</div>
-      </div>
-      <div style="display:flex;gap:8px;flex-shrink:0">
-        <button class="btn btn-ghost" onclick="Modals.openImport()">↑ Importar</button>
-        <button class="btn btn-accent" onclick="Modals.openWorker()">+ Novo</button>
-      </div>
-    </div>
-    <div class="search-bar">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" id="funcSearch" placeholder="Buscar nome ou função…" oninput="FuncPage.render()">
-    </div>
-    <div style="margin-bottom:12px">
-      <select id="funcSort" onchange="FuncPage.render()" class="form-input" style="max-width:200px">
-        <option value="nome">Nome A-Z</option>
-        <option value="nome_z">Nome Z-A</option>
-        <option value="cargo">Cargo</option>
-        <option value="equipe">Equipe</option>
-        <option value="obra">Obra</option>
-      </select>
-    </div>
-    <div class="func-list" id="funcList"></div>
-  </section>
-  <section class="page" id="page-relatorios">
-    <div class="section-header"><div><div class="section-title">DESEMPENHO & PRESENÇA</div><div class="section-sub">Métricas de assiduidade</div></div></div>
-    <div id="statContent"></div>
-  </section>
-  <section class="page" id="page-historico">
-    <div class="section-header"><div><div class="section-title">HISTÓRICO DE EFETIVOS</div><div class="section-sub">Relatórios anteriores</div></div></div>
-    <div id="histContent"></div>
-  </section>
-  <section class="page" id="page-configuracoes">
-    <div class="section-header"><div><div class="section-title">CONFIGURAÇÕES</div><div class="section-sub">Andares, tarefas, equipes e obras</div></div></div>
-    <div id="cfgContent"></div>
-    <div style="height:20px"></div>
-  </section>
-  <section class="page" id="page-horasextras">
-    <div id="heContent"></div>
-    <div style="height:20px"></div>
-  </section>
-  <section class="page" id="page-producao">
-    <div id="prodContent"></div>
-    <div style="height:80px"></div>
-  </section>
-</main>
-</div>
-<div id="modalBackdrop" class="modal-backdrop" onclick="Modals.closeAll(event)">
-  <div class="modal" id="modalObra">
-    <div class="modal-handle"></div>
-    <div class="modal-header"><div class="modal-title">Selecionar Obra</div><button class="modal-close" onclick="Modals.close('modalObra')">✕</button></div>
-    <div id="obraOptions"></div>
-    <div class="add-item-row" style="margin-top:12px"><input class="form-input" id="newObraInput" placeholder="Nova obra…"><button class="btn btn-accent" onclick="App.addObra()">Add</button></div>
-  </div>
-  <div class="modal" id="modalWorker">
-    <div class="modal-handle"></div>
-    <div class="modal-header"><div class="modal-title" id="mwTitle">Novo Funcionário</div><button class="modal-close" onclick="Modals.close('modalWorker')">✕</button></div>
-    <div class="form-group"><label>Nome Completo *</label><input class="form-input" id="wName" placeholder="ex: João Silva"></div>
-    <div class="form-group"><label>Função / Cargo *</label><input class="form-input" id="wRole" placeholder="ex: Pedreiro"></div>
-    <div class="form-row">
-      <div class="form-group"><label>Equipe</label><select class="form-input" id="wTeam"></select></div>
-      <div class="form-group"><label>Obra</label><select class="form-input" id="wObra"></select></div>
-    </div>
-    <input type="hidden" id="wEditId">
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="Modals.close('modalWorker')">Cancelar</button><button class="btn btn-accent" onclick="FuncPage.save()">Salvar</button></div>
-  </div>
-  <div class="modal" id="modalMove">
-    <div class="modal-handle"></div>
-    <div class="modal-header"><div class="modal-title">Mover de Obra</div><button class="modal-close" onclick="Modals.close('modalMove')">✕</button></div>
-    <p style="font-size:13px;color:var(--t2);margin-bottom:14px" id="mvName"></p>
-    <div class="form-group"><label>Obra de destino</label><select class="form-input" id="mvObra"></select></div>
-    <input type="hidden" id="mvWid">
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="Modals.close('modalMove')">Cancelar</button><button class="btn btn-accent" onclick="FuncPage.confirmMove()">Mover</button></div>
-  </div>
-  <div class="modal" id="modalImport">
-    <div class="modal-handle"></div>
-    <div class="modal-header"><div class="modal-title">Importar Lista</div><button class="modal-close" onclick="Modals.close('modalImport')">✕</button></div>
-    <p style="font-size:12px;color:var(--t2);margin-bottom:12px">Um por linha: <code>Nome – Função</code></p>
-    <div class="form-row">
-      <div class="form-group"><label>Obra</label><select class="form-input" id="impObra"></select></div>
-      <div class="form-group"><label>Equipe padrão</label><select class="form-input" id="impEquipe"></select></div>
-    </div>
-    <div class="form-group"><label>Lista</label><textarea class="form-input" id="impText" rows="8" placeholder="Fabio – Ajudante&#10;Genival – Pedreiro"></textarea></div>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="Modals.close('modalImport')">Cancelar</button><button class="btn btn-accent" onclick="FuncPage.importW()">Importar</button></div>
-  </div>
-  <div class="modal modal-large" id="modalPreview">
-    <div class="modal-handle"></div>
-    <div class="modal-header"><div class="modal-title">Pré-visualização</div><button class="modal-close" onclick="Modals.close('modalPreview')">✕</button></div>
-    <div class="report-preview" id="previewText"></div>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="Modals.close('modalPreview')">Fechar</button><button class="btn btn-accent" onclick="EfPage.copyReport()">📋 Copiar WhatsApp</button></div>
-  </div>
-  <div class="modal modal-large" id="modalHistDetail">
-    <div class="modal-handle"></div>
-    <div class="modal-header"><div class="modal-title" id="histDetailTitle">Relatório</div><button class="modal-close" onclick="Modals.close('modalHistDetail')">✕</button></div>
-    <div class="report-preview" id="histDetailText"></div>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="Modals.close('modalHistDetail')">Fechar</button><button class="btn btn-accent" onclick="HistPage.copyCur()">📋 Copiar</button></div>
-  </div>
-  <div class="modal modal-large" id="modalScript">
-    <div class="modal-handle"></div>
-    <div class="modal-header"><div class="modal-title">Código Apps Script</div><button class="modal-close" onclick="Modals.close('modalScript')">✕</button></div>
-    <pre class="report-preview" id="scriptCode" style="font-size:10px;line-height:1.6"></pre>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="Modals.close('modalScript')">Fechar</button><button class="btn btn-accent" onclick="Utils.copy(document.getElementById('scriptCode').textContent,'Copiado!')">Copiar</button></div>
-  </div>
-  <div class="modal" id="modalHE" style="width:560px;max-width:95vw;height:80vh;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;padding:0">
-    <div class="modal-handle" style="flex-shrink:0"></div>
-    <div class="modal-header" style="flex-shrink:0">
-      <div class="modal-title" id="heModalTitle">Lançar Horas Extras</div>
-      <button class="modal-close" onclick="Modals.close('modalHE')">✕</button>
-    </div>
-    <!-- Step 1: apenas data -->
-    <div id="heStep1Wrap" style="flex:1;display:flex;flex-direction:column;min-height:0">
-      <div style="padding:0 16px 12px;flex-shrink:0">
-        <div class="form-group" style="margin:0">
-          <label style="font-size:11px;color:var(--t3)">Data</label>
-          <input type="date" class="form-input" id="heDate">
-        </div>
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:0 16px;margin-bottom:10px;flex-shrink:0">
-        <span style="font-size:12px;color:var(--t3)">Toque para selecionar</span>
-        <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="HEPage.selectAll()">Selecionar todos</button>
-      </div>
-      <div style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px 16px">
-        <div id="heStep1" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
-      </div>
-    </div>
-    <!-- Step 2: tipo + horas -->
-    <div id="heStep2Wrap" style="flex:1;display:flex;flex-direction:column;min-height:0;display:none">
-      <div style="padding:0 16px 12px;flex-shrink:0">
-        <div class="form-group" style="margin:0 0 10px">
-          <label style="font-size:11px;color:var(--t3)">Tipo de Hora Extra</label>
-          <select class="form-input" id="heTipo">
-            <option value="60">60% — Dia normal</option>
-            <option value="100">100% — Feriado / Domingo</option>
-          </select>
-        </div>
-        <div style="display:flex;gap:10px;align-items:center;background:var(--sf2);border:1px solid var(--bd2);border-radius:10px;padding:10px 14px">
-          <label style="font-size:12px;color:var(--t3);white-space:nowrap">Horas p/ todos:</label>
-          <input type="number" id="heTodosH" min="0.5" max="24" step="0.5" placeholder="ex: 2"
-            style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--bd2);color:var(--t1);font-family:JetBrains Mono,monospace;font-size:15px;outline:none;padding:4px;text-align:center">
-          <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px;white-space:nowrap" onclick="HEPage.setTodosIgual()">Aplicar a todos</button>
-        </div>
-      </div>
-      <div style="flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px 16px">
-        <div id="heStep2" style="display:flex;flex-direction:column;gap:4px"></div>
-      </div>
-    </div>
-    <div class="modal-footer" style="flex-shrink:0">
-      <button class="btn btn-ghost" onclick="Modals.close('modalHE')">Cancelar</button>
-      <button class="btn btn-accent" id="heBtnLancar" onclick="HEPage.goStep2()">Próximo →</button>
-      <button class="btn btn-accent" id="heBtnSalvar" style="display:none" onclick="HEPage.saveAdd()">💾 Salvar</button>
-    </div>
-  </div>
-  <div class="toast<div class="toast-container" id="toastContainer"></div>
+  </div
+<div class="toast-container" id="toastContainer"></div>
 <span id="lastSaved" style="display:none"></span>
 <script>
 /* ═══ STATE + PERSISTÊNCIA ═══ */
@@ -1645,6 +1428,7 @@ const HEPage = (() => {
     document.getElementById('heBtnLancar').style.display='block';
     document.getElementById('heBtnSalvar').style.display='none';
     Modals.open('modalHE');
+    document.getElementById('modalHE').style.display='flex';
     // Definir altura do scroll após modal abrir
     setTimeout(()=>{
       const scr=document.getElementById('heListScroll');
