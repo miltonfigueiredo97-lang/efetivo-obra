@@ -528,26 +528,27 @@ const State = (() => {
     if (!d.gsSheetId) d.gsSheetId = '1Zilh_8iKHIaiXqOg8OwHW6HUUjVERxYuLzUA6LoC6rQ';
   }
 
-  function save() {
+  function save(context) {
     try {
       localStorage.setItem(KEY, JSON.stringify(d));
       const el = document.getElementById('lastSaved');
       if (el) { const n=new Date(); el.textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0'); }
-      // Push state to Sheets for cross-device sync
-      _syncToSheets();
+      _syncToSheets(context);
     } catch(e) {}
   }
 
   let _syncTimer = null;
-  function _syncToSheets() {
-    // Debounce: wait 2s after last save before pushing
+  let _pendingCtx = {};
+  function _syncToSheets(context) {
+    if (context) _pendingCtx[context] = true;
     clearTimeout(_syncTimer);
-    _syncTimer = setTimeout(function() {
-      const gsUrl = d.gsUrl;
-      const gsSheetId = d.gsSheetId;
-      if (!gsUrl || !gsSheetId) return;
-      var _x=new XMLHttpRequest();_x.open('POST',gsUrl,true);_x.setRequestHeader('Content-Type','text/plain');_x.send(JSON.stringify({action:'saveState',sheetId:gsSheetId,state:d}));
-    }, 2000);
+    _syncTimer = setTimeout(async function() {
+      const ctx = Object.assign({}, _pendingCtx);
+      _pendingCtx = {};
+      if (!d.gsUrl || !d.gsSheetId) return;
+      if (ctx.workers) await Sheets.saveWorkers();
+      if (ctx.config)  await Sheets.saveConfig();
+    }, 1500);
   }
 
   function _merge(t, s) {
@@ -575,17 +576,17 @@ const State = (() => {
 
   function getEquipe(id) { return d.equipes.find(e=>e.id===id||e.nome===id); }
   function getWorker(id) { return d.workers.find(w=>w.id===id); }
-  function addWorker(w) { w.id='w'+Date.now(); d.workers.push(w); save(); return w; }
-  function updateWorker(id,f) { const w=d.workers.find(x=>x.id===id); if(w) Object.assign(w,f); save(); }
-  function removeWorker(id) { d.workers=d.workers.filter(w=>w.id!==id); save(); }
+  function addWorker(w) { w.id='w'+Date.now(); d.workers.push(w); save('workers'); return w; }
+  function updateWorker(id,f) { const w=d.workers.find(x=>x.id===id); if(w) Object.assign(w,f); save('workers'); }
+  function removeWorker(id) { d.workers=d.workers.filter(w=>w.id!==id); save('workers'); }
   function addObra(n) { if(!d.obras.includes(n)){d.obras.push(n);save();} }
   function removeObra(n) { d.obras=d.obras.filter(o=>o!==n); save(); }
-  function addAndar(v) { d.andares.push(v); save(); }
-  function removeAndar(i) { d.andares.splice(i,1); save(); }
-  function addTarefa(v) { d.tarefas.push(v); save(); }
-  function removeTarefa(i) { d.tarefas.splice(i,1); save(); }
-  function addEquipe(e) { e.id='eq'+Date.now(); d.equipes.push(e); save(); return e; }
-  function removeEquipe(id) { d.equipes=d.equipes.filter(e=>e.id!==id); save(); }
+  function addAndar(v) { d.andares.push(v); save('config'); }
+  function removeAndar(i) { d.andares.splice(i,1); save('config'); }
+  function addTarefa(v) { d.tarefas.push(v); save('config'); }
+  function removeTarefa(i) { d.tarefas.splice(i,1); save('config'); }
+  function addEquipe(e) { e.id='eq'+Date.now(); d.equipes.push(e); save('config'); return e; }
+  function removeEquipe(id) { d.equipes=d.equipes.filter(e=>e.id!==id); save('config'); }
   function addHistorico(h) { d.historico.unshift(h); if(d.historico.length>200) d.historico=d.historico.slice(0,200); save(); }
 
   // Horas extras
