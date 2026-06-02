@@ -1865,6 +1865,7 @@ const App = (() => {
     Utils.toast('🔄 Conectando ao Sheets...','info');
     try {
       const state = await Sheets.loadState();
+      alert('loadState retornou: ' + (state ? 'OBJETO com '+( state.workers||[]).length+' workers' : 'NULL/UNDEFINED'));
       if (!state) { Utils.toast('⚠️ Sheets retornou vazio','warn'); return; }
       state.gsUrl = s.gsUrl;
       state.gsSheetId = s.gsSheetId;
