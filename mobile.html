@@ -1076,7 +1076,7 @@ const FuncPage = (() => {
       return `<div class="func-card">
         <div class="func-info">
           <div class="func-name">${Utils.esc(w.nome)}</div>
-          <div class="func-meta"><span class="badge" style="background:${cor}22;color:${cor};border:1px solid ${cor}44">${Utils.esc(eq?eq.nome:w.equipe)}</span> ${Utils.esc(w.funcao)} · ${Utils.esc(w.obra)}</div>
+          <div class="func-meta"><span class="team-badge" style="background:${cor}22;color:${cor};border:1px solid ${cor}44">${Utils.esc(eq?eq.nome:w.equipe)}</span> <span style="color:var(--t2)">${Utils.esc(w.funcao)}</span></div>
         </div>
         <div class="row-actions">
           <button class="icon-btn" onclick="Modals.openWorker('${w.id}')">✏️</button>
@@ -1859,6 +1859,9 @@ const App = (() => {
       if (!state) return;
       state.gsUrl = s.gsUrl;
       state.gsSheetId = s.gsSheetId;
+      // Normalizar nomes de obras (evitar ALL CAPS vindo do Sheets)
+      if (state.obras) state.obras = state.obras.map(o => o === o.toUpperCase() ? o.charAt(0)+o.slice(1).toLowerCase() : o);
+      if (state.workers) state.workers.forEach(w => { if (w.obra === w.obra.toUpperCase()) w.obra = w.obra.charAt(0)+w.obra.slice(1).toLowerCase(); });
       localStorage.setItem('efetivo_v3', JSON.stringify(state));
       State.load();
       if (typeof EfPage !== 'undefined') EfPage.render();
