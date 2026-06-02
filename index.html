@@ -426,15 +426,49 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
     <pre class="report-preview" id="scriptCode" style="font-size:10px;line-height:1.6"></pre>
     <div class="modal-footer"><button class="btn btn-ghost" onclick="Modals.close('modalScript')">Fechar</button><button class="btn btn-accent" onclick="Utils.copy(document.getElementById('scriptCode').textContent,'Copiado!')">Copiar</button></div>
   </div>
-  <div class="modal" id="modalHE">
+  <div class="modal" id="modalHE" style="max-height:85vh;display:flex;flex-direction:column;overflow:hidden;width:560px;max-width:95vw">
     <div class="modal-handle"></div>
-    <div class="modal-header"><div class="modal-title">Lançar Horas Extras</div><button class="modal-close" onclick="Modals.close('modalHE')">✕</button></div>
-    <div class="form-group"><label>Data</label><input class="form-input" type="date" id="heDate"></div>
-    <div style="max-height:50vh;overflow-y:auto;display:flex;flex-direction:column;gap:4px" id="heRows"></div>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="Modals.close('modalHE')">Cancelar</button><button class="btn btn-accent" onclick="HEPage.saveAdd()">Salvar</button></div>
+    <div class="modal-header" style="flex-shrink:0">
+      <div class="modal-title" id="heModalTitle">Lançar Horas Extras</div>
+      <button class="modal-close" onclick="Modals.close('modalHE')">✕</button>
+    </div>
+    <div style="display:flex;gap:12px;padding:0 20px 14px;flex-shrink:0">
+      <div class="form-group" style="flex:1;margin:0">
+        <label style="font-size:11px;color:var(--t3)">Data</label>
+        <input type="date" class="form-input" id="heDate">
+      </div>
+      <div class="form-group" style="flex:1;margin:0">
+        <label style="font-size:11px;color:var(--t3)">Tipo</label>
+        <select class="form-input" id="heTipo">
+          <option value="60">60% — Dia normal</option>
+          <option value="100">100% — Feriado/Dom.</option>
+        </select>
+      </div>
+    </div>
+    <div id="heStep1Wrap" style="flex:1;overflow-y:auto;padding:0 20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span style="font-size:12px;color:var(--t3)">Clique para selecionar os funcionários</span>
+        <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="HEPage.selectAll()">Selecionar todos</button>
+      </div>
+      <div id="heStep1" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;padding-bottom:16px"></div>
+    </div>
+    <div id="heStep2Wrap" style="flex:1;overflow-y:auto;padding:0 20px;display:none">
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;background:var(--sf2);border:1px solid var(--bd2);border-radius:10px;padding:10px 16px">
+        <label style="font-size:12px;color:var(--t3);white-space:nowrap">Horas p/ todos:</label>
+        <input type="number" id="heTodosH" min="0.5" max="24" step="0.5" placeholder="ex: 2"
+          style="width:80px;background:transparent;border:none;border-bottom:1px solid var(--bd2);color:var(--t1);font-family:'JetBrains Mono',monospace;font-size:15px;outline:none;padding:4px 0;text-align:center">
+        <button class="btn btn-ghost" style="font-size:12px;padding:6px 14px" onclick="HEPage.setTodosIgual()">Aplicar a todos</button>
+      </div>
+      <div id="heStep2" style="display:flex;flex-direction:column;gap:4px;padding-bottom:16px"></div>
+    </div>
+    <div class="modal-footer" style="flex-shrink:0">
+      <button class="btn btn-ghost" onclick="Modals.close('modalHE')">Cancelar</button>
+      <button class="btn btn-accent" id="heBtnLancar" onclick="HEPage.goStep2()">Próximo →</button>
+      <button class="btn btn-accent" id="heBtnSalvar" style="display:none" onclick="HEPage.saveAdd()">💾 Salvar</button>
+    </div>
   </div>
-</div>
-<div class="toast-container" id="toastContainer"></div>
+
+  <div class="toast<div class="toast-container" id="toastContainer"></div>
 <span id="lastSaved" style="display:none"></span>
 <script>
 /* ═══ STATE + PERSISTÊNCIA ═══ */
@@ -1311,132 +1345,190 @@ const CfgPage = (() => {
 
 /* ═══ HORAS EXTRAS PAGE ═══ */
 const HEPage = (() => {
+  let _sel = [];
+
   function render() {
-    const s=State.get(); const obra=App.obra();
+    const s=State.get(), obra=App.obra();
     const entries=(s.horasExtras&&s.horasExtras[obra])||[];
     const el=document.getElementById('heContent');
     if(!el) return;
-    var html='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">'
-      +'<div><div style="font-family:\'Bebas Neue\',sans-serif;font-size:28px;letter-spacing:1px">HORAS EXTRAS</div>'
-      +'<div style="font-size:11px;color:var(--t3)">'+obra+'</div></div>'
-      +'<div style="display:flex;gap:8px;flex-wrap:wrap">'
-      +'<button class="btn btn-ghost" onclick="HEPage.gerarRelatorio()">&#x1F4CB; Relatório por Período</button>'
-      +'<button class="btn btn-accent" onclick="HEPage.openAdd()">+ Lançar Dia</button>'
-      +'</div></div>';
-    if(!entries.length){
-      html+='<div class="empty-state" style="padding:40px 0;text-align:center;color:var(--t3)">Nenhum lançamento ainda. Clique em <strong>+ Lançar Dia</strong>.</div>';
+    const meses=[...new Set(entries.map(e=>e.data.substring(0,7)))].sort().reverse();
+    const mesSel=document.getElementById('heMesFiltro')?.value||(meses[0]||'');
+    const filtradas=mesSel?entries.filter(e=>e.data.startsWith(mesSel)):entries;
+    const mesOpts=meses.map(m=>`<option value="${m}" ${m===mesSel?'selected':''}>${_fmtMes(m)}</option>`).join('');
+    let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
+      <div><div style="font-family:Bebas Neue,sans-serif;font-size:28px;letter-spacing:1px">HORAS EXTRAS</div>
+      <div style="font-size:11px;color:var(--t3)">${Utils.esc(obra)}</div></div>
+      <button class="btn btn-accent" onclick="HEPage.openStep1()">+ Lançar Dia</button></div>`;
+    if(meses.length) html+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
+      <label style="font-size:12px;color:var(--t3)">Mês:</label>
+      <select id="heMesFiltro" class="form-input" style="flex:1;font-size:12px" onchange="HEPage.render()">
+        <option value="">Todos</option>${mesOpts}</select>
+      <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="HEPage.gerarRelatorio()">📋 Relatório</button></div>`;
+    if(!filtradas.length){
+      html+=`<div style="padding:40px 0;text-align:center;color:var(--t3)">Nenhum lançamento. Clique em <strong>+ Lançar Dia</strong>.</div>`;
     } else {
-      html+='<div style="display:flex;flex-direction:column;gap:10px">';
-      entries.forEach(function(e){
-        var tipo=Utils.isSunday(e.data)?'&#x1F534; 100% (domingo)':'&#x26AA; 60% (dia útil)';
-        var total=e.registros.reduce(function(s,r){return s+Number(r.horas);},0);
-        html+='<div style="background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:16px">'
-          +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">'
-          +'<div><span style="font-family:\'Bebas Neue\',sans-serif;font-size:20px;color:var(--ac)">'+Utils.fmtPT(e.data)+'</span>'
-          +'<span style="font-size:11px;color:var(--t3);margin-left:10px">'+Utils.weekday(e.data)+'  '+tipo+'</span></div>'
-          +'<div style="display:flex;align-items:center;gap:10px">'
-          +'<span style="font-family:\'JetBrains Mono\',monospace;font-size:13px;color:var(--ac);font-weight:700">Total: '+total+'h</span>'
-          +'<button class="icon-btn danger" onclick="HEPage.remove(\''+e.id+'\')">'+'&#x2715;</button>'
-          +'</div></div>'
-          +'<div style="display:flex;flex-direction:column;gap:2px">';
-        e.registros.forEach(function(r){
-          var w=State.getWorker(r.wid);
-          html+='<div style="display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid var(--bd)">'
-            +'<span>'+(w?Utils.esc(w.nome):'?')+'<span style="color:var(--t3);font-size:11px"> '+(w?Utils.esc(w.funcao):'')+'</span></span>'
-            +'<span style="font-family:\'JetBrains Mono\',monospace;color:var(--ac);font-weight:700">'+r.horas+'h</span></div>';
-        });
-        html+='</div></div>';
+      html+=`<div style="display:flex;flex-direction:column;gap:10px">`;
+      filtradas.forEach(e=>{
+        const p100=Utils.isSunday(e.data)||e.tipo==='100';
+        const tipoLabel=p100
+          ?`<span style="background:rgba(239,68,68,.15);color:#ef4444;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">100% Feriado/Dom.</span>`
+          :`<span style="background:rgba(240,165,0,.15);color:var(--ac);padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">60% Normal</span>`;
+        const total=e.registros.reduce((s,r)=>s+Number(r.horas),0);
+        let rows=e.registros.map(r=>{
+          const w=State.getWorker(r.wid);
+          return `<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:5px 0;border-bottom:1px solid var(--bd)">
+            <span>${w?Utils.esc(w.nome):'?'}</span>
+            <span style="font-family:JetBrains Mono,monospace;color:var(--ac);font-weight:700">${r.horas}h</span></div>`;
+        }).join('');
+        html+=`<div style="background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:16px">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+            <div><span style="font-family:Bebas Neue,sans-serif;font-size:20px;color:var(--ac)">${Utils.fmtPT(e.data)}</span>
+            <div style="margin-top:4px;display:flex;gap:6px;align-items:center">${tipoLabel}
+            <span style="font-size:11px;color:var(--t3)">${Utils.weekday(e.data)}</span></div></div>
+            <div style="display:flex;align-items:center;gap:10px">
+            <span style="font-family:JetBrains Mono,monospace;font-size:14px;color:var(--ac);font-weight:700">${total}h</span>
+            <button class="icon-btn danger" onclick="HEPage.remove('${e.id}')">✕</button></div></div>
+          <div style="display:flex;flex-direction:column">${rows}</div></div>`;
       });
-      html+='</div>';
+      html+=`</div>`;
     }
     el.innerHTML=html;
   }
 
-  function openAdd() {
-    const s=State.get(); const obra=App.obra();
-    const ws=s.workers.filter(function(w){return w.obra===obra;}).sort(function(a,b){return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR');});
+  function _fmtMes(ym){
+    const ms=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    const [y,m]=ym.split('-'); return (ms[parseInt(m)-1]||m)+'/'+y;
+  }
+
+  function openStep1(){
+    _sel=[];
+    const s=State.get(), obra=App.obra();
+    const ws=s.workers.filter(w=>w.obra===obra).sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'));
     document.getElementById('heDate').value=App.date();
-    var rows='';
-    ws.forEach(function(w){
-      rows+='<div class="he-row">'
-        +'<label style="flex:1;display:flex;align-items:center;gap:10px;cursor:pointer">'
-        +'<input type="checkbox" id="hec-'+w.id+'" style="width:18px;height:18px;cursor:pointer;flex-shrink:0">'
-        +'<div><div style="font-size:13px;font-weight:600">'+Utils.esc(w.nome)+'</div>'
-        +'<div style="font-size:11px;color:var(--t3)">'+Utils.esc(w.funcao)+'</div></div></label>'
-        +'<input type="number" id="heh-'+w.id+'" min="0.5" max="24" step="0.5" placeholder="h"'
-        +' style="width:70px;background:var(--sf2);border:1px solid var(--bd2);color:var(--t1);font-family:\'JetBrains Mono\',monospace;font-size:14px;padding:8px;border-radius:6px;outline:none;text-align:center">'
-        +'</div>';
-    });
-    document.getElementById('heRows').innerHTML=rows;
+    document.getElementById('heTipo').value='60';
+    document.getElementById('heStep1').innerHTML=ws.map(w=>{
+      const eq=State.getEquipe(w.equipe), cor=eq?eq.cor:'#8b92b0';
+      return `<div class="he-row" id="hesel-${w.id}" onclick="HEPage.toggleSel('${w.id}')" style="cursor:pointer;border:1px solid var(--bd);border-radius:8px;padding:12px;display:flex;align-items:center;gap:12px;transition:all .15s">
+        <div id="hecheck-${w.id}" style="width:24px;height:24px;border-radius:6px;border:2px solid var(--bd2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px"></div>
+        <div style="flex:1"><div style="font-size:14px;font-weight:600">${Utils.esc(w.nome)}</div>
+        <div style="font-size:11px;color:var(--t3)">${Utils.esc(w.funcao)}</div></div>
+        <span style="background:${cor}22;color:${cor};border:1px solid ${cor}44;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">${Utils.esc(eq?eq.nome:w.equipe)}</span></div>`;
+    }).join('');
+    document.getElementById('heStep1Wrap').style.display='block';
+    document.getElementById('heStep2Wrap').style.display='none';
+    document.getElementById('heModalTitle').textContent='Selecionar Funcionários';
+    document.getElementById('heBtnLancar').style.display='block';
+    document.getElementById('heBtnSalvar').style.display='none';
     Modals.open('modalHE');
   }
 
-  function saveAdd() {
-    const s=State.get(); const obra=App.obra();
-    const date=document.getElementById('heDate').value;
-    if(!date){Utils.toast('Selecione a data.','warn');return;}
-    const ws=s.workers.filter(function(w){return w.obra===obra;});
-    var registros=[];
-    ws.forEach(function(w){
-      var cb=document.getElementById('hec-'+w.id);
-      var hi=document.getElementById('heh-'+w.id);
-      if(cb&&cb.checked&&hi&&hi.value&&Number(hi.value)>0) registros.push({wid:w.id,horas:Number(hi.value)});
+  function toggleSel(wid){
+    const idx=_sel.indexOf(wid);
+    const el=document.getElementById('hesel-'+wid);
+    const chk=document.getElementById('hecheck-'+wid);
+    if(idx>=0){
+      _sel.splice(idx,1);
+      if(el){el.style.background='';el.style.borderColor='var(--bd)';}
+      if(chk){chk.innerHTML='';chk.style.background='';chk.style.borderColor='var(--bd2)';}
+    } else {
+      _sel.push(wid);
+      if(el){el.style.background='var(--acd)';el.style.borderColor='var(--ac)';}
+      if(chk){chk.innerHTML='✓';chk.style.background='var(--ac)';chk.style.borderColor='var(--ac)';chk.style.color='#000';}
+    }
+  }
+
+  function selectAll(){
+    const s=State.get(), obra=App.obra();
+    _sel=[];
+    s.workers.filter(w=>w.obra===obra).forEach(w=>{
+      _sel.push(w.id);
+      const el=document.getElementById('hesel-'+w.id);
+      const chk=document.getElementById('hecheck-'+w.id);
+      if(el){el.style.background='var(--acd)';el.style.borderColor='var(--ac)';}
+      if(chk){chk.innerHTML='✓';chk.style.background='var(--ac)';chk.style.borderColor='var(--ac)';chk.style.color='#000';}
     });
-    if(!registros.length){Utils.toast('Marque ao menos um funcionário e informe as horas.','warn');return;}
+  }
+
+  function goStep2(){
+    if(!_sel.length){Utils.toast('Selecione ao menos um funcionário.','warn');return;}
+    document.getElementById('heStep2').innerHTML=_sel.map(wid=>{
+      const w=State.getWorker(wid);
+      return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--bd)">
+        <div style="flex:1"><div style="font-size:14px;font-weight:600">${w?Utils.esc(w.nome):'?'}</div>
+        <div style="font-size:11px;color:var(--t3)">${w?Utils.esc(w.funcao):''}</div></div>
+        <input type="number" id="heh-${wid}" min="0.5" max="24" step="0.5" placeholder="h"
+          style="width:70px;background:var(--sf2);border:1px solid var(--bd2);color:var(--t1);font-family:JetBrains Mono,monospace;font-size:16px;padding:8px;border-radius:8px;outline:none;text-align:center"></div>`;
+    }).join('');
+    document.getElementById('heStep1Wrap').style.display='none';
+    document.getElementById('heStep2Wrap').style.display='block';
+    document.getElementById('heModalTitle').textContent=`Lançar Horas (${_sel.length} func.)`;
+    document.getElementById('heBtnLancar').style.display='none';
+    document.getElementById('heBtnSalvar').style.display='block';
+  }
+
+  function setTodosIgual(){
+    const val=document.getElementById('heTodosH').value;
+    if(!val){Utils.toast('Informe o valor.','warn');return;}
+    _sel.forEach(wid=>{const inp=document.getElementById('heh-'+wid);if(inp)inp.value=val;});
+  }
+
+  function saveAdd(){
+    const s=State.get(), obra=App.obra();
+    const date=document.getElementById('heDate').value;
+    const tipo=document.getElementById('heTipo').value||'60';
+    if(!date){Utils.toast('Selecione a data.','warn');return;}
+    const registros=_sel.map(wid=>{
+      const w=State.getWorker(wid);
+      const hi=document.getElementById('heh-'+wid);
+      return hi&&hi.value&&Number(hi.value)>0?{wid,horas:Number(hi.value),nome:w?w.nome:'',funcao:w?w.funcao:''}:null;
+    }).filter(Boolean);
+    if(!registros.length){Utils.toast('Informe as horas de ao menos um funcionário.','warn');return;}
     if(!s.horasExtras)s.horasExtras={};
     if(!s.horasExtras[obra])s.horasExtras[obra]=[];
-    s.horasExtras[obra].unshift({id:'he'+Date.now(),data:date,registros:registros});
+    const entry={id:'he'+Date.now(),data:date,tipo,registros};
+    s.horasExtras[obra].unshift(entry);
     State.save();
+    Sheets.saveHE(obra,[entry]);
     Modals.close('modalHE');
     render();
-    Utils.toast('Lançamento salvo!','success');
+    Utils.toast('✅ Lançamento salvo!','success');
   }
 
-  function remove(id) {
-    if(!confirm('Remover este lançamento?')) return;
-    const s=State.get(); const obra=App.obra();
-    if(s.horasExtras&&s.horasExtras[obra]) s.horasExtras[obra]=s.horasExtras[obra].filter(function(e){return e.id!==id;});
-    State.save(); render();
+  function remove(id){
+    if(!confirm('Remover este lançamento?'))return;
+    const s=State.get(), obra=App.obra();
+    if(s.horasExtras&&s.horasExtras[obra]) s.horasExtras[obra]=s.horasExtras[obra].filter(e=>e.id!==id);
+    State.save(); Sheets.deleteHE(id); render();
   }
 
-  function gerarRelatorio() {
-    const s=State.get(); const obra=App.obra();
+  function gerarRelatorio(){
+    const s=State.get(), obra=App.obra();
+    const mes=document.getElementById('heMesFiltro')?.value;
     const entries=(s.horasExtras&&s.horasExtras[obra])||[];
-    if(!entries.length){Utils.toast('Nenhum lançamento.','warn');return;}
-    var ini=prompt('Data início (AAAA-MM-DD):',entries.length?entries[entries.length-1].data:App.date());
-    if(!ini) return;
-    var fim=prompt('Data fim (AAAA-MM-DD):',App.date());
-    if(!fim) return;
-    var filtered=entries.filter(function(e){return e.data>=ini&&e.data<=fim;});
-    if(!filtered.length){Utils.toast('Nenhum lançamento no período.','warn');return;}
-    var map60={}, map100={};
-    filtered.forEach(function(e){
-      var p100=Utils.isSunday(e.data);
-      e.registros.forEach(function(r){
-        if(p100){if(!map100[r.wid])map100[r.wid]=0;map100[r.wid]+=Number(r.horas);}
-        else{if(!map60[r.wid])map60[r.wid]=0;map60[r.wid]+=Number(r.horas);}
+    const filtered=mes?entries.filter(e=>e.data.startsWith(mes)):entries;
+    if(!filtered.length){Utils.toast('Nenhum lançamento.','warn');return;}
+    const map60={}, map100={};
+    filtered.forEach(e=>{
+      const p100=Utils.isSunday(e.data)||e.tipo==='100';
+      e.registros.forEach(r=>{
+        const w=State.getWorker(r.wid);
+        const nome=r.nome||(w?w.nome:'?');
+        if(p100){map100[nome]=(map100[nome]||0)+Number(r.horas);}
+        else{map60[nome]=(map60[nome]||0)+Number(r.horas);}
       });
     });
-    var allWids={};
-    Object.keys(map60).forEach(function(k){allWids[k]=1;});
-    Object.keys(map100).forEach(function(k){allWids[k]=1;});
-    allWids=Object.keys(allWids);
-    var txt='*HORAS EXTRAS – '+obra.toUpperCase()+'*\n*Período: '+Utils.fmtPT(ini)+' a '+Utils.fmtPT(fim)+'*\n\n';
-    allWids.sort(function(a,b){
-      var wa=State.getWorker(a), wb=State.getWorker(b);
-      return ((wa&&wa.nome)||'').localeCompare((wb&&wb.nome)||'','pt-BR');
-    }).forEach(function(wid){
-      var w=State.getWorker(wid);
-      txt+='*'+(w&&w.nome||'?')+'* – '+(w&&w.funcao||'')+'\n';
-      if(map60[wid]) txt+='  • '+map60[wid]+'h a 60% (dias úteis)\n';
-      if(map100[wid]) txt+='  • '+map100[wid]+'h a 100% (domingos/feriados)\n';
-      txt+='  Total: '+((map60[wid]||0)+(map100[wid]||0))+'h\n\n';
+    const nomes=[...new Set([...Object.keys(map60),...Object.keys(map100)])].sort();
+    let txt=`⏰ RELATÓRIO DE HORAS EXTRAS\n${mes?_fmtMes(mes):'Todo o período'}\nObra: ${obra}\n\n`;
+    nomes.forEach(n=>{
+      const p=[]; if(map60[n])p.push(`${map60[n]}h (60%)`); if(map100[n])p.push(`${map100[n]}h (100%)`);
+      txt+=`${n}: ${p.join(' + ')}\n`;
     });
     document.getElementById('previewText').textContent=txt;
     Modals.open('modalPreview');
   }
 
-  return {render,openAdd,saveAdd,remove,gerarRelatorio};
+  return {render,openStep1,toggleSel,selectAll,goStep2,setTodosIgual,saveAdd,remove,gerarRelatorio};
 })();
 
 /* ═══ GERADOR DE TEXTO DO EFETIVO ═══ */
