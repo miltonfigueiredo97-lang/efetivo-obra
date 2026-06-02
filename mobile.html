@@ -2049,6 +2049,15 @@ const EfPage = (() => {
     App.updateTopbar();
   }
 
+  function toggleAndar(wid, val) {
+    const obra=App.obra(), date=App.date();
+    const dd=State.getDayData(obra,date,wid);
+    const cur=(dd.andar||'').split(',').map(s=>s.trim()).filter(Boolean);
+    const idx=cur.indexOf(val);
+    if(idx>=0) cur.splice(idx,1); else cur.push(val);
+    State.setDayField(obra,date,wid,'andar',cur.join(', '));
+    render();
+  }
   return { render, renderFilters, setTeam, toggleCard, togglePres, setAndar, setMotivo, addTag, addNewTag, rmTag, preview, copyReport, salvarRelatorio, gerar, toggleAndar };
 })();
 
