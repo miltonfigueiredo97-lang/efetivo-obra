@@ -526,6 +526,10 @@ const State = (() => {
     // Garantir URL e ID sempre presentes
     if (!d.gsUrl) d.gsUrl = 'https://script.google.com/macros/s/AKfycbz2WSboxUbnfKM_hp_91DIu04b2WFWfHSXdj6RG2ITkyLq7W9eDAtVdpN3ogcFUa-JM/exec';
     if (!d.gsSheetId) d.gsSheetId = '1Zilh_8iKHIaiXqOg8OwHW6HUUjVERxYuLzUA6LoC6rQ';
+    // Normalizar tarefas antigas (strings) para objetos {nome, equipes}
+    if (d.tarefas && d.tarefas.length > 0 && typeof d.tarefas[0] === 'string') {
+      d.tarefas = d.tarefas.map(function(t){ return {nome:t, equipes:[]}; });
+    }
   }
 
   function save(context) {
@@ -583,7 +587,7 @@ const State = (() => {
   function removeObra(n) { d.obras=d.obras.filter(o=>o!==n); save(); }
   function addAndar(v) { d.andares.push(v); save('config'); }
   function removeAndar(i) { d.andares.splice(i,1); save('config'); }
-  function addTarefa(v) { d.tarefas.push(v); save('config'); }
+  function addTarefa(v) { d.tarefas.push(typeof v==='string'?{nome:v,equipes:[]}:v); save('config'); }
   function removeTarefa(i) { d.tarefas.splice(i,1); save('config'); }
   function addEquipe(e) { e.id='eq'+Date.now(); d.equipes.push(e); save('config'); return e; }
   function removeEquipe(id) { d.equipes=d.equipes.filter(e=>e.id!==id); save('config'); }
@@ -1677,7 +1681,15 @@ const EfPage = (() => {
       const tags = (dd.tarefas||[]).map(t =>
         `<span class="activity-tag">${Utils.esc(t)}<button onclick="EfPage.rmTag('${w.id}','${t.replace(/'/g,"\\'")}')">×</button></span>`
       ).join('');
-      const tarefaOpts = s.tarefas.filter(t=>!(dd.tarefas||[]).includes(t)).map(t=>`<option value="${Utils.esc(t)}">${Utils.esc(t)}</option>`).join('');
+      const _eqNome = eq ? eq.nome : w.equipe;
+      const _tarNomes = s.tarefas.map(t => typeof t === 'string' ? t : t.nome);
+      const _tarFiltradas = s.tarefas.filter(t => {
+        const nome = typeof t === 'string' ? t : t.nome;
+        const eqs = typeof t === 'string' ? [] : (t.equipes||[]);
+        if (eqs.length === 0) return true; // global
+        return eqs.includes(_eqNome);
+      }).map(t => typeof t === 'string' ? t : t.nome);
+      const tarefaOpts = _tarFiltradas.filter(t=>!(dd.tarefas||[]).includes(t)).map(t=>`<option value="${Utils.esc(t)}">${Utils.esc(t)}</option>`).join('');
       const andarSel = andarOpts.replace(`value="${Utils.esc(dd.andar)}"`,`value="${Utils.esc(dd.andar)}" selected`);
 
       return `<tr id="drow-${w.id}" class="${absent?'absent':''}">
@@ -1701,6 +1713,10 @@ const EfPage = (() => {
               <option value="">Selecionar atividade existente</option>${tarefaOpts}
             </select>
             <button class="add-btn" onclick="EfPage.addTag('${w.id}')">+</button>
+          </div>
+          <div style="display:flex;gap:5px;align-items:center;margin-top:4px">
+            <input class="inline-select" id="newact-${w.id}" placeholder="Nova atividade…" style="min-width:180px;font-size:12px">
+            <button class="add-btn" onclick="EfPage.addNewTag('${w.id}')">+</button>
           </div>`:''}
         </td>
         <td>
