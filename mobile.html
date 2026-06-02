@@ -1827,6 +1827,10 @@ const App = (() => {
   let _obra = '';
 
   function init() {
+    // TESTE - remover depois
+    const _gsTest = localStorage.getItem('efetivo_v3');
+    const _parsed = _gsTest ? JSON.parse(_gsTest) : {};
+    alert('INIT rodando. gsUrl=' + (_parsed.gsUrl||'VAZIO') + ' | gsSheetId=' + (_parsed.gsSheetId||'VAZIO'));
     State.load();
     // Garantir URL e ID do Sheets em qualquer dispositivo
     (function(){
