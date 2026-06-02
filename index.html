@@ -140,10 +140,7 @@ input[type=date]:focus{border-color:var(--ac);}
 /* MODALS */
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:500;display:none;align-items:center;justify-content:center;}
 .modal-backdrop.open{display:flex;}
-#modalHE{padding:0;overflow:hidden;}
-#heListScroll,#heListScroll2{overflow-y:scroll;-webkit-overflow-scrolling:touch;}
 .modal{background:var(--sf);border:1px solid var(--bd2);border-radius:14px;padding:24px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;animation:fadeIn .2s ease;}
-#modalHE{padding:0;overflow:hidden;}
 .modal-large{max-width:700px;}
 @keyframes fadeIn{from{opacity:0;transform:scale(.97);}to{opacity:1;transform:scale(1);}}
 .modal-handle{display:none;}
@@ -617,10 +614,7 @@ input[type=date]:focus{border-color:var(--ac);}
 /* MODALS */
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:500;display:none;align-items:center;justify-content:center;}
 .modal-backdrop.open{display:flex;}
-#modalHE{padding:0;overflow:hidden;}
-#heListScroll,#heListScroll2{overflow-y:scroll;-webkit-overflow-scrolling:touch;}
 .modal{background:var(--sf);border:1px solid var(--bd2);border-radius:14px;padding:24px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;animation:fadeIn .2s ease;}
-#modalHE{padding:0;overflow:hidden;}
 .modal-large{max-width:700px;}
 @keyframes fadeIn{from{opacity:0;transform:scale(.97);}to{opacity:1;transform:scale(1);}}
 .modal-handle{display:none;}
@@ -1908,6 +1902,18 @@ const HEPage = (() => {
     document.getElementById('heBtnLancar').style.display='block';
     document.getElementById('heBtnSalvar').style.display='none';
     Modals.open('modalHE');
+    // Definir altura do scroll após modal abrir
+    setTimeout(()=>{
+      const scr=document.getElementById('heListScroll');
+      const modal=document.getElementById('modalHE');
+      if(scr&&modal){
+        const used=modal.querySelector('.modal-header').offsetHeight
+          +(modal.querySelector('[style*="heDate"]')||modal.querySelectorAll('[style*="flex-shrink:0"]')[1])?.offsetHeight||60
+          +50+60; // titulo+data+filtro+footer
+        scr.style.maxHeight=(window.innerHeight*0.75-used)+'px';
+        scr.style.overflowY='scroll';
+      }
+    },50);
   }
 
   function toggleSel(wid){
