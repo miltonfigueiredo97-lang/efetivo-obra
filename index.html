@@ -140,8 +140,6 @@ input[type=date]:focus{border-color:var(--ac);}
 /* MODALS */
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:500;display:none;align-items:center;justify-content:center;}
 .modal-backdrop.open{display:flex;}
-#modalHE{padding:0;}
-#heListScroll,#heListScroll2{overflow-y:auto;max-height:50vh;}
 .modal{background:var(--sf);border:1px solid var(--bd2);border-radius:14px;padding:24px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;animation:fadeIn .2s ease;}
 .modal-large{max-width:700px;}
 @keyframes fadeIn{from{opacity:0;transform:scale(.97);}to{opacity:1;transform:scale(1);}}
@@ -428,54 +426,46 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
     <pre class="report-preview" id="scriptCode" style="font-size:10px;line-height:1.6"></pre>
     <div class="modal-footer"><button class="btn btn-ghost" onclick="Modals.close('modalScript')">Fechar</button><button class="btn btn-accent" onclick="Utils.copy(document.getElementById('scriptCode').textContent,'Copiado!')">Copiar</button></div>
   </div>
-  <div class="modal" id="modalHE">
-    <div class="modal-handle" style="flex-shrink:0;padding-top:6px"></div>
-    <div class="modal-header" style="flex-shrink:0;padding:0 16px 12px">
+  <div class="modal" id="modalHE" style="width:560px;max-width:95vw;padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:80vh">
+    <div class="modal-header" style="padding:20px 20px 12px;flex-shrink:0">
       <div class="modal-title" id="heModalTitle">Lançar Horas Extras</div>
       <button class="modal-close" onclick="Modals.close('modalHE')">✕</button>
     </div>
-    <div id="heStep1Wrap" style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0">
-      <div style="padding:0 16px 10px;flex-shrink:0">
-        <div class="form-group" style="margin:0">
-          <label style="font-size:11px;color:var(--t3)">Data</label>
-          <input type="date" class="form-input" id="heDate">
-        </div>
+    <div id="heStep1Wrap" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden">
+      <div style="padding:0 20px 12px;flex-shrink:0">
+        <input type="date" class="form-input" id="heDate" style="width:100%">
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:0 16px 10px;flex-shrink:0">
-        <span style="font-size:12px;color:var(--t3)">Toque para selecionar</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:0 20px 10px;flex-shrink:0">
+        <span style="font-size:12px;color:var(--t3)">Clique para selecionar</span>
         <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="HEPage.selectAll()">Selecionar todos</button>
       </div>
-      <div id="heListScroll" style="overflow-y:scroll;-webkit-overflow-scrolling:touch;flex:1;min-height:0;padding:0 16px 16px">
+      <div id="heListScroll" style="overflow-y:auto;flex:1;min-height:0;padding:0 20px 16px">
         <div id="heStep1" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
       </div>
     </div>
-    <div id="heStep2Wrap" style="flex:1;display:none;flex-direction:column;overflow:hidden;min-height:0">
-      <div style="padding:0 16px 12px;flex-shrink:0">
-        <div class="form-group" style="margin:0 0 10px">
-          <label style="font-size:11px;color:var(--t3)">Tipo</label>
-          <select class="form-input" id="heTipo">
-            <option value="60">60% — Dia normal</option>
-            <option value="100">100% — Feriado / Domingo</option>
-          </select>
-        </div>
+    <div id="heStep2Wrap" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden">
+      <div style="padding:0 20px 12px;flex-shrink:0">
+        <select class="form-input" id="heTipo" style="width:100%;margin-bottom:10px">
+          <option value="60">60% — Dia normal</option>
+          <option value="100">100% — Feriado / Domingo</option>
+        </select>
         <div style="display:flex;gap:10px;align-items:center;background:var(--sf2);border:1px solid var(--bd2);border-radius:10px;padding:10px 14px">
           <label style="font-size:12px;color:var(--t3);white-space:nowrap">Horas p/ todos:</label>
           <input type="number" id="heTodosH" min="0.5" max="24" step="0.5" placeholder="ex: 2"
             style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--bd2);color:var(--t1);font-family:JetBrains Mono,monospace;font-size:15px;outline:none;padding:4px;text-align:center">
-          <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px;white-space:nowrap" onclick="HEPage.setTodosIgual()">Aplicar a todos</button>
+          <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px" onclick="HEPage.setTodosIgual()">Aplicar a todos</button>
         </div>
       </div>
-      <div id="heListScroll2" style="overflow-y:scroll;-webkit-overflow-scrolling:touch;flex:1;min-height:0;padding:0 16px 16px">
+      <div id="heListScroll2" style="overflow-y:auto;flex:1;min-height:0;padding:0 20px 16px">
         <div id="heStep2" style="display:flex;flex-direction:column;gap:4px"></div>
       </div>
     </div>
-    <div class="modal-footer" style="flex-shrink:0;padding:12px 16px">
+    <div class="modal-footer" style="padding:12px 20px;flex-shrink:0">
       <button class="btn btn-ghost" onclick="Modals.close('modalHE')">Cancelar</button>
       <button class="btn btn-accent" id="heBtnLancar" onclick="HEPage.goStep2()">Próximo →</button>
       <button class="btn btn-accent" id="heBtnSalvar" style="display:none" onclick="HEPage.saveAdd()">💾 Salvar</button>
     </div>
-  </div
-<div class="toast-container" id="toastContainer"></div>
+  </div>ass="toast-container" id="toastContainer"></div>
 <span id="lastSaved" style="display:none"></span>
 <script>
 /* ═══ STATE + PERSISTÊNCIA ═══ */
@@ -1424,6 +1414,7 @@ const HEPage = (() => {
     }).join('');
     document.getElementById('heStep1Wrap').style.display='flex';
     document.getElementById('heStep2Wrap').style.display='none';
+    document.getElementById('heStep2Wrap').style.flexDirection='column';
     document.getElementById('heModalTitle').textContent='Selecionar Funcionários';
     document.getElementById('heBtnLancar').style.display='block';
     document.getElementById('heBtnSalvar').style.display='none';
@@ -1482,6 +1473,7 @@ const HEPage = (() => {
     }).join('');
     document.getElementById('heStep1Wrap').style.display='none';
     document.getElementById('heStep2Wrap').style.display='flex';
+    document.getElementById('heStep2Wrap').style.flexDirection='column';
     document.getElementById('heModalTitle').textContent=`Lançar Horas (${_sel.length} func.)`;
     document.getElementById('heBtnLancar').style.display='none';
     document.getElementById('heBtnSalvar').style.display='block';
