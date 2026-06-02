@@ -169,6 +169,8 @@ input[type=date]:focus{border-color:var(--ac);}
 /* MODALS */
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:500;display:none;align-items:flex-end;justify-content:center;}
 .modal-backdrop.open{display:flex;}
+#modalHE{padding:0;}
+#heListScroll,#heListScroll2{overflow-y:auto;max-height:50vh;}
 
 .modal{background:var(--sf);border:1px solid var(--bd2);border-radius:20px 20px 0 0;padding:6px 18px calc(18px + env(safe-area-inset-bottom,0px));width:100%;max-height:92dvh;overflow-y:auto;animation:sheetUp .2s ease;}
 .modal-large{max-height:94dvh;}
@@ -442,7 +444,7 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
     <pre class="report-preview" id="scriptCode" style="font-size:10px;line-height:1.6"></pre>
     <div class="modal-footer"><button class="btn btn-ghost" onclick="Modals.close('modalScript')">Fechar</button><button class="btn btn-accent" onclick="Utils.copy(document.getElementById('scriptCode').textContent,'Copiado!')">Copiar</button></div>
   </div>
-  <div class="modal" id="modalHE" style="height:80vh;display:flex;flex-direction:column;padding:0;overflow:hidden">
+  <div class="modal" id="modalHE">
     <div class="modal-handle" style="flex-shrink:0;padding-top:6px"></div>
     <div class="modal-header" style="flex-shrink:0;padding:0 16px 12px">
       <div class="modal-title" id="heModalTitle">Lançar Horas Extras</div>
@@ -584,6 +586,19 @@ const State = (() => {
     // Normalizar tarefas antigas (strings) para objetos {nome, equipes}
     if (d.tarefas && d.tarefas.length > 0 && typeof d.tarefas[0] === 'string') {
       d.tarefas = d.tarefas.map(function(t){ return {nome:t, equipes:[]}; });
+    }
+    // Normalizar andar de string para array
+    if (d.dailyData) {
+      Object.values(d.dailyData).forEach(function(obraData) {
+        Object.values(obraData).forEach(function(dayData) {
+          Object.values(dayData).forEach(function(wd) {
+            if (wd && typeof wd.andar === 'string') {
+              wd.andares = wd.andar ? [wd.andar] : [];
+              delete wd.andar;
+            }
+          });
+        });
+      });
     }
   }
 
@@ -1442,6 +1457,7 @@ const HEPage = (() => {
     document.getElementById('heBtnLancar').style.display='block';
     document.getElementById('heBtnSalvar').style.display='none';
     Modals.open('modalHE');
+    document.getElementById('modalHE').style.display='flex';
     // Definir altura do scroll após modal abrir
     setTimeout(()=>{
       const scr=document.getElementById('heListScroll');
@@ -1624,7 +1640,8 @@ function buildReportText(obra, date) {
   const byAndar = {};
   nonAdm.forEach(function(w){
     const dd = dayMap[w.id] || {};
-    const andar = dd.andar || 'SEM LOCAL DEFINIDO';
+    const ddAndares2 = dd.andares || (dd.andar ? [dd.andar] : []);
+    const andar = ddAndares2.length ? ddAndares2.join(', ') : 'SEM LOCAL DEFINIDO';
     if (!byAndar[andar]) byAndar[andar] = { tarefas: [], workers: [] };
     byAndar[andar].workers.push(w);
     (dd.tarefas||[]).forEach(function(t){ if(!byAndar[andar].tarefas.includes(t)) byAndar[andar].tarefas.push(t); });
@@ -1845,7 +1862,6 @@ const EfPage = (() => {
         return eqs.includes(_eqNome);
       }).map(t => typeof t === 'string' ? t : t.nome);
       const tarefaOpts = _tarFiltradas.filter(t=>!(dd.tarefas||[]).includes(t)).map(t=>`<option value="${Utils.esc(t)}">${Utils.esc(t)}</option>`).join('');
-      const andarSel = andarOpts.replace(`value="${Utils.esc(dd.andar)}"`,`value="${Utils.esc(dd.andar)}" selected`);
 
       return `<div class="worker-card ${absent?'absent':''}" id="wcard-${w.id}">
         <div class="worker-card-top">
@@ -1878,7 +1894,14 @@ const EfPage = (() => {
             </div>` : `
             <div>
               <div class="field-label">Andar / Local</div>
-              <select class="inline-select" onchange="EfPage.setAndar('${w.id}',this.value)">${andarSel}</select>
+              <details style="width:100%">
+                <summary style="cursor:pointer;padding:8px 12px;background:var(--sf2);border:1px solid var(--bd2);border-radius:8px;font-size:13px;color:${ddAndares.length?'var(--t1)':'var(--t3)'};list-style:none;display:flex;align-items:center;justify-content:space-between">
+                  <span>${andarLabel}</span><span style="font-size:10px;color:var(--t3)">▼</span>
+                </summary>
+                <div style="padding:8px;background:var(--sf2);border:1px solid var(--bd2);border-top:none;border-radius:0 0 8px 8px;display:flex;flex-wrap:wrap;max-height:150px;overflow-y:auto">
+                  ${andarChipsHtml}
+                </div>
+              </details>
             </div>
             <div>
               <div class="field-label">Atividades</div>
@@ -2025,7 +2048,17 @@ const EfPage = (() => {
     App.updateTopbar();
   }
 
-  return { render, renderFilters, setTeam, toggleCard, togglePres, setAndar, setMotivo, addTag, addNewTag, rmTag, preview, copyReport, gerar };
+  function salvarRelatorio() {
+    const s=State.get(), obra=App.obra(), date=App.date();
+    const txt=document.getElementById('previewText').textContent;
+    const dayMap=s.dailyData?.[obra]?.[date]||{};
+    const presentes=s.workers.filter(w=>w.obra===obra&&dayMap[w.id]?.presente!==false);
+    Sheets.saveEfetivo(date, obra);
+    Sheets.saveRelatorio(date, obra, presentes.length, txt);
+    Utils.toast('✅ Relatório salvo no Sheets!','success');
+    Modals.close('modalPreview');
+  }
+  return { render, renderFilters, setTeam, toggleCard, togglePres, setAndar, toggleAndar, setMotivo, addTag, addNewTag, rmTag, preview, copyReport, gerar, salvarRelatorio };
 })();
 
 
