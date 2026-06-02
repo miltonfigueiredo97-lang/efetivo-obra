@@ -1068,11 +1068,11 @@ const FuncPage = (() => {
     let ws=[...s.workers];
     if(q) ws=ws.filter(w=>w.nome.toLowerCase().includes(q)||w.funcao.toLowerCase().includes(q));
     ws.sort((a,b)=>{
-      if(sort==='nome_z') return b.nome.localeCompare(a.nome,'pt-BR');
-      if(sort==='cargo') return a.funcao.localeCompare(b.funcao,'pt-BR');
+      if(sort==='nome_z') return String(b.nome||'').localeCompare(String(a.nome||''),'pt-BR');
+      if(sort==='cargo') return String(a.funcao||'').localeCompare(String(b.funcao||''),'pt-BR');
       if(sort==='equipe') { const ea=(State.getEquipe(a.equipe)||{}).nome||''; const eb=(State.getEquipe(b.equipe)||{}).nome||''; return ea.localeCompare(eb,'pt-BR'); }
-      if(sort==='obra') return a.obra.localeCompare(b.obra,'pt-BR');
-      return a.nome.localeCompare(b.nome,'pt-BR');
+      if(sort==='obra') return String(a.obra||'').localeCompare(String(b.obra||''),'pt-BR');
+      return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR');
     });
     const el=document.getElementById('funcList');
     if(!el) return;
@@ -1318,7 +1318,7 @@ const HEPage = (() => {
 
   function openAdd() {
     const s=State.get(); const obra=App.obra();
-    const ws=s.workers.filter(function(w){return w.obra===obra;}).sort(function(a,b){return a.nome.localeCompare(b.nome,'pt-BR');});
+    const ws=s.workers.filter(function(w){return w.obra===obra;}).sort(function(a,b){return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR');});
     document.getElementById('heDate').value=App.date();
     var rows='';
     ws.forEach(function(w){
@@ -1451,7 +1451,7 @@ function buildReportText(obra, date) {
   const admPresentes = presentes.filter(function(w){ return w.equipe === admId; });
   if (admPresentes.length) {
     txt += '*ADMINISTRA\u00c7\u00c3O E OPERACIONAL*\n';
-    admPresentes.sort(function(a,b){ return a.nome.localeCompare(b.nome,'pt-BR'); }).forEach(function(w){
+    admPresentes.sort(function(a,b){ return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'); }).forEach(function(w){
       txt += '\u2022 ' + w.nome + ' \u2013 ' + w.funcao + '\n';
       const dd = dayMap[w.id] || {};
       (dd.tarefas||[]).sort(function(a,b){ return a.localeCompare(b,'pt-BR'); }).forEach(function(t){ txt += '  \u25e6 ' + t + '\n'; });
@@ -1482,7 +1482,7 @@ function buildReportText(obra, date) {
       tf.forEach(function(t){ txt += '\u2022 ' + t + '\n'; });
     }
     txt += '*Funcion\u00e1rios:*\n';
-    grp.workers.sort(function(a,b){ return a.nome.localeCompare(b.nome,'pt-BR'); })
+    grp.workers.sort(function(a,b){ return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'); })
       .forEach(function(w){ txt += '\u2022 ' + w.nome + ' \u2013 ' + w.funcao + '\n'; });
     txt += '\n';
   });
@@ -1490,7 +1490,7 @@ function buildReportText(obra, date) {
   txt += '*TOTAL DE FUNCION\u00c1RIOS: ' + presentes.length + '*\n';
   if (ausentes.length) {
     txt += '\n*FALTANTES*\n';
-    ausentes.sort(function(a,b){ return a.nome.localeCompare(b.nome,'pt-BR'); }).forEach(function(w){
+    ausentes.sort(function(a,b){ return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'); }).forEach(function(w){
       const dd = dayMap[w.id] || {};
       txt += '\u2022 ' + w.nome + ' \u2013 ' + (dd.motivo||'Sem justificativa') + '\n';
     });
