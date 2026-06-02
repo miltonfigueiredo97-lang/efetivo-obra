@@ -1300,7 +1300,8 @@ const CfgPage = (() => {
     return `<div class="settings-item" style="flex-direction:column;align-items:flex-start;gap:6px;padding:10px 12px">
       <div style="display:flex;width:100%;align-items:center;gap:8px">
         <span style="flex:1;font-size:13px">${Utils.esc(nome)}</span>
-        <button class="icon-btn danger" style="width:24px;height:24px;font-size:11px;flex-shrink:0" onclick="CfgPage.rmTarefa(${i})">✕</button>
+        <button class="icon-btn" style="width:24px;height:24px;font-size:11px;flex-shrink:0" onclick="CfgPage.editTarefa(${i})">✏️</button>
+      <button class="icon-btn danger" style="width:24px;height:24px;font-size:11px;flex-shrink:0" onclick="CfgPage.rmTarefa(${i})">✕</button>
       </div>
       <div style="display:flex;flex-wrap:wrap;gap:4px">${chips || '<span style="font-size:10px;color:var(--t3)">Global (todas as equipes)</span>'}</div>
     </div>`;
@@ -1615,9 +1616,12 @@ function buildReportText(obra, date) {
   const byAndar = {};
   nonAdm.forEach(function(w){
     const dd = dayMap[w.id] || {};
-    // Suporte a múltiplos andares (string separada por vírgula)
-    const andares = dd.andar ? dd.andar.split(',').map(function(a){return a.trim();}).filter(Boolean) : ['SEM LOCAL DEFINIDO'];
-    andares.forEach(function(andar){
+    const andarRaw = dd.andar || '';
+    // Sempre dividir por vírgula para suporte a múltiplos andares
+    const andares = andarRaw ? andarRaw.split(',').map(function(a){return a.trim();}).filter(Boolean) : ['SEM LOCAL DEFINIDO'];
+    // Usar só andares únicos (evitar duplicatas se string já estava separada)
+    const uniqueAndares = andares.filter(function(a,i){return andares.indexOf(a)===i;});
+    uniqueAndares.forEach(function(andar){
       if (!byAndar[andar]) byAndar[andar] = { tarefas: [], workers: [] };
       if (!byAndar[andar].workers.find(function(x){return x.id===w.id;})) byAndar[andar].workers.push(w);
       (dd.tarefas||[]).forEach(function(t){ if(!byAndar[andar].tarefas.includes(t)) byAndar[andar].tarefas.push(t); });
