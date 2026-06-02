@@ -1546,6 +1546,7 @@ const ProdPage = (() => {
             </div>`).join('')}
         </div>
         <button class="btn btn-ghost" onclick="ProdPage.addConc()">+ Adicionar concretagem</button>
+        <button class="btn btn-accent" onclick="ProdPage.saveConc()" style="margin-top:8px">💾 Salvar Concretagens</button>
       </div>
     `;
   }
@@ -1565,7 +1566,10 @@ const ProdPage = (() => {
       acoAlv:document.getElementById('pgAcoAlv').value,
       acoLaje:document.getElementById('pgAcoLaje').value,
     };
-    State.save();Utils.toast('Informações gerais salvas!','success');
+    State.save();
+    const _s=State.get(),_o=App.obra(),_d=App.date();
+    Sheets.saveProd(_d,_o,_s.producaoGeral?.[_o]||{},_s.producaoDiaria?.[_o]?.[_d]||{});
+    Utils.toast('Informações gerais salvas!','success');
   }
 
   function _getDailyData(){
@@ -1580,14 +1584,23 @@ const ProdPage = (() => {
     const pd=_getDailyData();
     pd.alvEst={vol:Number(document.getElementById('pdAlvEstVol').value)||0,qtd:Number(document.getElementById('pdAlvEstQtd').value)||0};
     pd.alvVed={vol:Number(document.getElementById('pdAlvVedVol').value)||0,qtd:Number(document.getElementById('pdAlvVedQtd').value)||0};
-    State.save();Utils.toast('Produção do dia salva!','success');
+    State.save();
+    const _s2=State.get(),_o2=App.obra(),_d2=App.date();
+    Sheets.saveProd(_d2,_o2,_s2.producaoGeral?.[_o2]||{},_s2.producaoDiaria?.[_o2]?.[_d2]||{});
+    Utils.toast('Produção do dia salva!','success');
   }
 
   function addConc(){const pd=_getDailyData();if(!pd.concretagens)pd.concretagens=[];pd.concretagens.push({data:'',local:'',volume:''});State.save();render();}
   function rmConc(i){const pd=_getDailyData();pd.concretagens?.splice(i,1);State.save();render();}
   function updConc(i,field,val){const pd=_getDailyData();if(pd.concretagens?.[i])pd.concretagens[i][field]=val;State.save();}
 
-  return {render,calcAlvEst,calcAlvVed,saveGeral,saveDaily,addConc,rmConc,updConc};
+  function saveConc(){
+    const _s3=State.get(),_o3=App.obra(),_d3=App.date();
+    State.save();
+    Sheets.saveProd(_d3,_o3,_s3.producaoGeral?.[_o3]||{},_s3.producaoDiaria?.[_o3]?.[_d3]||{});
+    Utils.toast('Concretagens salvas!','success');
+  }
+  return {render,calcAlvEst,calcAlvVed,saveGeral,saveDaily,addConc,rmConc,updConc,saveConc};
 })();
 
 
