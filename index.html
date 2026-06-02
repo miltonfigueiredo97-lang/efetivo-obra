@@ -1233,7 +1233,7 @@ const CfgPage = (() => {
         s.andares.map((a,i)=>itm(a,`CfgPage.rmAndar(${i})`)).join(''),
         `<div class="add-item-row"><input id="newAndar" placeholder="ex: 17º Pavimento"><button class="btn btn-accent" onclick="CfgPage.addAndar()">Add</button></div>`)}
       ${blk('⚒ Atividades',
-        s.tarefas.map((t,i)=>itm(t,`CfgPage.rmTarefa(${i})`)).join(''),
+        s.tarefas.map((t,i)=>itm(typeof t==='string'?t:t.nome,`CfgPage.rmTarefa(${i})`)).join(''),
         `<div class="add-item-row"><input id="newTarefa" placeholder="ex: Instalação elétrica"><button class="btn btn-accent" onclick="CfgPage.addTarefa()">Add</button></div>`)}
       ${blk('👥 Equipes',
         s.equipes.map(e=>`<div class="settings-item"><span class="color-dot" style="background:${e.cor}"></span><span style="flex:1">${Utils.esc(e.nome)}</span><button class="icon-btn danger" onclick="CfgPage.rmEquipe('${e.id}')">✕</button></div>`).join(''),
@@ -1453,7 +1453,7 @@ function buildReportText(obra, date) {
     admPresentes.sort(function(a,b){ return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'); }).forEach(function(w){
       txt += '\u2022 ' + w.nome + ' \u2013 ' + w.funcao + '\n';
       const dd = dayMap[w.id] || {};
-      (dd.tarefas||[]).sort(function(a,b){ return a.localeCompare(b,'pt-BR'); }).forEach(function(t){ txt += '  \u25e6 ' + t + '\n'; });
+      (dd.tarefas||[]).sort(function(a,b){ return String(a||'').localeCompare(String(b||''),'pt-BR'); }).forEach(function(t){ txt += '  \u25e6 ' + t + '\n'; });
     });
     txt += '\n';
   }
@@ -1475,7 +1475,7 @@ function buildReportText(obra, date) {
   ordered.forEach(function(andar){
     const grp = byAndar[andar];
     txt += '*' + andar.toUpperCase() + '*\n';
-    const tf = grp.tarefas.slice().sort(function(a,b){ return a.localeCompare(b,'pt-BR'); });
+    const tf = grp.tarefas.slice().sort(function(a,b){ return String(a||'').localeCompare(String(b||''),'pt-BR'); });
     if (tf.length) {
       txt += '*Tarefas:*\n';
       tf.forEach(function(t){ txt += '\u2022 ' + t + '\n'; });
@@ -1764,7 +1764,13 @@ const EfPage = (() => {
     if (!tarefas.includes(tarefa)) {
       tarefas.push(tarefa);
       State.setDayField(obra, date, wid, 'tarefas', tarefas);
-      if (!State.get().tarefas.includes(tarefa)) State.addTarefa(tarefa);
+      const s2 = State.get();
+      const w2 = s2.workers.find(x=>x.id===wid);
+      const eq2 = w2 ? State.getEquipe(w2.equipe) : null;
+      const tarNomes = s2.tarefas.map(t=>typeof t==='string'?t:t.nome);
+      if (!tarNomes.includes(tarefa)) {
+        State.addTarefa({nome: tarefa, equipes: eq2 ? [eq2.nome] : []});
+      }
     }
     inp.value = '';
     renderTable();
