@@ -170,8 +170,8 @@ input[type=date]:focus{border-color:var(--ac);}
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:500;display:none;align-items:flex-end;justify-content:center;}
 .modal-backdrop.open{display:flex;}
 
-#modalHE{padding:0!important;overflow:hidden!important;height:80vh!important;max-height:80vh!important;display:flex!important;flex-direction:column!important;}
-#heListScroll,#heListScroll2{overflow-y:scroll!important;-webkit-overflow-scrolling:touch!important;}
+#modalHE{padding:0;overflow:hidden;}
+#heListScroll,#heListScroll2{overflow-y:scroll;-webkit-overflow-scrolling:touch;}
 .modal{background:var(--sf);border:1px solid var(--bd2);border-radius:20px 20px 0 0;padding:6px 18px calc(18px + env(safe-area-inset-bottom,0px));width:100%;max-height:92dvh;overflow-y:auto;animation:sheetUp .2s ease;}
 #modalHE{padding:0;overflow:hidden;}
 .modal-large{max-height:94dvh;}
@@ -1736,7 +1736,8 @@ const ProdPage = (() => {
     State.save();
     const _s=State.get(),_o=App.obra(),_d=App.date();
     Sheets.saveProd(_d,_o,_s.producaoGeral?.[_o]||{},_s.producaoDiaria?.[_o]?.[_d]||{});
-    Utils.toast('Informações gerais salvas!','success');
+    Utils.toast('✅ Informações gerais salvas!','success');
+    const _btn1=document.querySelector('[onclick="ProdPage.saveGeral()"]');if(_btn1){const _t=_btn1.textContent;_btn1.textContent='✅ Salvo!';_btn1.disabled=true;setTimeout(()=>{_btn1.textContent=_t;_btn1.disabled=false;},2000);}
   }
 
   function _getDailyData(){
@@ -1754,7 +1755,8 @@ const ProdPage = (() => {
     State.save();
     const _s2=State.get(),_o2=App.obra(),_d2=App.date();
     Sheets.saveProd(_d2,_o2,_s2.producaoGeral?.[_o2]||{},_s2.producaoDiaria?.[_o2]?.[_d2]||{});
-    Utils.toast('Produção do dia salva!','success');
+    Utils.toast('✅ Produção do dia salva!','success');
+    const _btn2=document.querySelector('[onclick="ProdPage.saveDaily()"]');if(_btn2){const _t=_btn2.textContent;_btn2.textContent='✅ Salvo!';_btn2.disabled=true;setTimeout(()=>{_btn2.textContent=_t;_btn2.disabled=false;},2000);}
   }
 
   function addConc(){const pd=_getDailyData();if(!pd.concretagens)pd.concretagens=[];pd.concretagens.push({data:'',local:'',volume:''});State.save();render();}
@@ -1765,7 +1767,8 @@ const ProdPage = (() => {
     const _s3=State.get(),_o3=App.obra(),_d3=App.date();
     State.save();
     Sheets.saveProd(_d3,_o3,_s3.producaoGeral?.[_o3]||{},_s3.producaoDiaria?.[_o3]?.[_d3]||{});
-    Utils.toast('Concretagens salvas!','success');
+    Utils.toast('✅ Concretagens salvas!','success');
+    const _btn3=document.querySelector('[onclick="ProdPage.saveConc()"]');if(_btn3){const _t=_btn3.textContent;_btn3.textContent='✅ Salvo!';_btn3.disabled=true;setTimeout(()=>{_btn3.textContent=_t;_btn3.disabled=false;},2000);}
   }
   return {render,calcAlvEst,calcAlvVed,saveGeral,saveDaily,addConc,rmConc,updConc,saveConc};
 })();
