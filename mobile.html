@@ -1238,7 +1238,7 @@ const CfgPage = (() => {
         s.andares.map((a,i)=>itm(a,`CfgPage.rmAndar(${i})`)).join(''),
         `<div class="add-item-row"><input id="newAndar" placeholder="ex: 17º Pavimento"><button class="btn btn-accent" onclick="CfgPage.addAndar()">Add</button></div>`)}
       ${blk('⚒ Atividades',
-        s.tarefas.map((t,i)=>itm(typeof t==='string'?t:t.nome,`CfgPage.rmTarefa(${i})`)).join(''),
+        s.tarefas.map((t,i)=>itmTarefa(t,i,s.equipes)).join(''),
         `<div class="add-item-row"><input id="newTarefa" placeholder="ex: Instalação elétrica"><button class="btn btn-accent" onclick="CfgPage.addTarefa()">Add</button></div>`)}
       ${blk('👥 Equipes',
         s.equipes.map(e=>`<div class="settings-item"><span class="color-dot" style="background:${e.cor}"></span><span style="flex:1">${Utils.esc(e.nome)}</span><button class="icon-btn danger" onclick="CfgPage.rmEquipe('${e.id}')">✕</button></div>`).join(''),
@@ -1263,10 +1263,33 @@ const CfgPage = (() => {
   function itm(text,fn) {
     return `<div class="settings-item"><span style="flex:1">${Utils.esc(text)}</span><button class="icon-btn danger" style="width:24px;height:24px;font-size:11px" onclick="${fn}">✕</button></div>`;
   }
+  function itmTarefa(t, i, equipes) {
+    const nome = typeof t==='string' ? t : (t.nome||'');
+    const eqsVinc = typeof t==='string' ? [] : (t.equipes||[]);
+    const opts = equipes.map(e =>
+      `<option value="${Utils.esc(e.nome)}" ${eqsVinc.includes(e.nome)?'selected':''}>${Utils.esc(e.nome)}</option>`
+    ).join('');
+    return `<div class="settings-item" style="flex-wrap:wrap;gap:6px">
+      <span style="flex:1;min-width:140px">${Utils.esc(nome)}</span>
+      <select multiple style="font-size:11px;background:var(--sf2);border:1px solid var(--bd2);color:var(--t1);border-radius:6px;padding:2px 6px;max-width:200px;min-height:28px" onchange="CfgPage.setTarefaEqs(${i},this)">
+        <option disabled style="color:var(--t3);font-size:10px">Equipes (multi)</option>${opts}
+      </select>
+      <button class="icon-btn danger" style="width:24px;height:24px;font-size:11px" onclick="CfgPage.rmTarefa(${i})">✕</button>
+    </div>`;
+  }
   function addAndar(){const v=document.getElementById('newAndar').value.trim();if(!v)return;State.addAndar(v);document.getElementById('newAndar').value='';render();if(typeof EfPage!=='undefined')EfPage.renderFilters();}
   function rmAndar(i){State.removeAndar(i);render();if(typeof EfPage!=='undefined')EfPage.renderFilters();}
   function addTarefa(){const v=document.getElementById('newTarefa').value.trim();if(!v)return;State.addTarefa(v);document.getElementById('newTarefa').value='';render();}
   function rmTarefa(i){State.removeTarefa(i);render();}
+  function setTarefaEqs(i, sel) {
+    const s = State.get();
+    const t = s.tarefas[i];
+    if (!t) return;
+    const eqs = Array.from(sel.selectedOptions).map(o=>o.value);
+    if (typeof t === 'string') s.tarefas[i] = {nome:t, equipes:eqs};
+    else t.equipes = eqs;
+    State.save('config');
+  }
   function addEquipe(){const n=document.getElementById('newEquipe').value.trim();const c=document.getElementById('newEquipeCor').value;if(!n)return;State.addEquipe({nome:n,cor:c});document.getElementById('newEquipe').value='';render();if(typeof EfPage!=='undefined')EfPage.renderFilters();}
   function rmEquipe(id){State.removeEquipe(id);render();if(typeof EfPage!=='undefined')EfPage.renderFilters();}
   function addObra(){const v=document.getElementById('newObra').value.trim();if(!v)return;State.addObra(v);document.getElementById('newObra').value='';render();App.rebuildObraSelects();}
@@ -1274,7 +1297,7 @@ const CfgPage = (() => {
   function saveGS(){const s=State.get();s.gsUrl=document.getElementById('gsUrl').value.trim();s.gsSheetId=document.getElementById('gsSheetId').value.trim();State.save();Utils.toast('Salvo!','success');App.updateGSIndicator();}
   async function testGS(){const url=document.getElementById('gsUrl').value.trim();if(!url){Utils.toast('Configure a URL.','warn');return;}Utils.toast('Testando…','info');const ok=await Sheets.ping(url);ok?Utils.toast('OK!','success'):Utils.toast('Falhou.','error');}
   function showScript(){document.getElementById('scriptCode').textContent=Sheets.CODE;Modals.open('modalScript');}
-  return {render,addAndar,rmAndar,addTarefa,rmTarefa,addEquipe,rmEquipe,addObra,rmObra,saveGS,testGS,showScript};
+  return {render,addAndar,rmAndar,addTarefa,rmTarefa,setTarefaEqs,addEquipe,rmEquipe,addObra,rmObra,saveGS,testGS,showScript};
 })();
 
 /* ═══ HORAS EXTRAS PAGE ═══ */
