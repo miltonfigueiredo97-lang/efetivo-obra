@@ -1854,7 +1854,14 @@ const EfPage = (() => {
           ${absent?`<div style="margin-top:4px"><input class="finput" placeholder="Motivo da falta" value="${Utils.esc(dd.motivo||'')}" onchange="EfPage.setMotivo('${w.id}',this.value)" style="font-size:11px;padding:4px 8px;width:100%"></div>`:''}
         </td>
         <td><span class="team-badge" style="background:${cor}22;color:${cor};border:1px solid ${cor}44">${Utils.esc(eq?eq.nome:w.equipe)}</span></td>
-        <td><div style="display:flex;flex-wrap:wrap;max-width:220px;max-height:72px;overflow-y:auto">${andarChips}</div></td>
+        <td>
+          <details style="min-width:160px">
+            <summary style="cursor:pointer;padding:5px 10px;background:var(--sf2);border:1px solid var(--bd2);border-radius:8px;font-size:12px;color:${_curAndares.length?'var(--t1)':'var(--t3)'};list-style:none;display:flex;justify-content:space-between;align-items:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+              <span style="overflow:hidden;text-overflow:ellipsis">${_curAndares.length?_curAndares.join(', '):'— Local —'}</span><span style="margin-left:6px;font-size:9px;flex-shrink:0">▼</span>
+            </summary>
+            <div style="position:absolute;z-index:100;background:var(--sf);border:1px solid var(--bd2);border-radius:8px;padding:8px;display:flex;flex-wrap:wrap;gap:4px;max-width:280px;max-height:180px;overflow-y:auto;box-shadow:0 4px 20px rgba(0,0,0,.4)">${andarChips}</div>
+          </details>
+        </td>
         <td>
           <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:${absent?'0':'5px'}">${tags}</div>
           ${!absent?`<div style="display:flex;gap:5px;align-items:center">
