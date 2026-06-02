@@ -1851,7 +1851,7 @@ const EfPage = (() => {
       const andarLabel = _curAndares.length ? _curAndares.join(', ') : '— Selecionar local —';
       const andarChips = s.andares.map(a=>{
         const sel=_curAndares.includes(a);
-        return `<span onclick="EfPage.toggleAndar('${w.id}','${Utils.esc(a)}')" style="cursor:pointer;display:inline-block;padding:3px 10px;margin:2px;border-radius:12px;font-size:12px;border:1px solid ${sel?'var(--ac)':'var(--bd2)'};background:${sel?'var(--acd)':'transparent'};color:${sel?'var(--ac)':'var(--t3)'}">${Utils.esc(a)}</span>`;
+        return `<span data-andar-wid="${w.id}" data-andar-val="${Utils.esc(a)}" onclick="event.stopPropagation();EfPage.toggleAndar('${w.id}','${Utils.esc(a)}')" style="cursor:pointer;display:inline-block;padding:3px 10px;margin:2px;border-radius:12px;font-size:12px;border:1px solid ${sel?'var(--ac)':'var(--bd2)'};background:${sel?'var(--acd)':'transparent'};color:${sel?'var(--ac)':'var(--t3)'}">${Utils.esc(a)}</span>`;
       }).join('');
       const tarefaOpts = _tarFiltradas.filter(t=>!(dd.tarefas||[]).includes(t)).map(t=>`<option value="${Utils.esc(t)}">${Utils.esc(t)}</option>`).join('');
 
@@ -1886,12 +1886,12 @@ const EfPage = (() => {
             </div>` : `
             <div>
               <div class="field-label">Andar / Local</div>
-              <details style="width:100%">
-                <summary style="cursor:pointer;padding:8px 12px;background:var(--sf2);border:1px solid var(--bd2);border-radius:8px;font-size:13px;color:${_curAndares.length?'var(--t1)':'var(--t3)'};list-style:none;display:flex;justify-content:space-between;align-items:center">
-                  <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${andarLabel}</span><span style="font-size:10px;margin-left:6px">▼</span>
-                </summary>
-                <div style="padding:8px;background:var(--sf2);border:1px solid var(--bd2);border-top:none;border-radius:0 0 8px 8px;display:flex;flex-wrap:wrap;max-height:140px;overflow-y:auto">${andarChips}</div>
-              </details>
+              <div style="position:relative">
+                <div onclick="(function(e){e.stopPropagation();var d=document.getElementById('madrop-${w.id}');var open=d.style.display==='flex';document.querySelectorAll('[id^=madrop-]').forEach(function(x){x.style.display='none';});if(!open)d.style.display='flex';})(event)" style="cursor:pointer;padding:10px 14px;background:var(--sf2);border:1px solid var(--bd2);border-radius:8px;font-size:13px;color:${_curAndares.length?'var(--t1)':'var(--t3)'};display:flex;justify-content:space-between;align-items:center;user-select:none">
+                  <span id="alabel-${w.id}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${andarLabel}</span><span style="font-size:10px;margin-left:8px;flex-shrink:0">▼</span>
+                </div>
+                <div id="madrop-${w.id}" style="display:none;position:absolute;z-index:200;background:var(--sf);border:1px solid var(--bd2);border-radius:8px;padding:10px;flex-wrap:wrap;gap:4px;width:100%;max-height:180px;overflow-y:auto;box-shadow:0 4px 20px rgba(0,0,0,.5);top:100%;left:0;margin-top:4px">${andarChips}</div>
+              </div>
             </div>
             <div>
               <div class="field-label">Atividades</div>
@@ -2056,7 +2056,18 @@ const EfPage = (() => {
     const idx=cur.indexOf(val);
     if(idx>=0) cur.splice(idx,1); else cur.push(val);
     State.setDayField(obra,date,wid,'andar',cur.join(', '));
-    render();
+    // Atualizar visualmente sem re-renderizar
+    const label = cur.length ? cur.join(', ') : '— Selecionar local —';
+    const labelEl = document.getElementById('alabel-'+wid);
+    if (labelEl) labelEl.textContent = label;
+    // Atualizar chip clicado
+    document.querySelectorAll('[data-andar-wid="'+wid+'"]').forEach(function(chip){
+      const a = chip.dataset.andarVal;
+      const sel = cur.includes(a);
+      chip.style.borderColor = sel ? 'var(--ac)' : 'var(--bd2)';
+      chip.style.background = sel ? 'var(--acd)' : 'transparent';
+      chip.style.color = sel ? 'var(--ac)' : 'var(--t3)';
+    });
   }
   return { render, renderFilters, setTeam, toggleCard, togglePres, setAndar, setMotivo, addTag, addNewTag, rmTag, preview, copyReport, salvarRelatorio, gerar, toggleAndar };
 })();
