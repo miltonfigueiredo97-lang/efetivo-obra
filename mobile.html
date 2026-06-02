@@ -295,7 +295,7 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
 <body>
 <header class="topbar">
   <div class="topbar-left"><span style="font-size:18px;line-height:1">&#9874;</span><span class="topbar-name">EFETIVO</span><span class="topbar-divider">|</span><span class="topbar-title" id="topbarTitle">DO DIA</span></div>
-  <div class="topbar-right"><div class="topbar-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><strong id="topbarPresentes">0</strong></div><div class="obra-pill" id="obraPill" onclick="Modals.open('modalObra')">–</div></div>
+  <div class="topbar-right"><div class="topbar-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><strong id="topbarPresentes">0</strong></div><button onclick="App.syncNow()" title="Sincronizar" style="background:none;border:none;color:var(--t2);font-size:16px;cursor:pointer;padding:4px">🔄</button><div class="obra-pill" id="obraPill" onclick="Modals.open('modalObra')">–</div></div>
 </header>
 <main class="page-area">
   <section class="page active" id="page-efetivo">
@@ -1827,10 +1827,6 @@ const App = (() => {
   let _obra = '';
 
   function init() {
-    // TESTE - remover depois
-    const _gsTest = localStorage.getItem('efetivo_v3');
-    const _parsed = _gsTest ? JSON.parse(_gsTest) : {};
-    alert('INIT rodando. gsUrl=' + (_parsed.gsUrl||'VAZIO') + ' | gsSheetId=' + (_parsed.gsSheetId||'VAZIO'));
     State.load();
     // Garantir URL e ID do Sheets em qualquer dispositivo
     (function(){
@@ -1859,26 +1855,20 @@ const App = (() => {
 
   async function _loadFromSheets() {
     const s = State.get();
-    if (!s.gsUrl || !s.gsSheetId) {
-      Utils.toast('⚠️ URL/ID não configurado','warn'); return;
-    }
-    Utils.toast('🔄 Conectando ao Sheets...','info');
+    if (!s.gsUrl || !s.gsSheetId) return;
     try {
       const state = await Sheets.loadState();
-      alert('loadState retornou: ' + (state ? 'OBJETO com '+( state.workers||[]).length+' workers' : 'NULL/UNDEFINED'));
-      if (!state) { Utils.toast('⚠️ Sheets retornou vazio','warn'); return; }
+      if (!state) return;
       state.gsUrl = s.gsUrl;
       state.gsSheetId = s.gsSheetId;
-      if (state.obras) state.obras = state.obras.map(o => o === o.toUpperCase() ? o.charAt(0)+o.slice(1).toLowerCase() : o);
-      if (state.workers) state.workers.forEach(w => { if (w.obra && w.obra === w.obra.toUpperCase()) w.obra = w.obra.charAt(0)+w.obra.slice(1).toLowerCase(); });
       localStorage.setItem('efetivo_v3', JSON.stringify(state));
       State.load();
+      rebuildObraSelects();
+      _obra = State.get().activeObra || State.get().obras[0];
       if (typeof EfPage !== 'undefined') EfPage.render();
       if (typeof FuncPage !== 'undefined') FuncPage.render();
-      Utils.toast('✅ Sincronizado! '+state.workers.length+' func.','success');
-    } catch(e) {
-      Utils.toast('❌ Erro: '+e.message,'error');
-    }
+      Utils.toast('✅ Sincronizado!','success');
+    } catch(e) {}
   }
 
   function obra() { return _obra; }
