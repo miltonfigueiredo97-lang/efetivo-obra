@@ -169,7 +169,7 @@ input[type=date]:focus{border-color:var(--ac);}
 /* MODALS */
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:500;display:none;align-items:flex-end;justify-content:center;}
 .modal-backdrop.open{display:flex;}
-#modalHE{padding:0;}
+#modalHE{padding:0;flex-direction:column;max-height:88vh;overflow:hidden;}
 #heListScroll,#heListScroll2{overflow-y:auto;max-height:50vh;}
 
 .modal{background:var(--sf);border:1px solid var(--bd2);border-radius:20px 20px 0 0;padding:6px 18px calc(18px + env(safe-area-inset-bottom,0px));width:100%;max-height:92dvh;overflow-y:auto;animation:sheetUp .2s ease;}
