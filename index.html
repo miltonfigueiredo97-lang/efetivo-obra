@@ -558,6 +558,8 @@ const State = (() => {
     // Garantir URL e ID sempre presentes
     if (!d.gsUrl) d.gsUrl = 'https://script.google.com/macros/s/AKfycbz2WSboxUbnfKM_hp_91DIu04b2WFWfHSXdj6RG2ITkyLq7W9eDAtVdpN3ogcFUa-JM/exec';
     if (!d.gsSheetId) d.gsSheetId = '1Zilh_8iKHIaiXqOg8OwHW6HUUjVERxYuLzUA6LoC6rQ';
+    // Deduplicar andares e tarefas
+    if (d.andares) d.andares = d.andares.filter(function(a,i){return d.andares.indexOf(a)===i;});
     // Normalizar tarefas antigas (strings) para objetos {nome, equipes}
     if (d.tarefas && d.tarefas.length > 0 && typeof d.tarefas[0] === 'string') {
       d.tarefas = d.tarefas.map(function(t){ return {nome:t, equipes:[]}; });
@@ -1625,9 +1627,11 @@ function buildReportText(obra, date) {
     (dd.tarefas||[]).forEach(function(t){ if(!byAndar[chave].tarefas.includes(t)) byAndar[chave].tarefas.push(t); });
   });
 
-  const andaresCfg = s.andares;
+  const andaresCfg = s.andares.filter(function(a,i){ return s.andares.indexOf(a)===i; });
+  const _seen = {};
   const ordered = andaresCfg.filter(function(a){ return byAndar[a]; })
-    .concat(Object.keys(byAndar).filter(function(a){ return !andaresCfg.includes(a); }).sort());
+    .concat(Object.keys(byAndar).filter(function(a){ return !andaresCfg.includes(a); }).sort())
+    .filter(function(a){ if(_seen[a]) return false; _seen[a]=true; return true; });
 
   ordered.forEach(function(andar){
     const grp = byAndar[andar];
