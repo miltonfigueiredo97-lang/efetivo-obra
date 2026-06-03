@@ -1617,7 +1617,7 @@ function buildReportText(obra, date) {
   nonAdm.forEach(function(w){
     const dd = dayMap[w.id] || {};
     const andarRaw = dd.andar || '';
-    // Múltiplos andares viram UM grupo com nome combinado ex: "Cobertura, Ático"
+    // Chave é exatamente o que foi selecionado (ex: "Cobertura, Atico" vira um grupo só)
     const andares = andarRaw ? andarRaw.split(',').map(function(a){return a.trim();}).filter(Boolean) : [];
     const chave = andares.length ? andares.join(', ') : 'SEM LOCAL DEFINIDO';
     if (!byAndar[chave]) byAndar[chave] = { tarefas: [], workers: [] };
