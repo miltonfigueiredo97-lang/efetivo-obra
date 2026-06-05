@@ -2,2181 +2,351 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Efetivo de Obra</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9874;</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<style>:root{
-  --bg:#0b0d13;--sf:#111420;--sf2:#171b28;--sf3:#1c2133;
-  --bd:#1f2540;--bd2:#2a3060;
-  --ac:#f0a500;--ac2:#d99400;--acd:rgba(240,165,0,.12);
-  --gn:#22c55e;--gnd:rgba(34,197,94,.12);
-  --rd:#ef4444;--rdd:rgba(239,68,68,.12);
-  --bl:#3b82f6;
-  --t1:#e2e6f3;--t2:#8b93b5;--t3:#454d6a;
-  --r:12px;--rs:8px;--th:54px;--sw:224px;
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Essence · Mapa de Obra</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f1117;--bg2:#161b23;--bg3:#1d2330;--bg4:#242d3d;
+  --border:#2a3347;--border2:#374460;
+  --text:#f0f2f7;--text2:#a8b3cc;--text3:#5a6a88;
+  --yellow:#f5c518;--yellow2:#c49a10;--yglow:rgba(245,197,24,.18);
+  --green:#22d3a0;--gbg:rgba(34,211,160,.15);
+  --blue:#60a5fa;--bbg:rgba(96,165,250,.15);
+  --red:#f87171;--rbg:rgba(248,113,113,.15);
+  --orange:#fb923c;
+  --r:14px;--rsm:10px;
 }
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html{font-size:14px;}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);display:flex;height:100vh;overflow:hidden;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{background:var(--bg);color:var(--text);font-family:'Sora',sans-serif;min-height:100vh;overflow-x:hidden}
 
-/* FONTS */
-.section-title,.modal-title,.stat-value,.weekday-label,.hist-day,.topbar-name,.logo-tag-d,.nav-badge-d,.pill,.att-pct{
-  font-family:'Bebas Neue',Impact,'Arial Narrow',sans-serif;
-}
-.report-preview,.bar-label,code,pre{font-family:'JetBrains Mono','Courier New',monospace;}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:var(--bg2);border-top:1px solid var(--border);display:flex;padding-bottom:env(safe-area-inset-bottom,0px)}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 4px;gap:4px;border:none;background:none;color:var(--text3);font-family:'Sora',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;cursor:pointer;transition:color .15s}
+.nav-btn.active{color:var(--yellow)}
+.nav-icon{font-size:22px;line-height:1}
 
-/* SIDEBAR */
-.sidebar-desktop{
-  width:var(--sw);background:var(--sf);border-right:1px solid var(--bd);
-  height:100vh;display:flex;flex-direction:column;flex-shrink:0;overflow-y:auto;
-}
-.sidebar-logo-d{display:flex;align-items:center;gap:10px;padding:18px 16px 14px;border-bottom:1px solid var(--bd);}
-.logo-tag-d{font-size:20px;letter-spacing:2px;color:var(--ac);line-height:1;}
-.logo-sub-d{font-size:9px;color:var(--t3);letter-spacing:1.5px;margin-top:1px;}
-.obra-selector-d{padding:10px 14px;border-bottom:1px solid var(--bd);}
-.obra-selector-d label{display:block;font-size:9px;letter-spacing:1.5px;color:var(--t3);margin-bottom:4px;}
-.obra-selector-d select{width:100%;background:var(--sf2);border:1px solid var(--bd2);color:var(--t1);font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;padding:7px 10px;border-radius:6px;outline:none;cursor:pointer;}
-.nav-d{flex:1;padding:8px 0;overflow-y:auto;}
-.nav-section-d{padding:10px 16px 3px;font-size:9px;letter-spacing:1.8px;color:var(--t3);}
-.nav-item-d{display:flex;align-items:center;gap:9px;padding:9px 16px;cursor:pointer;font-size:13px;color:var(--t2);border-left:2px solid transparent;transition:all .13s;}
-.nav-item-d:hover{background:var(--sf2);color:var(--t1);}
-.nav-item-d.active{background:var(--acd);color:var(--ac);border-left-color:var(--ac);font-weight:500;}
-.nav-item-d>span:not(.nav-badge-d){flex:1;}
-.nav-badge-d{background:var(--ac);color:#000;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;padding:1px 6px;border-radius:10px;min-width:18px;text-align:center;}
-.nav-badge-d.sec{background:var(--sf3);color:var(--t2);}
-.sidebar-footer-d{padding:10px 16px;border-top:1px solid var(--bd);display:flex;justify-content:space-between;font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace;}
+.page{display:none;flex-direction:column;min-height:100vh;padding-bottom:80px;overflow-x:hidden}
+.page.active{display:flex}
 
-/* TOPBAR */
-.layout-right{display:flex;flex-direction:column;flex:1;min-width:0;height:100vh;overflow:hidden;}
-.topbar{height:var(--th);flex-shrink:0;background:var(--sf);border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;padding:0 24px;gap:12px;}
-.topbar-left{display:flex;align-items:center;gap:8px;}
-.topbar-name{font-size:18px;letter-spacing:2px;color:var(--ac);line-height:1;}
-.topbar-divider{color:var(--bd2);font-size:16px;}
-.topbar-title{font-size:13px;font-weight:600;color:var(--t2);}
-.topbar-right{display:flex;align-items:center;gap:8px;}
-.topbar-chip{display:flex;align-items:center;gap:5px;background:var(--sf2);border:1px solid var(--bd2);padding:4px 10px;border-radius:20px;font-size:12px;color:var(--t2);}
-.topbar-chip strong{color:var(--ac);font-size:14px;font-family:'JetBrains Mono',monospace;}
-.obra-pill{background:var(--acd);border:1px solid rgba(240,165,0,.3);color:var(--ac);font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;cursor:pointer;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.page-header{background:var(--bg2);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.brand-mark{width:36px;height:36px;background:var(--yellow);border-radius:9px;display:grid;place-items:center;font-weight:900;font-size:16px;color:#111;flex-shrink:0}
+.page-title{font-size:15px;font-weight:700}
+.page-sub{font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:1px}
+.icon-btn{width:40px;height:40px;border-radius:var(--rsm);background:var(--bg3);border:1px solid var(--border);color:var(--text2);display:grid;place-items:center;font-size:20px;cursor:pointer;flex-shrink:0}
 
-/* MAIN */
-.main-content{flex:1;overflow-y:auto;padding:22px 26px 26px;min-width:0;}
-.page{display:none;}.page.active{display:block;}
+.kpis{padding:14px 14px 0;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px}
+.kpi.main{grid-column:1/-1;display:flex;align-items:center;gap:14px}
+.kpi-icon{width:44px;height:44px;border-radius:11px;display:grid;place-items:center;font-size:22px;flex-shrink:0}
+.kpi-label{font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:var(--text3);font-family:'JetBrains Mono',monospace;font-weight:600;margin-bottom:5px}
+.kpi-value{font-family:'JetBrains Mono',monospace;font-size:30px;font-weight:700;line-height:1;color:var(--yellow)}
+.kpi-bar{height:4px;background:var(--border);border-radius:999px;margin-top:8px;overflow:hidden}
+.kpi-bar-fill{height:100%;background:linear-gradient(90deg,var(--yellow2),var(--yellow));border-radius:999px;transition:width 1s ease}
+.kpi-val-sm{font-family:'JetBrains Mono',monospace;font-size:26px;font-weight:700;line-height:1;margin-top:6px}
+.kpi-lbl-sm{font-size:9px;text-transform:uppercase;letter-spacing:.12em;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-bottom:2px}
 
-/* DATE BAR */
-.date-bar{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;}
-.date-bar-left{display:flex;align-items:center;gap:12px;}
-.date-bar-left label{font-size:9px;letter-spacing:1.5px;color:var(--t3);white-space:nowrap;}
-input[type=date]{background:var(--sf2);border:1px solid var(--bd2);color:var(--t1);font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;padding:7px 12px;border-radius:var(--rs);outline:none;cursor:pointer;}
-input[type=date]:focus{border-color:var(--ac);}
-.weekday-label{font-size:20px;letter-spacing:1px;color:var(--ac);}
-.pills-row{display:flex;gap:7px;}
-.pill{padding:5px 13px;border-radius:20px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;}
-.pill.green{background:var(--gnd);color:var(--gn);}
-.pill.red{background:var(--rdd);color:var(--rd);}
-.pill.orange{background:var(--acd);color:var(--ac);}
+.filter-bar{padding:12px 14px 0;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.filter-bar::-webkit-scrollbar{display:none}
+.ftab{padding:9px 18px;border-radius:999px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:13px;font-weight:600;white-space:nowrap;cursor:pointer;flex-shrink:0}
+.ftab.active{background:var(--yellow);border-color:var(--yellow);color:#111}
+.filter-row{padding:10px 14px;display:flex;gap:8px;align-items:center}
+.search-input{flex:1;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px 16px;border-radius:999px;font-family:'JetBrains Mono',monospace;font-size:14px;outline:none}
+.search-input:focus{border-color:var(--yellow)}
+.search-input::placeholder{color:var(--text3)}
+.pill-btn{padding:9px 16px;border-radius:999px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.pill-btn.on{background:var(--yglow);border-color:var(--yellow);color:var(--yellow)}
+.legenda{display:flex;gap:12px;flex-wrap:wrap;padding:0 14px 12px;font-size:12px;color:var(--text2)}
+.leg-item{display:flex;align-items:center;gap:6px}
+.leg-dot{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;font-size:11px;font-weight:700}
 
-/* SECTION HEADER */
-.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:12px;}
-.section-title{font-size:14px;letter-spacing:1px;line-height:1;}
-.section-sub{font-size:11px;color:var(--t3);margin-top:3px;}
+.mapa-wrap{margin:0 14px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow-x:scroll;overflow-y:auto;flex:1;-webkit-overflow-scrolling:touch}
+.mapa-wrap::-webkit-scrollbar{height:5px;width:5px}
+.mapa-wrap::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:999px}
+table{border-collapse:separate;border-spacing:3px;font-family:'JetBrains Mono',monospace;padding:8px}
 
-/* TEAM FILTERS */
-.team-filter-scroll{display:flex;gap:6px;overflow-x:auto;margin-bottom:14px;scrollbar-width:none;}
-.team-filter-scroll::-webkit-scrollbar{display:none;}
-.filter-chip{padding:5px 13px;border-radius:20px;font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;border:1px solid var(--bd2);background:var(--sf2);color:var(--t2);transition:all .13s;}
-.filter-chip.active{border-color:var(--ac);color:var(--ac);background:var(--acd);}
+thead tr.grp-row th{background:var(--bg2);font-family:'Sora',sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:8px 6px 6px;text-align:center;white-space:nowrap;border-radius:6px;position:sticky;top:0;z-index:5}
+thead tr.grp-row th.corner{position:sticky;left:0;z-index:6;background:var(--bg2)}
+thead tr.grp-row th.grp-vedacao{background:rgba(167,139,250,.15);color:#c4b5fd}
+thead tr.grp-row th.grp-eletrica{background:rgba(245,158,11,.15);color:#fbbf24}
+thead tr.grp-row th.grp-hidraulica{background:rgba(96,165,250,.15);color:#93c5fd}
+thead tr.grp-row th.grp-instalacoes{background:rgba(34,211,160,.15);color:#6ee7b7}
+thead tr.grp-row th.grp-acabamento{background:rgba(248,113,113,.15);color:#fca5a5}
+thead tr.lbl-row th{position:sticky;top:40px;z-index:4;background:var(--bg3);padding:8px 5px;font-size:11px;font-weight:600;color:var(--text);white-space:nowrap;text-align:center;border-radius:6px;min-width:52px;border:1px solid var(--border)}
+thead tr.lbl-row th.ap-th{position:sticky;left:0;top:40px;z-index:6;background:var(--bg3);color:var(--yellow);font-weight:700;min-width:52px;border:1px solid var(--yellow)}
+thead tr.lbl-row th.col-proj{color:var(--text3);font-style:italic;background:rgba(167,139,250,.06)}
+tbody td{padding:2px;vertical-align:middle}
+tbody td.ap-td{position:sticky;left:0;z-index:2;background:var(--bg3);color:var(--yellow);font-weight:700;font-size:13px;text-align:center;padding:0 6px;border-radius:8px;border:1px solid var(--border2);min-width:52px;white-space:nowrap}
+tbody tr.floor-div td{padding-top:6px}
+.cell{display:grid;place-items:center;width:52px;height:42px;border-radius:8px;font-size:14px;font-weight:700;position:relative;border:1.5px solid transparent}
+.cell.s-idle{background:var(--bg3);color:var(--text2);border-color:var(--border)}
+.cell.s-done{background:var(--gbg);color:var(--green);border-color:rgba(34,211,160,.3)}
+.cell.s-doing{background:var(--bbg);color:var(--blue);border-color:rgba(96,165,250,.3)}
+.cell.s-late{background:var(--rbg);color:var(--red);border-color:rgba(248,113,113,.3);font-size:10px}
+.cell.s-np{background:repeating-linear-gradient(45deg,transparent,transparent 3px,rgba(74,85,104,.3) 3px,rgba(74,85,104,.3) 4px);color:var(--text3);font-size:9px;border-color:var(--border)}
+.cell.late-warn::after{content:'';position:absolute;top:4px;right:4px;width:7px;height:7px;border-radius:50%;background:var(--orange)}
+.cell-pct{font-size:8px;position:absolute;bottom:2px;right:3px;opacity:.75}
+.hide-proj thead tr.grp-row th.grp-proj,
+.hide-proj thead tr.lbl-row th.col-proj,
+.hide-proj tbody td.col-proj{display:none}
+.update-bar{padding:6px 14px 4px;font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;text-align:right}
 
-/* TABLE */
-.worker-table-wrap{overflow:visible;background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);margin-bottom:16px;}
-.data-table{width:100%;border-collapse:collapse;}
-.data-table thead tr{background:var(--sf2);border-bottom:1px solid var(--bd);}
-.data-table th{padding:11px 14px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:var(--t3);font-weight:600;white-space:nowrap;}
-.data-table td{padding:10px 14px;font-size:13px;border-bottom:1px solid var(--bd);vertical-align:middle;}
-.data-table tbody tr:last-child td{border-bottom:none;}
-.data-table tbody tr:hover{background:rgba(255,255,255,.02);}
-.data-table tbody tr.absent .worker-name{text-decoration:line-through;opacity:.5;}
-.th-sort{cursor:pointer;user-select:none;}
-.th-sort:hover{color:var(--t2)!important;}
-.th-sort.sorted{color:var(--ac)!important;}
-.sort-arrow{font-size:10px;color:var(--t3);margin-left:2px;}
+.rel-wrap{padding:14px;display:flex;flex-direction:column;gap:12px}
+.rel-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.rel-card-title{padding:14px 16px;border-bottom:1px solid var(--border);font-size:14px;font-weight:700}
+.rel-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.rel-row:last-child{border:none}
+.rel-ap{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--yellow);font-size:15px;min-width:40px}
+.rel-bar-wrap{flex:1;height:8px;background:var(--border);border-radius:999px;overflow:hidden}
+.rel-bar{height:100%;border-radius:999px}
+.rel-pct{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;min-width:48px;text-align:right}
 
-/* WORKER CELLS */
-.worker-name{font-weight:600;font-size:13px;}
-.worker-role{font-size:11px;color:var(--t3);margin-top:1px;}
-.team-badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:20px;font-size:10px;font-weight:600;white-space:nowrap;}
-
-/* PRESENCE */
-.presence-toggle{position:relative;width:44px;height:24px;cursor:pointer;flex-shrink:0;display:block;}
-.presence-toggle input{opacity:0;width:0;height:0;position:absolute;}
-.presence-slider{position:absolute;inset:0;background:var(--rdd);border:1.5px solid rgba(239,68,68,.4);border-radius:24px;transition:all .2s;}
-.presence-slider::before{content:'';position:absolute;width:16px;height:16px;background:var(--rd);border-radius:50%;top:3px;left:3px;transition:all .2s;}
-.presence-toggle input:checked+.presence-slider{background:var(--gnd);border-color:rgba(34,197,94,.4);}
-.presence-toggle input:checked+.presence-slider::before{background:var(--gn);left:21px;}
-
-/* SELECTS + TAGS */
-.inline-select{width:100%;background:var(--sf2);border:1px solid var(--bd2);color:var(--t1);font-family:'DM Sans',sans-serif;font-size:12px;padding:7px 10px;border-radius:var(--rs);outline:none;cursor:pointer;}
-.inline-select:focus{border-color:var(--ac);}
-.inline-select:disabled{opacity:.3;}
-.activity-tags{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:5px;}
-.activity-tag{background:var(--sf3);border:1px solid var(--bd2);color:var(--t2);font-size:11px;padding:2px 8px;border-radius:20px;display:inline-flex;align-items:center;gap:4px;}
-.activity-tag button{background:none;border:none;color:var(--t3);cursor:pointer;font-size:13px;padding:0;line-height:1;}
-.add-btn{width:32px;height:32px;background:var(--acd);border:1px solid rgba(240,165,0,.4);color:var(--ac);border-radius:var(--rs);font-size:18px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;}
-.add-btn:hover{background:var(--ac);color:#000;}
-
-/* ACTION BAR */
-.action-bar{display:flex;gap:8px;padding:14px 0 0;}
-
-/* BUTTONS */
-.icon-btn{width:30px;height:30px;border-radius:6px;border:1px solid var(--bd2);background:var(--sf2);color:var(--t3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:all .13s;}
-.icon-btn:hover{border-color:var(--ac);color:var(--ac);background:var(--acd);}
-.icon-btn.danger:hover{border-color:var(--rd);color:var(--rd);background:var(--rdd);}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--rs);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;border:none;transition:all .13s;white-space:nowrap;}
-.btn-ghost{background:var(--sf2);color:var(--t2);border:1px solid var(--bd2);}
-.btn-ghost:hover{border-color:var(--ac);color:var(--ac);}
-.btn-accent{background:var(--ac);color:#000;font-weight:700;}
-.btn-accent:hover{background:var(--ac2);}
-
-/* MODALS */
-.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:500;display:none;align-items:center;justify-content:center;}
-.modal-backdrop.open{display:flex;}
-.modal{background:var(--sf);border:1px solid var(--bd2);border-radius:14px;padding:24px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;animation:fadeIn .2s ease;}
-.modal-large{max-width:700px;}
-@keyframes fadeIn{from{opacity:0;transform:scale(.97);}to{opacity:1;transform:scale(1);}}
-.modal-handle{display:none;}
-.modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
-.modal-title{font-size:20px;letter-spacing:1px;color:var(--ac);}
-.modal-close{background:var(--sf2);border:1px solid var(--bd2);color:var(--t2);cursor:pointer;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;}
-.modal-close:hover{color:var(--rd);}
-.modal-footer{display:flex;gap:8px;margin-top:16px;padding-top:14px;border-top:1px solid var(--bd);}
-.modal-footer .btn{flex:1;justify-content:center;}
-
-/* FORMS */
-.form-group{margin-bottom:12px;}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-.form-group label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--t3);margin-bottom:5px;}
-.form-input{width:100%;background:var(--sf2);border:1px solid var(--bd2);color:var(--t1);font-family:'DM Sans',sans-serif;font-size:13px;padding:10px 12px;border-radius:var(--rs);outline:none;}
-.form-input:focus{border-color:var(--ac);}
-textarea.form-input{resize:vertical;min-height:80px;font-family:'DM Sans',sans-serif;}
-select.form-input{cursor:pointer;}
-
-/* REPORT */
-.report-preview{background:var(--sf2);border:1px solid var(--bd2);border-radius:var(--rs);padding:14px;font-size:11px;line-height:1.9;color:var(--t1);white-space:pre-wrap;max-height:60vh;overflow-y:auto;}
-
-/* STATS */
-.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;}
-.stat-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:16px;}
-.stat-label{font-size:9px;text-transform:uppercase;letter-spacing:1.2px;color:var(--t3);margin-bottom:5px;}
-.stat-value{font-size:36px;line-height:1;color:var(--ac);}
-.stat-desc{font-size:10px;color:var(--t3);margin-top:3px;}
-
-/* FUNC LIST */
-.search-bar{display:flex;align-items:center;gap:8px;background:var(--sf2);border:1px solid var(--bd2);border-radius:var(--rs);padding:10px 13px;margin-bottom:10px;}
-.search-bar input{flex:1;background:none;border:none;color:var(--t1);font-family:'DM Sans',sans-serif;font-size:14px;outline:none;}
-.search-bar svg{color:var(--t3);flex-shrink:0;}
-.filter-row{display:flex;gap:8px;margin-bottom:12px;}
-.filter-row select{background:var(--sf2);border:1px solid var(--bd2);color:var(--t1);font-family:'DM Sans',sans-serif;font-size:12px;padding:8px 12px;border-radius:var(--rs);outline:none;cursor:pointer;}
-.func-list,.att-list,.hist-list{display:flex;flex-direction:column;gap:6px;}
-.func-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;gap:10px;}
-.func-info{flex:1;min-width:0;}
-.func-name{font-weight:600;font-size:13px;}
-.func-meta{font-size:11px;color:var(--t3);margin-top:3px;}
-.func-actions{display:flex;gap:5px;flex-shrink:0;margin-left:auto;}
-
-/* ATT */
-.att-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:12px 14px;}
-.att-top{display:flex;align-items:center;gap:10px;margin-bottom:8px;}
-.att-info{flex:1;min-width:0;}
-.att-name{font-weight:600;font-size:13px;}
-.att-role{font-size:11px;color:var(--t3);}
-.att-pct{font-size:26px;line-height:1;flex-shrink:0;}
-.bar-wrap{display:flex;align-items:center;gap:8px;}
-.bar-bg{flex:1;height:5px;background:var(--sf3);border-radius:3px;overflow:hidden;}
-.bar-fill{height:100%;border-radius:3px;transition:width .5s;}
-.bar-fill.good{background:var(--gn);}
-.bar-fill.warn{background:var(--ac);}
-.bar-fill.danger{background:var(--rd);}
-.bar-label{font-size:10px;color:var(--t3);flex-shrink:0;font-family:'JetBrains Mono',monospace;}
-
-/* HIST */
-.hist-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:14px;cursor:pointer;transition:border-color .15s;display:flex;align-items:center;gap:12px;}
-.hist-card:hover{border-color:var(--ac);}
-.hist-day{font-size:32px;color:var(--ac);line-height:1;}
-.hist-month{font-size:10px;color:var(--t3);letter-spacing:1px;}
-.hist-info{flex:1;min-width:0;}
-.hist-obra{font-size:12px;font-weight:600;}
-.hist-weekday{font-size:11px;color:var(--t3);}
-.hist-total{font-size:12px;color:var(--t2);font-family:'JetBrains Mono',monospace;margin-top:4px;}
-.hist-arrow{color:var(--t3);font-size:20px;}
-
-/* SETTINGS */
-.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-.settings-section{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:18px;}
-.settings-section-header{margin-bottom:12px;}
-.settings-section-title{font-size:16px;letter-spacing:1px;color:var(--ac);}
-.settings-section-body{}
-.settings-item{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--bd);font-size:12.5px;}
-.settings-item:last-of-type{border-bottom:none;}
-.add-item-row{display:flex;gap:6px;margin-top:10px;}
-.add-item-row input{flex:1;background:var(--sf2);border:1px solid var(--bd2);color:var(--t1);font-family:'DM Sans',sans-serif;font-size:13px;padding:9px 12px;border-radius:var(--rs);outline:none;}
-.add-item-row input:focus{border-color:var(--ac);}
-.add-item-row input[type=color]{width:40px;flex:none;padding:4px;cursor:pointer;border-radius:var(--rs);}
-.color-dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex-shrink:0;}
-
-/* PRODUCAO */
-.prod-section{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:18px;margin-bottom:14px;}
-.prod-section-title{font-size:15px;letter-spacing:.8px;color:var(--t2);margin-bottom:12px;}
-.prod-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-
-/* INTEGRACAO */
-.int-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:18px;margin-bottom:14px;}
-.int-card-title{font-size:16px;letter-spacing:1px;color:var(--ac);margin-bottom:12px;}
-.steps-list{list-style:none;counter-reset:step;}
-.steps-list li{counter-increment:step;display:flex;gap:10px;margin-bottom:10px;font-size:12.5px;color:var(--t2);line-height:1.6;}
-.steps-list li::before{content:counter(step);background:var(--acd);border:1px solid var(--ac);color:var(--ac);font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
-.steps-list a{color:var(--ac);}
-
-/* OBRA OPTIONS */
-.obra-option{display:flex;align-items:center;gap:10px;padding:13px;border:1px solid var(--bd);border-radius:var(--rs);margin-bottom:7px;cursor:pointer;font-size:14px;font-weight:500;transition:border-color .13s;}
-.obra-option:hover,.obra-option.selected{border-color:var(--ac);background:var(--acd);color:var(--ac);}
-
-/* TOAST */
-.toast-container{position:fixed;bottom:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:7px;pointer-events:none;}
-.toast{background:var(--sf);border:1px solid var(--bd2);border-radius:var(--rs);padding:12px 16px;font-size:13px;color:var(--t1);display:flex;align-items:center;gap:9px;box-shadow:0 8px 32px rgba(0,0,0,.4);animation:toastIn .2s ease,toastOut .3s ease 2.7s forwards;}
-.toast.success{border-left:3px solid var(--gn);}
-.toast.error{border-left:3px solid var(--rd);}
-.toast.info{border-left:3px solid var(--bl);}
-.toast.warn{border-left:3px solid var(--ac);}
-@keyframes toastIn{from{opacity:0;transform:translateX(12px);}to{opacity:1;transform:none;}}
-@keyframes toastOut{from{opacity:1;}to{opacity:0;}}
-.empty-state{text-align:center;padding:48px 20px;color:var(--t3);font-size:13px;display:flex;flex-direction:column;align-items:center;gap:10px;}
-.empty-state svg{opacity:.2;}
-.gs-indicator{width:7px;height:7px;border-radius:50%;background:var(--t3);flex-shrink:0;}
-.gs-indicator.connected{background:var(--gn);box-shadow:0 0 6px var(--gn);}
-::-webkit-scrollbar{width:4px;}::-webkit-scrollbar-track{background:transparent;}::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px;}
-code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
-
-/* HE rows */
-.he-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd2);font-size:13px;}
-.he-row:last-child{border-bottom:none;}
-.he-row label{display:flex;align-items:center;gap:8px;flex:1;cursor:pointer;}
-.he-row input[type=number]{width:80px;background:var(--sf2);border:1px solid var(--bd2);color:var(--t1);font-family:'JetBrains Mono',monospace;font-size:13px;padding:6px 8px;border-radius:6px;outline:none;text-align:center;}
-
-.empty{text-align:center;padding:40px 20px;color:var(--t3);font-size:13px;}</style>
-<script>if(window.innerWidth<768){window.location.replace('mobile.html');}</script>
+.loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:48px 20px;color:var(--text3);font-family:'JetBrains Mono',monospace;font-size:13px}
+.spinner{width:22px;height:22px;border:2px solid var(--border);border-top-color:var(--yellow);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
 </head>
 <body>
-<aside class="sidebar-desktop">
-  <div class="sidebar-logo-d"><span style="font-size:22px;line-height:1">&#9874;</span><div><div class="logo-tag-d">EFETIVO</div><div class="logo-sub-d">GESTÃO DE OBRA</div></div></div>
-  <div class="obra-selector-d"><label>OBRA ATIVA</label><select id="obraSelectDesktop" onchange="App.setObra(this.value)"></select></div>
-  <nav class="nav-d">
-    <div class="nav-section-d">PRINCIPAL</div>
-    <div class="nav-item-d active" data-page="efetivo" onclick="App.showPage('efetivo',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg><span>Efetivo do Dia</span><span class="nav-badge-d" id="dNavPresentes">0</span></div>
-    <div class="nav-item-d" data-page="producao" onclick="App.showPage('producao',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6M9 12h6M9 15h4"/></svg><span>Rel. de Execução</span></div>
-    <div class="nav-section-d">GESTÃO</div>
-    <div class="nav-item-d" data-page="funcionarios" onclick="App.showPage('funcionarios',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>Funcionários</span><span class="nav-badge-d sec" id="dNavTotal">0</span></div>
-    <div class="nav-item-d" data-page="relatorios" onclick="App.showPage('relatorios',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><span>Desempenho</span></div>
-    <div class="nav-item-d" data-page="historico" onclick="App.showPage('historico',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Histórico</span></div>
-    <div class="nav-item-d" data-page="horasextras" onclick="App.showPage('horasextras',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/><path d="M16 14h2"/></svg><span>Horas Extras</span></div>
-    <div class="nav-section-d">SISTEMA</div>
-    <div class="nav-item-d" data-page="configuracoes" onclick="App.showPage('configuracoes',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M2 12h2M20 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/></svg><span>Configurações</span></div>
-  </nav>
-  <div class="sidebar-footer-d"><span>v3.0</span><span id="lastSaved">–</span></div>
-</aside>
-<div class="layout-right">
-<header class="topbar">
-  <div class="topbar-left"><span style="font-size:18px;line-height:1">&#9874;</span><span class="topbar-name">EFETIVO</span><span class="topbar-divider">|</span><span class="topbar-title" id="topbarTitle">DO DIA</span></div>
-  <div class="topbar-right"><div class="topbar-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><strong id="topbarPresentes">0</strong></div><button onclick="App.syncNow()" title="Sincronizar com Sheets" style="background:var(--sf2);border:1px solid var(--bd2);color:var(--t2);padding:4px 10px;border-radius:20px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px"><span id="syncStatusDot" style="width:7px;height:7px;border-radius:50%;background:var(--gn);display:inline-block"></span>Sync</button><div class="obra-pill" id="obraPill" onclick="Modals.open('modalObra')">–</div></div>
-</header>
-<main class="main-content">
-  <section class="page active" id="page-efetivo">
-    <div class="date-bar">
-      <div class="date-bar-left"><label>DATA DO EFETIVO</label><input type="date" id="datePicker"><span class="weekday-label" id="weekdayLabel"></span></div>
-      <div class="pills-row"><span class="pill green" id="pillPresentes">0 presentes</span><span class="pill red" id="pillAusentes">0 ausentes</span><span class="pill orange" id="pillTotal">0 total</span></div>
-    </div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;gap:8px">
-      <div>
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;line-height:1">EFETIVO DE OBRA</div>
-        <div class="section-sub" id="obraLabel">–</div>
-      </div>
-      <button class="btn btn-ghost" style="flex-shrink:0" onclick="Modals.openWorker()">+ Funcionário</button>
-    </div>
-    <div class="team-filter-scroll" id="teamFilters" style="margin-bottom:14px"></div>
-    <div class="worker-table-wrap">
-      <table class="data-table">
-        <thead><tr>
-          <th style="width:54px" data-col="pres" onclick="EfPage.setSort('pres')" class="th-sort">Pres.<span class="sort-arrow"> ⇅</span></th>
-          <th data-col="nome" onclick="EfPage.setSort('nome')" class="th-sort">Nome<span class="sort-arrow"> ⇅</span></th>
-          <th style="width:170px" data-col="equipe" onclick="EfPage.setSort('equipe')" class="th-sort">Equipe<span class="sort-arrow"> ⇅</span></th>
-          <th style="width:185px" data-col="andar" onclick="EfPage.setSort('andar')" class="th-sort">Andar / Local<span class="sort-arrow"> ⇅</span></th>
-          <th>Atividade(s)</th>
-          <th style="width:100px">Ações</th>
-        </tr></thead>
-        <tbody id="workerTableBody"></tbody>
-      </table>
-    </div>
-    <div class="action-bar">
-      <button class="btn btn-ghost" onclick="EfPage.preview()">👁 Pré-visualizar</button>
-      <button class="btn btn-accent" onclick="EfPage.gerar()">📄 Gerar Relatório</button>
-    </div>
-  </section>
 
-  <section class="page" id="page-funcionarios">
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:14px;gap:10px">
+<div class="page active" id="page-mapa">
+  <div class="page-header">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="brand-mark">E</div>
+      <div><div class="page-title">Essence Residence</div><div class="page-sub">Mapa de Acompanhamento</div></div>
+    </div>
+    <button class="icon-btn" onclick="carregarDados()">&#8635;</button>
+  </div>
+  <div class="kpis">
+    <div class="kpi main">
+      <div class="kpi-icon" style="background:var(--yglow)">&#128208;</div>
       <div style="flex:1;min-width:0">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;line-height:1">FUNCIONÁRIOS</div>
-        <div class="section-sub" id="funcSubtitle">–</div>
-      </div>
-      <div style="display:flex;gap:8px;flex-shrink:0">
-        <button class="btn btn-ghost" onclick="Modals.openImport()">↑ Importar</button>
-        <button class="btn btn-accent" onclick="Modals.openWorker()">+ Novo</button>
+        <div class="kpi-label">Progresso Geral</div>
+        <div class="kpi-value" id="kpi-prog">--</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" id="kpi-bar" style="width:0%"></div></div>
       </div>
     </div>
-    <div class="search-bar">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="16" height="16"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      <input type="text" id="funcSearch" placeholder="Buscar nome ou função…" oninput="FuncPage.render()">
-    </div>
-    <div style="margin-bottom:12px">
-      <select id="funcSort" onchange="FuncPage.render()" class="form-input" style="max-width:200px">
-        <option value="nome">Nome A-Z</option>
-        <option value="nome_z">Nome Z-A</option>
-        <option value="cargo">Cargo</option>
-        <option value="equipe">Equipe</option>
-        <option value="obra">Obra</option>
-      </select>
-    </div>
-    <div class="func-list" id="funcList"></div>
-  </section>
-  <section class="page" id="page-relatorios">
-    <div class="section-header"><div><div class="section-title">DESEMPENHO & PRESENÇA</div><div class="section-sub">Métricas de assiduidade</div></div></div>
-    <div id="statContent"></div>
-  </section>
-  <section class="page" id="page-historico">
-    <div class="section-header"><div><div class="section-title">HISTÓRICO DE EFETIVOS</div><div class="section-sub">Relatórios anteriores</div></div></div>
-    <div id="histContent"></div>
-  </section>
-  <section class="page" id="page-configuracoes">
-    <div class="section-header"><div><div class="section-title">CONFIGURAÇÕES</div><div class="section-sub">Andares, tarefas, equipes e obras</div></div></div>
-    <div id="cfgContent"></div>
-    <div style="height:20px"></div>
-  </section>
-  <section class="page" id="page-horasextras">
-    <div id="heContent"></div>
-    <div style="height:20px"></div>
-  </section>
-  <section class="page" id="page-producao">
-    <div id="prodContent"></div>
-    <div style="height:80px"></div>
-  </section>
-</main>
+    <div class="kpi" style="text-align:center"><div class="kpi-lbl-sm">Concluidos</div><div class="kpi-val-sm" style="color:var(--green)" id="kpi-done">--</div></div>
+    <div class="kpi" style="text-align:center"><div class="kpi-lbl-sm">Em Execucao</div><div class="kpi-val-sm" style="color:var(--blue)" id="kpi-doing">--</div></div>
+    <div class="kpi" style="text-align:center"><div class="kpi-lbl-sm">Atrasados</div><div class="kpi-val-sm" style="color:var(--red)" id="kpi-late">--</div></div>
+    <div class="kpi" style="text-align:center"><div class="kpi-lbl-sm">Nao Iniciados</div><div class="kpi-val-sm" style="color:var(--text3)" id="kpi-idle">--</div></div>
+  </div>
+  <div class="filter-bar">
+    <button class="ftab active" data-f="todos">Todos</button>
+    <button class="ftab" data-f="atrasados">Atrasados</button>
+    <button class="ftab" data-f="emexec">Em execucao</button>
+    <button class="ftab" data-f="concluidos">Concluidos</button>
+  </div>
+  <div class="filter-row">
+    <input class="search-input" id="search" placeholder="Buscar AP..." oninput="filtrarBusca(this.value)">
+    <button class="pill-btn" id="btn-hide" onclick="toggleProj(this)">Projetos</button>
+  </div>
+  <div class="legenda">
+    <div class="leg-item"><div class="leg-dot" style="background:var(--gbg);color:var(--green)">&#10003;</div>Concluido</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--bbg);color:var(--blue)">&#9679;</div>Execucao</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--rbg);color:var(--red);font-size:9px">ATR</div>Atrasado</div>
+    <div class="leg-item"><div class="leg-dot" style="background:var(--bg3);color:var(--text2)">&#9633;</div>Nao iniciado</div>
+    <div class="leg-item"><span style="color:var(--orange);font-size:20px;line-height:1">&#9679;</span>Fora do prazo</div>
+  </div>
+  <div class="mapa-wrap" id="mapa-wrap"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+  <div class="update-bar" id="update-bar"></div>
 </div>
-<div id="modalBackdrop" class="modal-backdrop" onclick="Modals.closeAll(event)">
-  <div class="modal" id="modalObra">
-    <div class="modal-handle"></div>
-    <div class="modal-header"><div class="modal-title">Selecionar Obra</div><button class="modal-close" onclick="Modals.close('modalObra')">✕</button></div>
-    <div id="obraOptions"></div>
-    <div class="add-item-row" style="margin-top:12px"><input class="form-input" id="newObraInput" placeholder="Nova obra…"><button class="btn btn-accent" onclick="App.addObra()">Add</button></div>
-  </div>
-  <div class="modal" id="modalWorker">
-    <div class="modal-handle"></div>
-    <div class="modal-header"><div class="modal-title" id="mwTitle">Novo Funcionário</div><button class="modal-close" onclick="Modals.close('modalWorker')">✕</button></div>
-    <div class="form-group"><label>Nome Completo *</label><input class="form-input" id="wName" placeholder="ex: João Silva"></div>
-    <div class="form-group"><label>Função / Cargo *</label><input class="form-input" id="wRole" placeholder="ex: Pedreiro"></div>
-    <div class="form-row">
-      <div class="form-group"><label>Equipe</label><select class="form-input" id="wTeam"></select></div>
-      <div class="form-group"><label>Obra</label><select class="form-input" id="wObra"></select></div>
-    </div>
-    <input type="hidden" id="wEditId">
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="Modals.close('modalWorker')">Cancelar</button><button class="btn btn-accent" onclick="FuncPage.save()">Salvar</button></div>
-  </div>
-  <div class="modal" id="modalMove">
-    <div class="modal-handle"></div>
-    <div class="modal-header"><div class="modal-title">Mover de Obra</div><button class="modal-close" onclick="Modals.close('modalMove')">✕</button></div>
-    <p style="font-size:13px;color:var(--t2);margin-bottom:14px" id="mvName"></p>
-    <div class="form-group"><label>Obra de destino</label><select class="form-input" id="mvObra"></select></div>
-    <input type="hidden" id="mvWid">
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="Modals.close('modalMove')">Cancelar</button><button class="btn btn-accent" onclick="FuncPage.confirmMove()">Mover</button></div>
-  </div>
-  <div class="modal" id="modalImport">
-    <div class="modal-handle"></div>
-    <div class="modal-header"><div class="modal-title">Importar Lista</div><button class="modal-close" onclick="Modals.close('modalImport')">✕</button></div>
-    <p style="font-size:12px;color:var(--t2);margin-bottom:12px">Um por linha: <code>Nome – Função</code></p>
-    <div class="form-row">
-      <div class="form-group"><label>Obra</label><select class="form-input" id="impObra"></select></div>
-      <div class="form-group"><label>Equipe padrão</label><select class="form-input" id="impEquipe"></select></div>
-    </div>
-    <div class="form-group"><label>Lista</label><textarea class="form-input" id="impText" rows="8" placeholder="Fabio – Ajudante&#10;Genival – Pedreiro"></textarea></div>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="Modals.close('modalImport')">Cancelar</button><button class="btn btn-accent" onclick="FuncPage.importW()">Importar</button></div>
-  </div>
-  <div class="modal modal-large" id="modalPreview">
-    <div class="modal-handle"></div>
-    <div class="modal-header"><div class="modal-title">Pré-visualização</div><button class="modal-close" onclick="Modals.close('modalPreview')">✕</button></div>
-    <div class="report-preview" id="previewText"></div>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="Modals.close('modalPreview')">Fechar</button><button class="btn btn-accent" onclick="EfPage.copyReport()">📋 Copiar WhatsApp</button><button class="btn btn-accent" style="background:#22c55e" onclick="EfPage.salvarRelatorio()">💾 Salvar Relatório</button></div>
-  </div>
-  <div class="modal modal-large" id="modalHistDetail">
-    <div class="modal-handle"></div>
-    <div class="modal-header"><div class="modal-title" id="histDetailTitle">Relatório</div><button class="modal-close" onclick="Modals.close('modalHistDetail')">✕</button></div>
-    <div class="report-preview" id="histDetailText"></div>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="Modals.close('modalHistDetail')">Fechar</button><button class="btn btn-accent" onclick="HistPage.copyCur()">📋 Copiar</button></div>
-  </div>
-  <div class="modal modal-large" id="modalScript">
-    <div class="modal-handle"></div>
-    <div class="modal-header"><div class="modal-title">Código Apps Script</div><button class="modal-close" onclick="Modals.close('modalScript')">✕</button></div>
-    <pre class="report-preview" id="scriptCode" style="font-size:10px;line-height:1.6"></pre>
-    <div class="modal-footer"><button class="btn btn-ghost" onclick="Modals.close('modalScript')">Fechar</button><button class="btn btn-accent" onclick="Utils.copy(document.getElementById('scriptCode').textContent,'Copiado!')">Copiar</button></div>
-  </div>
-  <div class="modal" id="modalHE" style="width:560px;max-width:95vw;padding:0;overflow:hidden;display:flex;flex-direction:column;max-height:80vh">
-    <div class="modal-header" style="padding:20px 20px 12px;flex-shrink:0">
-      <div class="modal-title" id="heModalTitle">Lançar Horas Extras</div>
-      <button class="modal-close" onclick="Modals.close('modalHE')">✕</button>
-    </div>
-    <div id="heStep1Wrap" style="display:flex;flex-direction:column;flex:1;min-height:0;overflow:hidden">
-      <div style="padding:0 20px 12px;flex-shrink:0">
-        <input type="date" class="form-input" id="heDate" style="width:100%">
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:0 20px 10px;flex-shrink:0">
-        <span style="font-size:12px;color:var(--t3)">Clique para selecionar</span>
-        <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="HEPage.selectAll()">Selecionar todos</button>
-      </div>
-      <div id="heListScroll" style="overflow-y:auto;flex:1;min-height:0;padding:0 20px 16px">
-        <div id="heStep1" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
-      </div>
-    </div>
-    <div id="heStep2Wrap" style="display:none;flex-direction:column;flex:1;min-height:0;overflow:hidden">
-      <div style="padding:0 20px 12px;flex-shrink:0">
-        <select class="form-input" id="heTipo" style="width:100%;margin-bottom:10px">
-          <option value="60">60% — Dia normal</option>
-          <option value="100">100% — Feriado / Domingo</option>
-        </select>
-        <div style="display:flex;gap:10px;align-items:center;background:var(--sf2);border:1px solid var(--bd2);border-radius:10px;padding:10px 14px">
-          <label style="font-size:12px;color:var(--t3);white-space:nowrap">Horas p/ todos:</label>
-          <input type="number" id="heTodosH" min="0.5" max="24" step="0.5" placeholder="ex: 2"
-            style="flex:1;background:transparent;border:none;border-bottom:1px solid var(--bd2);color:var(--t1);font-family:JetBrains Mono,monospace;font-size:15px;outline:none;padding:4px;text-align:center">
-          <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px" onclick="HEPage.setTodosIgual()">Aplicar a todos</button>
-        </div>
-      </div>
-      <div id="heListScroll2" style="overflow-y:auto;flex:1;min-height:0;padding:0 20px 16px">
-        <div id="heStep2" style="display:flex;flex-direction:column;gap:4px"></div>
-      </div>
-    </div>
-    <div class="modal-footer" style="padding:12px 20px;flex-shrink:0">
-      <button class="btn btn-ghost" onclick="Modals.close('modalHE')">Cancelar</button>
-      <button class="btn btn-accent" id="heBtnLancar" onclick="HEPage.goStep2()">Próximo →</button>
-      <button class="btn btn-accent" id="heBtnSalvar" style="display:none" onclick="HEPage.saveAdd()">💾 Salvar</button>
+
+<div class="page" id="page-rel">
+  <div class="page-header">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="brand-mark">E</div>
+      <div><div class="page-title">Relatorios</div><div class="page-sub">Progresso por AP</div></div>
     </div>
   </div>
-<div class="toast-container" id="toastContainer"></div>
-<span id="lastSaved" style="display:none"></span>
+  <div class="rel-wrap" id="rel-wrap"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+</div>
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" data-page="mapa" onclick="switchPage(this)"><span class="nav-icon">&#9711;</span>Mapa</button>
+  <button class="nav-btn" data-page="rel" onclick="switchPage(this)"><span class="nav-icon">&#128202;</span>Relatorio</button>
+  <button class="nav-btn" onclick="window.location.href='admin.html'"><span class="nav-icon">&#128274;</span>Admin</button>
+</nav>
+
 <script>
-/* ═══ STATE + PERSISTÊNCIA ═══ */
-const State = (() => {
-  const KEY = 'efetivo_v3';
-  const DEF = {
-    obras: ['Essence Residence'],
-    andares: ['2º Subsolo','1º Subsolo','Térreo','1º Pavimento','2º Pavimento','3º Pavimento','4º Pavimento','5º Pavimento','6º Pavimento','7º Pavimento','8º Pavimento','9º Pavimento','10º Pavimento','11º Pavimento','12º Pavimento','13º Pavimento','14º Pavimento','15º Pavimento','16º Pavimento','Cobertura','Área Comum','Guarita'],
-    tarefas: ['Alvenaria estrutural – Lado A','Alvenaria estrutural – Lado B','Alvenaria de vedação','Armação positiva','Assoalho','Pontos de graute do andar','Aéreo da hidráulica','Aranhas (instalações)','Operação de Bobcat','Operação da mini grua','Proteção periférica','Marcação da laje','Organização da área comum','Organização e paletamento de blocos','Produção de peças (solda)','Piso do estacionamento','Betoneira','Concretagem','Instalação elétrica','Pintura','Revestimento','Serviços gerais'],
-    equipes: [
-      {id:'eq1',nome:'Administração',cor:'#a855f7'},
-      {id:'eq2',nome:'Alvenaria Estrutural',cor:'#f0a500'},
-      {id:'eq3',nome:'Alvenaria de Vedação',cor:'#fb923c'},
-      {id:'eq4',nome:'Armação / Ferragem',cor:'#ef4444'},
-      {id:'eq5',nome:'Carpintaria',cor:'#22c55e'},
-      {id:'eq6',nome:'Hidráulica',cor:'#3b82f6'},
-      {id:'eq7',nome:'Elétrica',cor:'#eab308'},
-      {id:'eq8',nome:'Geral',cor:'#8b92b0'},
-    ],
-    workers: [
-      {id:'w1',nome:'Raimundo Gonçalo Coelho',funcao:'Mestre de Obras',equipe:'eq1',obra:'Essence Residence'},
-      {id:'w2',nome:'Milton de Campos Figueiredo',funcao:'Engenheiro de Obra',equipe:'eq1',obra:'Essence Residence'},
-      {id:'w3',nome:'Jordeano Rocha dos Santos',funcao:'Encarregado Civil',equipe:'eq1',obra:'Essence Residence'},
-      {id:'w4',nome:'Wilson Robson de Souza',funcao:'Almoxarife',equipe:'eq1',obra:'Essence Residence'},
-      {id:'w5',nome:'Vinicius Hideo Takemoto B. do Nascimento',funcao:'Assistente Engenharia',equipe:'eq1',obra:'Essence Residence'},
-      {id:'w6',nome:'Cleber Ferreira Miranda',funcao:'Administrativo',equipe:'eq1',obra:'Essence Residence'},
-      {id:'w7',nome:'Fabio Lopes dos Santos',funcao:'Ajudante',equipe:'eq8',obra:'Essence Residence'},
-      {id:'w8',nome:'Jose Edigleuson Xavier dos Santos',funcao:'Ajudante',equipe:'eq8',obra:'Essence Residence'},
-      {id:'w9',nome:'José Pereira da Silva Filho',funcao:'Ajudante',equipe:'eq8',obra:'Essence Residence'},
-      {id:'w10',nome:'Lino dos Santos',funcao:'Ajudante',equipe:'eq8',obra:'Essence Residence'},
-      {id:'w11',nome:'Juciel',funcao:'Pedreiro / Carpinteiro',equipe:'eq5',obra:'Essence Residence'},
-      {id:'w12',nome:'Edson Ramos da Silva',funcao:'Operador de Bobcat',equipe:'eq8',obra:'Essence Residence'},
-      {id:'w13',nome:'Edson Fernandes de Almeida',funcao:'Ajudante',equipe:'eq8',obra:'Essence Residence'},
-      {id:'w14',nome:'Francisco dos Santos da Silva',funcao:'Ajudante',equipe:'eq8',obra:'Essence Residence'},
-      {id:'w15',nome:'Lucas Dantas',funcao:'Soldador',equipe:'eq8',obra:'Essence Residence'},
-      {id:'w16',nome:'Genival',funcao:'Pedreiro',equipe:'eq3',obra:'Essence Residence'},
-      {id:'w17',nome:'Gildivan',funcao:'Ajudante',equipe:'eq3',obra:'Essence Residence'},
-      {id:'w18',nome:'Gilvan Bispo',funcao:'Ajudante',equipe:'eq6',obra:'Essence Residence'},
-      {id:'w19',nome:'Lucas Pereira',funcao:'Ajudante',equipe:'eq6',obra:'Essence Residence'},
-      {id:'w20',nome:'Valmir da Conceição Barbosa',funcao:'Ajudante',equipe:'eq8',obra:'Essence Residence'},
-      {id:'w21',nome:'Wagner (Brinco)',funcao:'Encanador',equipe:'eq6',obra:'Essence Residence'},
-      {id:'w22',nome:'Ray Nascimento dos Santos',funcao:'Ajudante',equipe:'eq8',obra:'Essence Residence'},
-      {id:'w23',nome:'Edson Fernandes de Morais',funcao:'Ajudante',equipe:'eq8',obra:'Essence Residence'},
-      {id:'w24',nome:'Adalberto Ferreira da Silva',funcao:'Bloqueiro',equipe:'eq2',obra:'Essence Residence'},
-      {id:'w25',nome:'Jose Vani',funcao:'Bloqueiro',equipe:'eq2',obra:'Essence Residence'},
-      {id:'w26',nome:'Silvanildo João da Silva',funcao:'Bloqueiro',equipe:'eq2',obra:'Essence Residence'},
-      {id:'w27',nome:'André Borges Evangelista',funcao:'Bloqueiro',equipe:'eq2',obra:'Essence Residence'},
-      {id:'w28',nome:'Erivam de Jesus Lima',funcao:'Ajudante',equipe:'eq2',obra:'Essence Residence'},
-      {id:'w29',nome:'José de Souza Silva',funcao:'Ajudante',equipe:'eq2',obra:'Essence Residence'},
-      {id:'w30',nome:'Samuel Gonçalves Coelho',funcao:'Ajudante',equipe:'eq2',obra:'Essence Residence'},
-      {id:'w31',nome:'Jorge Ramos Machado',funcao:'Ajudante',equipe:'eq2',obra:'Essence Residence'},
-      {id:'w32',nome:'João Vitor da Silva',funcao:'Ajudante',equipe:'eq2',obra:'Essence Residence'},
-      {id:'w33',nome:'Noel Brito',funcao:'Ajudante',equipe:'eq2',obra:'Essence Residence'},
-      {id:'w34',nome:'Valdiano Alves Santana',funcao:'Ajudante',equipe:'eq2',obra:'Essence Residence'},
-      {id:'w35',nome:'Guilherme Porfirio',funcao:'Armador (Segurança)',equipe:'eq4',obra:'Essence Residence'},
-      {id:'w36',nome:'Ezequiel Pereira dos Santos',funcao:'Encanador',equipe:'eq6',obra:'Essence Residence'},
-      {id:'w37',nome:'Eugenio Ribeiro de Souza',funcao:'Armador',equipe:'eq4',obra:'Essence Residence'},
-      {id:'w38',nome:'Francisco Ramylo Nascimento Silva',funcao:'Armador',equipe:'eq4',obra:'Essence Residence'},
-      {id:'w39',nome:'Junior Pereira',funcao:'Armador',equipe:'eq4',obra:'Essence Residence'},
-      {id:'w40',nome:'Roniel Brito Gois',funcao:'Armador',equipe:'eq4',obra:'Essence Residence'},
-      {id:'w41',nome:'Cleto de Souza Santos',funcao:'Carpinteiro',equipe:'eq5',obra:'Essence Residence'},
-      {id:'w42',nome:'Genilson Soares Maciel',funcao:'Carpinteiro',equipe:'eq5',obra:'Essence Residence'},
-      {id:'w43',nome:'Jose Amorim da Rocha',funcao:'Carpinteiro',equipe:'eq5',obra:'Essence Residence'},
-      {id:'w44',nome:'Rodrigo Mendes da Silva',funcao:'Carpinteiro',equipe:'eq5',obra:'Essence Residence'},
-      {id:'w45',nome:'Vagner Araujo de Morais',funcao:'Carpinteiro',equipe:'eq5',obra:'Essence Residence'},
-      {id:'w46',nome:'Jose Ramalho da Silva',funcao:'Carpinteiro',equipe:'eq5',obra:'Essence Residence'},
-      {id:'w47',nome:'Thiago da Silva',funcao:'Ajudante',equipe:'eq8',obra:'Essence Residence'},
-    ],
-    // dailyData[obra][date][wid] = {presente, andar, tarefas[], motivo}
-    dailyData: {},
-    // producao[obra] = {areaAlv, areaLaje, volGraute, volArg, volConc, acoAlv, acoLaje, mestre, engenheiro, encarregado, almoxarife, assistente, administrativo}
-    producaoGeral: {},
-    // producaoDiaria[obra][date] = {alvEst:{vol,qtd}, alvVed:{vol,qtd}, concretagens:[{local,volume}]}
-    producaoDiaria: {},
-    // horasExtras[obra] = [{id, data, registros:[{wid, horas}]}]
-    horasExtras: {},
-    historico: [],
-    gsUrl: 'https://script.google.com/macros/s/AKfycbz2WSboxUbnfKM_hp_91DIu04b2WFWfHSXdj6RG2ITkyLq7W9eDAtVdpN3ogcFUa-JM/exec', gsSheetId: '1Zilh_8iKHIaiXqOg8OwHW6HUUjVERxYuLzUA6LoC6rQ',
-    activeObra: 'Essence Residence',
-  };
+const DATA_URL='https://raw.githubusercontent.com/miltonfigueiredo97-lang/dashboard-administracaoobra/main/public/data.json';
+const TODAY=new Date();
+let DADOS={},UNIDADES=[],jsonKPIs={};
 
-  let d = {};
+const GRUPOS=[
+  {id:'vedacao',nome:'Vedacao',etapas:[
+    {id:'proj_vedacao',nome:'Projeto de Vedacao',abrev:'P.Vedacao',projeto:true,prev:'2026-01-15'},
+    {id:'alvenaria',nome:'Alvenaria',abrev:'Alvenaria',projeto:false,prev:'2026-01-30'},
+    {id:'encunhamento',nome:'Encunhamento',abrev:'Encunham.',projeto:false,prev:'2026-02-10'},
+  ]},
+  {id:'eletrica',nome:'Eletrica',etapas:[
+    {id:'proj_infra_el',nome:'Proj. Infra Eletrica',abrev:'P.Infra El.',projeto:true,prev:'2026-01-10'},
+    {id:'infra_eletrica',nome:'Infra Eletrica',abrev:'Infra El.',projeto:false,prev:'2026-02-05'},
+    {id:'proj_quadros',nome:'Proj. Quadros Dist.',abrev:'P.Quadros',projeto:true,prev:'2026-01-20'},
+    {id:'quadros_dist',nome:'Quadros de Distribuicao',abrev:'Quadros',projeto:false,prev:'2026-02-20'},
+    {id:'proj_prumada',nome:'Proj. Prumada',abrev:'P.Prumada',projeto:true,prev:'2026-01-12'},
+    {id:'prumada',nome:'Prumada',abrev:'Prumada',projeto:false,prev:'2026-02-15'},
+  ]},
+  {id:'hidraulica',nome:'Hidraulica',etapas:[
+    {id:'proj_aereo_hid',nome:'Proj. Aereo Hidraulica',abrev:'P.Aer.Hid.',projeto:true,prev:'2026-01-18'},
+    {id:'aereo_hidraulica',nome:'Aereo Hidraulica',abrev:'Aereo Hid.',projeto:false,prev:'2026-02-25'},
+    {id:'proj_dist_hid',nome:'Proj. Dist. Hidraulica',abrev:'P.Dist.Hid.',projeto:true,prev:'2026-01-22'},
+    {id:'dist_hidraulica',nome:'Distribuicao Hidraulica',abrev:'Dist.Hid.',projeto:false,prev:'2026-03-01'},
+    {id:'proj_hd_banh',nome:'Proj. Hd. Banheira',abrev:'P.Banh.',projeto:true,prev:'2026-01-25'},
+    {id:'infra_hd_banh',nome:'Infra Hd. Banheira',abrev:'I.Banh.',projeto:false,prev:'2026-03-05'},
+    {id:'proj_gas',nome:'Proj. Infra Gas',abrev:'P.Gas',projeto:true,prev:'2026-01-15'},
+    {id:'infra_gas',nome:'Infra Gas',abrev:'Infra Gas',projeto:false,prev:'2026-02-28'},
+  ]},
+  {id:'instalacoes',nome:'Instalacoes',etapas:[
+    {id:'det_nichos',nome:'Detalhe dos Nichos',abrev:'Det.Nichos',projeto:true,prev:'2026-02-01'},
+    {id:'nichos',nome:'Nichos',abrev:'Nichos',projeto:false,prev:'2026-03-10'},
+    {id:'det_contrapiso',nome:'Detalhe Contrapisos',abrev:'Det.Cpiso',projeto:true,prev:'2026-02-01'},
+    {id:'contrapiso',nome:'Contrapiso',abrev:'Contrapiso',projeto:false,prev:'2026-03-15'},
+    {id:'proj_ar',nome:'Proj. Ar Condicionado',abrev:'P.A/C',projeto:true,prev:'2026-02-05'},
+    {id:'ar_condicionado',nome:'Ar Condicionado',abrev:'Ar Cond.',projeto:false,prev:'2026-03-20'},
+    {id:'proj_aspiracao',nome:'Proj. Aspiracao Central',abrev:'P.Aspir.',projeto:true,prev:'2026-02-05'},
+    {id:'aspiracao',nome:'Aspiracao Central',abrev:'Aspiracao',projeto:false,prev:'2026-03-25'},
+    {id:'proj_automacao',nome:'Proj. Automacao',abrev:'P.Autom.',projeto:true,prev:'2026-02-10'},
+    {id:'automacao',nome:'Automacao',abrev:'Automacao',projeto:false,prev:'2026-04-01'},
+  ]},
+  {id:'acabamento',nome:'Acabamento',etapas:[
+    {id:'proj_acabamento',nome:'Proj. Acabamento Interno',abrev:'P.Acab.',projeto:true,prev:'2026-03-01'},
+    {id:'gesso_liso',nome:'Gesso Liso',abrev:'Gesso',projeto:false,prev:'2026-04-10'},
+    {id:'forro',nome:'Forro',abrev:'Forro',projeto:false,prev:'2026-04-15'},
+    {id:'impermeabilizacao',nome:'Impermeabilizacao',abrev:'Impermeab.',projeto:false,prev:'2026-04-05'},
+    {id:'revestimentos',nome:'Revestimentos',abrev:'Revestim.',projeto:false,prev:'2026-04-20'},
+    {id:'proj_bancadas',nome:'Proj. Bancadas',abrev:'P.Bancadas',projeto:true,prev:'2026-03-10'},
+    {id:'granito',nome:'Granito',abrev:'Granito',projeto:false,prev:'2026-05-01'},
+    {id:'pintura',nome:'Pintura',abrev:'Pintura',projeto:false,prev:'2026-05-15'},
+  ]},
+];
+const ETAPAS=GRUPOS.flatMap(function(g){return g.etapas.map(function(e){return Object.assign({},e,{grupo:g.id});});});
 
-  function load() {
-    try {
-      const raw = localStorage.getItem(KEY);
-      d = raw ? _merge(DEF, JSON.parse(raw)) : JSON.parse(JSON.stringify(DEF));
-    } catch(e) { d = JSON.parse(JSON.stringify(DEF)); }
-    // Garantir URL e ID sempre presentes
-    if (!d.gsUrl) d.gsUrl = 'https://script.google.com/macros/s/AKfycbz2WSboxUbnfKM_hp_91DIu04b2WFWfHSXdj6RG2ITkyLq7W9eDAtVdpN3ogcFUa-JM/exec';
-    if (!d.gsSheetId) d.gsSheetId = '1Zilh_8iKHIaiXqOg8OwHW6HUUjVERxYuLzUA6LoC6rQ';
-    // Deduplicar andares e tarefas
-    if (d.andares) d.andares = d.andares.filter(function(a,i){return d.andares.indexOf(a)===i;});
-    // Normalizar tarefas antigas (strings) para objetos {nome, equipes}
-    if (d.tarefas && d.tarefas.length > 0 && typeof d.tarefas[0] === 'string') {
-      d.tarefas = d.tarefas.map(function(t){ return {nome:t, equipes:[]}; });
-    }
-  }
-
-  function save(context) {
-    try {
-      localStorage.setItem(KEY, JSON.stringify(d));
-      const el = document.getElementById('lastSaved');
-      if (el) { const n=new Date(); el.textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0'); }
-      _syncToSheets(context);
-    } catch(e) {}
-  }
-
-  let _syncTimer = null;
-  let _pendingCtx = {};
-  function _syncToSheets(context) {
-    if (context) _pendingCtx[context] = true;
-    clearTimeout(_syncTimer);
-    _syncTimer = setTimeout(async function() {
-      const ctx = Object.assign({}, _pendingCtx);
-      _pendingCtx = {};
-      if (!d.gsUrl || !d.gsSheetId) return;
-      if (ctx.workers) await Sheets.saveWorkers();
-      if (ctx.config)  await Sheets.saveConfig();
-    }, 1500);
-  }
-
-  function _merge(t, s) {
-    const o = Object.assign({}, t);
-    for (const k in s) {
-      if (s[k] && typeof s[k]==='object' && !Array.isArray(s[k])) o[k] = _merge(t[k]||{}, s[k]);
-      else o[k] = s[k];
-    }
-    return o;
-  }
-
-  function get() { return d; }
-
-  function getDayData(obra, date, wid) {
-    if (!d.dailyData[obra]) d.dailyData[obra] = {};
-    if (!d.dailyData[obra][date]) d.dailyData[obra][date] = {};
-    if (!d.dailyData[obra][date][wid]) d.dailyData[obra][date][wid] = {presente:true, andar:'', tarefas:[], motivo:''};
-    return d.dailyData[obra][date][wid];
-  }
-
-  function setDayField(obra, date, wid, field, val) {
-    getDayData(obra, date, wid)[field] = val;
-    save();
-  }
-
-  function getEquipe(id) { return d.equipes.find(e=>e.id===id||e.nome===id); }
-  function getWorker(id) { return d.workers.find(w=>w.id===id); }
-  function addWorker(w) { w.id='w'+Date.now(); d.workers.push(w); save('workers'); return w; }
-  function updateWorker(id,f) { const w=d.workers.find(x=>x.id===id); if(w) Object.assign(w,f); save('workers'); }
-  function removeWorker(id) { d.workers=d.workers.filter(w=>w.id!==id); save('workers'); }
-  function addObra(n) { if(!d.obras.includes(n)){d.obras.push(n);save();} }
-  function removeObra(n) { d.obras=d.obras.filter(o=>o!==n); save(); }
-  function addAndar(v) { d.andares.push(v); save('config'); }
-  function removeAndar(i) { d.andares.splice(i,1); save('config'); }
-  function addTarefa(v) { d.tarefas.push(typeof v==='string'?{nome:v,equipes:[]}:v); save('config'); }
-  function removeTarefa(i) { d.tarefas.splice(i,1); save('config'); }
-  function addEquipe(e) { e.id='eq'+Date.now(); d.equipes.push(e); save('config'); return e; }
-  function removeEquipe(id) { d.equipes=d.equipes.filter(e=>e.id!==id); save('config'); }
-  function addHistorico(h) { d.historico.unshift(h); if(d.historico.length>200) d.historico=d.historico.slice(0,200); save(); }
-
-  // Horas extras
-  function getHE(obra) { if(!d.horasExtras[obra]) d.horasExtras[obra]=[]; return d.horasExtras[obra]; }
-  function addHE(obra, entry) { getHE(obra).unshift(entry); save(); }
-  function removeHE(obra, id) { d.horasExtras[obra]=getHE(obra).filter(e=>e.id!==id); save(); }
-
-  return { load,save,get, getDayData,setDayField, getEquipe,getWorker,
-    addWorker,updateWorker,removeWorker, addObra,removeObra,
-    addAndar,removeAndar, addTarefa,removeTarefa, addEquipe,removeEquipe,
-    addHistorico, getHE,addHE,removeHE };
-})();
-
-/* ═══ UTILS ═══ */
-const Utils = (() => {
-  const WD = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
-  const MS = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
-  const MN = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'];
-
-  function todayStr() { return new Date().toISOString().split('T')[0]; }
-  function dateFrom(s) { return new Date(s+'T12:00:00'); }
-  function pad(n) { return String(n).padStart(2,'0'); }
-  function fmtPT(s) { const d=dateFrom(s); return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()}`; }
-  function fmtLong(s) { const d=dateFrom(s); return `${pad(d.getDate())}/${pad(d.getMonth()+1)}/${d.getFullYear()} – ${WD[d.getDay()]}`; }
-  function weekday(s) { return WD[dateFrom(s).getDay()]; }
-  function monthShort(s) { return MS[dateFrom(s).getMonth()]; }
-  function isSunday(s) { return dateFrom(s).getDay()===0; }
-  function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-  function toast(msg, type='success') {
-    const icons={success:'✅',error:'❌',info:'ℹ️',warn:'⚠️'};
-    const c=document.getElementById('toastContainer');
-    if(!c) return;
-    const t=document.createElement('div');
-    t.className=`toast ${type}`;
-    t.innerHTML=`<span>${icons[type]||'✅'}</span><span>${msg}</span>`;
-    c.appendChild(t);
-    setTimeout(()=>t.remove(),3300);
-  }
-
-  function copy(text, msg='Copiado!') {
-    navigator.clipboard.writeText(text).then(()=>toast(msg)).catch(()=>{
-      const ta=document.createElement('textarea');
-      ta.value=text; document.body.appendChild(ta); ta.select();
-      document.execCommand('copy'); document.body.removeChild(ta); toast(msg);
-    });
-  }
-
-  return { todayStr,dateFrom,pad,fmtPT,fmtLong,weekday,monthShort,isSunday,esc,toast,copy };
-})();
-
-/* ═══ GOOGLE SHEETS ═══ */
-const Sheets = (() => {
-  const CODE = `// EFETIVO DE OBRA – Apps Script v5
-// Implantar → Nova implantação → App da Web → Qualquer pessoa → Executar como: Eu mesmo
-
-var ABA_FUNC   = '👷 Funcionários';
-var ABA_EFET   = '📅 Efetivo Diário';
-var ABA_REL    = '📊 Relatórios';
-var ABA_ASSID  = '👷 Assiduidade';
-var ABA_CFG    = '⚙️ Configurações';
-var ABA_PROD   = '📐 Prod. Técnica';
-var ABA_HE     = '⏰ Horas Extras';
-
-function doGet(e) {
-  try {
-    var sheetId = e && e.parameter && e.parameter.sheetId;
-    if (!sheetId) return _ok({msg: 'API ativa.'});
-    var ss = SpreadsheetApp.openById(sheetId);
-    var state = _buildState(ss);
-    return ContentService
-      .createTextOutput(JSON.stringify({ok: true, state: state}))
-      .setMimeType(ContentService.MimeType.JSON);
-  } catch(err) { return _err(err); }
-}
-
-function doPost(e) {
-  try {
-    // Aceita tanto JSON no body quanto form field 'payload'
-    var raw = '';
-    if (e.postData && e.postData.contents) {
-      raw = e.postData.contents;
-    } else if (e.parameter && e.parameter.payload) {
-      raw = e.parameter.payload;
-    }
-    var p = JSON.parse(raw);
-    var ss = SpreadsheetApp.openById(p.sheetId || '');
-    var act = p.action || '';
-
-    if (act === 'saveWorkers')   { _saveWorkers(ss, p.workers);           return _ok({msg:'Funcionários salvos'}); }
-    if (act === 'saveEfetivo')   { _saveEfetivo(ss, p); _syncAssid(ss, p); return _ok({msg:'Efetivo salvo'}); }
-    if (act === 'saveRelatorio') { _saveRelatorio(ss, p);                  return _ok({msg:'Relatório salvo'}); }
-    if (act === 'saveConfig')    { _saveConfig(ss, p);                     return _ok({msg:'Config salva'}); }
-    if (act === 'saveProd')      { _saveProd(ss, p);                       return _ok({msg:'Produção salva'}); }
-    if (act === 'saveHE')        { _saveHE(ss, p);                         return _ok({msg:'HE salvas'}); }
-    if (act === 'deleteHE')      { _deleteHE(ss, p);                       return _ok({msg:'HE removida'}); }
-
-    return _ok({msg: 'Ação desconhecida: ' + act});
-  } catch(err) { return _err(err); }
-}
-
-function _buildState(ss) {
-  var state = {
-    workers: [], equipes: [], andares: [], tarefas: [], obras: [],
-    dailyData: {}, historico: [], horasExtras: {}, producaoGeral: {}, producaoDiaria: {},
-    gsUrl: 'https://script.google.com/macros/s/AKfycbz2WSboxUbnfKM_hp_91DIu04b2WFWfHSXdj6RG2ITkyLq7W9eDAtVdpN3ogcFUa-JM/exec', gsSheetId: '1Zilh_8iKHIaiXqOg8OwHW6HUUjVERxYuLzUA6LoC6rQ', activeObra: ''
-  };
-
-  var shF = ss.getSheetByName(ABA_FUNC);
-  if (shF && shF.getLastRow() > 3) {
-    var rows = shF.getRange(4, 1, shF.getLastRow()-3, 7).getValues();
-    rows.forEach(function(r) {
-      if (!r[0] || !r[1]) return;
-      state.workers.push({id: String(r[0]), nome: r[1], funcao: r[2], equipe: r[3], obra: r[4], ativo: r[5] !== 'NÃO'});
-    });
-  }
-
-  var shC = ss.getSheetByName(ABA_CFG);
-  if (shC && shC.getLastRow() > 4) {
-    var cfgData = shC.getRange(5, 1, shC.getLastRow()-4, 8).getValues();
-    var eqId = 1;
-    cfgData.forEach(function(r) {
-      if (r[0]) state.andares.push(String(r[0]).trim());
-      if (r[2]) state.tarefas.push(String(r[2]).trim());
-      if (r[4]) {
-        var parts = String(r[4]).split('|');
-        state.equipes.push({id: 'eq'+(eqId++), nome: parts[0].trim(), cor: parts[1] ? parts[1].trim() : '#8b92b0'});
-      }
-      if (r[6]) {
-        var obra = String(r[6]).trim();
-        if (obra && state.obras.indexOf(obra) === -1) state.obras.push(obra);
-      }
-    });
-  }
-  if (!state.obras.length) state.obras = ['Essence Residence'];
-  if (!state.andares.length) state.andares = ['Térreo'];
-  state.activeObra = state.obras[0];
-
-  var shE = ss.getSheetByName(ABA_EFET);
-  if (shE && shE.getLastRow() > 3) {
-    var efRows = shE.getRange(4, 1, shE.getLastRow()-3, 9).getValues();
-    efRows.forEach(function(r) {
-      if (!r[0] || !r[2]) return;
-      var dateStr = _toISO(r[0]);
-      var obra = String(r[1]);
-      var w = state.workers.find(function(x){ return x.nome === String(r[2]); });
-      if (!w) return;
-      if (!state.dailyData[obra]) state.dailyData[obra] = {};
-      if (!state.dailyData[obra][dateStr]) state.dailyData[obra][dateStr] = {};
-      state.dailyData[obra][dateStr][w.id] = {
-        presente: String(r[5]) === 'SIM',
-        andar: String(r[6] || ''),
-        tarefas: r[7] ? String(r[7]).split('; ').filter(Boolean) : [],
-        motivo: ''
-      };
-    });
-  }
-
-  var shR = ss.getSheetByName(ABA_REL);
-  if (shR && shR.getLastRow() > 3) {
-    var relRows = shR.getRange(4, 1, shR.getLastRow()-3, 5).getValues();
-    relRows.forEach(function(r) {
-      if (!r[0] || !r[3]) return;
-      state.historico.push({data: _toISO(r[0]), obra: String(r[1]), total: Number(r[2])||0, texto: String(r[3])});
-    });
-    state.historico.reverse();
-  }
-
-  var shHE = ss.getSheetByName(ABA_HE);
-  if (shHE && shHE.getLastRow() > 3) {
-    var heRows = shHE.getRange(4, 1, shHE.getLastRow()-3, 8).getValues();
-    heRows.forEach(function(r) {
-      if (!r[0] || !r[1]) return;
-      var obra = String(r[2]);
-      if (!state.horasExtras[obra]) state.horasExtras[obra] = [];
-      var w = state.workers.find(function(x){ return x.nome === String(r[3]); });
-      state.horasExtras[obra].push({
-        id: String(r[0]), data: _toISO(r[1]),
-        wid: w ? w.id : '', nome: String(r[3]), funcao: String(r[4]),
-        horas: Number(r[5])||0, tipo: String(r[6]||'Normal')
-      });
-    });
-  }
-
-  return state;
-}
-
-function _saveWorkers(ss, workers) {
-  var sh = _getOrCreate(ss, ABA_FUNC, ['ID','Nome','Função / Cargo','Equipe','Obra','Ativo','Timestamp'], 3);
-  var last = sh.getLastRow();
-  if (last > 3) sh.deleteRows(4, last-3);
-  var ts = _ts();
-  var rows = workers.map(function(w) {
-    return [w.id, w.nome, w.funcao, w.equipe, w.obra, w.ativo===false?'NÃO':'SIM', ts];
-  });
-  if (rows.length) sh.getRange(4, 1, rows.length, 7).setValues(rows);
-}
-
-function _saveEfetivo(ss, p) {
-  var sh = _getOrCreate(ss, ABA_EFET, ['Data','Obra','Nome','Função','Equipe','Presente','Andar / Local','Atividades','Timestamp'], 3);
-  var last = sh.getLastRow();
-  if (last > 3) {
-    var vals = sh.getRange(4, 1, last-3, 2).getValues();
-    for (var i = vals.length-1; i >= 0; i--) {
-      if (_toISO(vals[i][0]) === p.data && String(vals[i][1]) === p.obra) sh.deleteRow(i+4);
-    }
-  }
-  var ts = _ts(); var datePT = _toPT(p.data);
-  var rows = (p.workers||[]).map(function(w) {
-    return [datePT, p.obra, w.nome, w.funcao, w.equipe, w.presente?'SIM':'NÃO', w.andar||'–', (w.tarefas||[]).join('; ')||'–', ts];
-  });
-  if (rows.length) {
-    var startRow = sh.getLastRow()+1;
-    sh.getRange(startRow, 1, rows.length, 9).setValues(rows);
-    for (var j = 0; j < rows.length; j++) {
-      sh.getRange(startRow+j, 6).setFontColor(rows[j][5]==='SIM'?'#22c55e':'#ef4444').setFontWeight('bold');
-    }
-  }
-}
-
-function _saveRelatorio(ss, p) {
-  var sh = _getOrCreate(ss, ABA_REL, ['Data','Obra','Total Trabalhadores','Texto Completo','Timestamp'], 3);
-  sh.appendRow([_toPT(p.data), p.obra, p.total||0, p.texto, _ts()]);
-  sh.setColumnWidth(4, 600);
-}
-
-function _syncAssid(ss, p) {
-  if (!p.state) return;
-  var sh = _getOrCreate(ss, ABA_ASSID, ['Nome','Função','Equipe','Obra','Dias Presentes','Total Registrado','Assiduidade %','Status'], 3);
-  var last = sh.getLastRow();
-  if (last > 3) sh.deleteRows(4, last-3);
-  var state = p.state;
-  var att = {};
-  Object.keys(state.dailyData||{}).forEach(function(obra) {
-    Object.keys(state.dailyData[obra]).forEach(function(date) {
-      var dayMap = state.dailyData[obra][date];
-      Object.keys(dayMap).forEach(function(wid) {
-        if (!att[wid]) att[wid] = {dias:0, total:0};
-        att[wid].total++;
-        if (dayMap[wid].presente !== false) att[wid].dias++;
-      });
-    });
-  });
-  var rows = (state.workers||[]).map(function(w) {
-    var a = att[w.id]||{dias:0,total:0};
-    var pct = a.total > 0 ? Math.round(a.dias/a.total*100) : 100;
-    var eq = (state.equipes||[]).find(function(e){return e.id===w.equipe;});
-    var status = pct>=90?'✅ Regular':pct>=75?'⚠️ Atenção':'❌ Crítico';
-    return [w.nome, w.funcao, eq?eq.nome:w.equipe, w.obra, a.dias, a.total, pct+'%', status];
-  });
-  if (rows.length) {
-    sh.getRange(4, 1, rows.length, 8).setValues(rows);
-    rows.forEach(function(r, i) {
-      sh.getRange(i+4, 8).setFontColor(r[7].includes('Regular')?'#22c55e':r[7].includes('Atenção')?'#f59e0b':'#ef4444');
-    });
-  }
-}
-
-function _saveConfig(ss, p) {
-  var sh = ss.getSheetByName(ABA_CFG);
-  if (!sh) return;
-  var last = sh.getLastRow();
-  if (last > 4) sh.deleteRows(5, last-4);
-  var andares = p.andares||[], tarefas = p.tarefas||[], equipes = p.equipes||[], obras = p.obras||[];
-  var maxLen = Math.max(andares.length, tarefas.length, equipes.length, obras.length);
-  for (var i = 0; i < maxLen; i++) {
-    sh.appendRow([andares[i]||'','',tarefas[i]||'','',equipes[i]?equipes[i].nome+'|'+equipes[i].cor:'','',obras[i]||'','']);
-  }
-}
-
-function _saveProd(ss, p) {
-  var sh = _getOrCreate(ss, ABA_PROD,
-    ['Data','Obra','Área Alv. Est. m²','Área Laje m²','Vol. Graute m³','Vol. Argamassa m³','Vol. Concreto m³',
-     'Aço Alv. Est. kg','Aço Lajes kg','Alv. Est. Data Ref.','Alv. Est. m² Exec.','m²/Bloqueiro',
-     'Alv. Ved. Data Ref.','Alv. Ved. m² Exec.','m²/Pedreiro','Concretagens',
-     'Mestre','Engenheiro','Encarregado','Almoxarife','Assistente','Administrativo','Timestamp'], 3);
-  var g=p.geral||{}, d=p.diario||{};
-  sh.appendRow([_toPT(p.data),p.obra,g.areaAlv||0,g.areaLaje||0,g.volGraute||0,g.volArg||0,g.volConc||0,
-    g.acoAlv||0,g.acoLaje||0,d.alvEst&&d.alvEst.dataRef||'',d.alvEst&&d.alvEst.exec||0,d.alvEst&&d.alvEst.m2porBloqueiro||0,
-    d.alvVed&&d.alvVed.dataRef||'',d.alvVed&&d.alvVed.exec||0,d.alvVed&&d.alvVed.m2porPedreiro||0,d.concretagens||'',
-    g.mestre||'',g.engenheiro||'',g.encarregado||'',g.almoxarife||'',g.assistente||'',g.administrativo||'',_ts()]);
-}
-
-function _saveHE(ss, p) {
-  var sh = _getOrCreate(ss, ABA_HE, ['ID Lançamento','Data','Obra','Nome','Função','Horas','Tipo','Timestamp'], 3);
-  (p.registros||[]).forEach(function(r) {
-    sh.appendRow([r.id, _toPT(r.data), p.obra, r.nome, r.funcao, r.horas, r.tipo||'Normal', _ts()]);
-  });
-}
-
-function _deleteHE(ss, p) {
-  var sh = ss.getSheetByName(ABA_HE);
-  if (!sh || sh.getLastRow() < 4) return;
-  var vals = sh.getRange(4, 1, sh.getLastRow()-3, 1).getValues();
-  for (var i = vals.length-1; i >= 0; i--) {
-    if (String(vals[i][0]) === String(p.id)) sh.deleteRow(i+4);
-  }
-}
-
-function _getOrCreate(ss, name, headers, headerRow) {
-  var sh = ss.getSheetByName(name);
-  if (!sh) {
-    sh = ss.insertSheet(name);
-    var hRow = sh.getRange(headerRow, 1, 1, headers.length);
-    hRow.setValues([headers]);
-    hRow.setFontWeight('bold').setBackground('#f0a500').setFontColor('#000000');
-    sh.setFrozenRows(headerRow);
-  }
-  return sh;
-}
-
-function _toISO(val) {
-  if (!val) return '';
-  if (val instanceof Date) return Utilities.formatDate(val, 'America/Sao_Paulo', 'yyyy-MM-dd');
-  var s = String(val);
-  if (s.match(/^\d{4}-\d{2}-\d{2}/)) return s.substring(0,10);
-  var p = s.split('/');
-  if (p.length === 3) return p[2]+'-'+p[1]+'-'+p[0];
-  return s;
-}
-
-function _toPT(iso) {
-  if (!iso) return '';
-  var p = String(iso).split('-');
-  return p.length === 3 ? p[2]+'/'+p[1]+'/'+p[0] : iso;
-}
-
-function _ts() {
-  return Utilities.formatDate(new Date(), 'America/Sao_Paulo', 'dd/MM/yyyy HH:mm');
-}
-
-function _ok(data)  { return ContentService.createTextOutput(JSON.stringify(Object.assign({ok:true},data))).setMimeType(ContentService.MimeType.JSON); }
-function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:false,error:e.toString()})).setMimeType(ContentService.MimeType.JSON); }
-`;
-
-  async function _post(payload) {
-    const s = State.get();
-    if (!s.gsUrl || !s.gsSheetId) return false;
-    try {
-      await fetch(s.gsUrl, {
-        method: 'POST', mode: 'no-cors',
-        headers: {'Content-Type': 'text/plain;charset=utf-8'},
-        body: JSON.stringify({...payload, sheetId: s.gsSheetId})
-      });
-      return true;
-    } catch(e) { return false; }
-  }
-
-  async function loadState() {
-    const s = State.get();
-    if (!s.gsUrl || !s.gsSheetId) return null;
-    try {
-      const res = await fetch(s.gsUrl + '?sheetId=' + s.gsSheetId, {method:'GET', mode:'cors'});
-      const json = await res.json();
-      return json.ok ? json.state : null;
-    } catch(e) { return null; }
-  }
-
-  async function saveWorkers() {
-    return _post({action:'saveWorkers', workers: State.get().workers});
-  }
-
-  async function saveEfetivo(date, obra) {
-    const s = State.get();
-    const dayMap = s.dailyData?.[obra]?.[date] || {};
-    const workers = s.workers.filter(w => w.obra === obra).map(w => {
-      const dd = dayMap[w.id] || {presente:true, andar:'', tarefas:[]};
-      const eq = s.equipes.find(e => e.id === w.equipe);
-      return {nome:w.nome, funcao:w.funcao, equipe:eq?eq.nome:w.equipe,
-              presente:dd.presente!==false, andar:dd.andar||'', tarefas:dd.tarefas||[]};
-    });
-    return _post({action:'saveEfetivo', data:date, obra, workers, state:s});
-  }
-
-  async function saveRelatorio(date, obra, total, texto) {
-    return _post({action:'saveRelatorio', data:date, obra, total, texto});
-  }
-
-  async function saveConfig() {
-    const s = State.get();
-    return _post({action:'saveConfig', andares:s.andares, tarefas:s.tarefas, equipes:s.equipes, obras:s.obras});
-  }
-
-  async function saveHE(obra, registros) {
-    return _post({action:'saveHE', obra, registros});
-  }
-
-  async function deleteHE(id) {
-    return _post({action:'deleteHE', id});
-  }
-
-  async function saveProd(date, obra, geral, diario) {
-    return _post({action:'saveProd', data:date, obra, geral, diario});
-  }
-
-  async function ping(url) {
-    try { const r=await fetch(url,{method:'GET',mode:'cors'}); const j=await r.json(); return j.ok===true; } catch { return false; }
-  }
-
-  return { CODE, loadState, saveWorkers, saveEfetivo, saveRelatorio, saveConfig, saveProd, saveHE, deleteHE, ping };
-})();
-
-
-/* ═══ MODALS ═══ */
-const Modals = (() => {
-  function open(id) {
-    document.getElementById('modalBackdrop').classList.add('open');
-    document.querySelectorAll('.modal').forEach(m=>m.style.display='none');
-    const m=document.getElementById(id);
-    if(m) m.style.display = id==='modalHE' ? 'flex' : 'block';
-    if(id==='modalObra') _renderObraOpts();
-  }
-  function close(id) {
-    const m=document.getElementById(id);
-    if(m) m.style.display='none';
-    if(!Array.from(document.querySelectorAll('.modal')).some(m=>m.style.display!=='none'))
-      document.getElementById('modalBackdrop').classList.remove('open');
-  }
-  function closeAll(e) {
-    if(e&&e.target!==document.getElementById('modalBackdrop')) return;
-    document.querySelectorAll('.modal').forEach(m=>m.style.display='none');
-    document.getElementById('modalBackdrop').classList.remove('open');
-  }
-  function _renderObraOpts() {
-    const s=State.get(); const obra=App.obra();
-    document.getElementById('obraOptions').innerHTML=s.obras.map(o=>`
-      <div class="obra-option ${o===obra?'selected':''}" onclick="App.setObra('${Utils.esc(o)}');Modals.close('modalObra')">
-        <span>${Utils.esc(o)}</span>${o===obra?'<span>✓</span>':''}
-      </div>`).join('');
-  }
-  function openWorker(wid) {
-    const s=State.get();
-    document.getElementById('wTeam').innerHTML=s.equipes.map(e=>`<option value="${e.id}">${e.nome}</option>`).join('');
-    document.getElementById('wObra').innerHTML=s.obras.map(o=>`<option value="${Utils.esc(o)}" ${o===App.obra()?'selected':''}>${Utils.esc(o)}</option>`).join('');
-    if(wid) {
-      const w=State.getWorker(wid);
-      document.getElementById('mwTitle').textContent='Editar Funcionário';
-      document.getElementById('wEditId').value=wid;
-      document.getElementById('wName').value=w.nome;
-      document.getElementById('wRole').value=w.funcao;
-      document.getElementById('wTeam').value=w.equipe;
-      document.getElementById('wObra').value=w.obra;
-    } else {
-      document.getElementById('mwTitle').textContent='Novo Funcionário';
-      document.getElementById('wEditId').value='';
-      document.getElementById('wName').value='';
-      document.getElementById('wRole').value='';
-    }
-    open('modalWorker');
-  }
-  function openMove(wid) {
-    const s=State.get(); const w=State.getWorker(wid);
-    document.getElementById('mvWid').value=wid;
-    document.getElementById('mvName').textContent=w?w.nome:'';
-    document.getElementById('mvObra').innerHTML=s.obras.filter(o=>o!==w?.obra).map(o=>`<option value="${Utils.esc(o)}">${Utils.esc(o)}</option>`).join('');
-    open('modalMove');
-  }
-  function openImport() {
-    const s=State.get();
-    document.getElementById('impObra').innerHTML=s.obras.map(o=>`<option value="${Utils.esc(o)}" ${o===App.obra()?'selected':''}>${Utils.esc(o)}</option>`).join('');
-    document.getElementById('impEquipe').innerHTML=s.equipes.map(e=>`<option value="${e.id}">${e.nome}</option>`).join('');
-    document.getElementById('impText').value='';
-    open('modalImport');
-  }
-  return {open,close,closeAll,openWorker,openMove,openImport};
-})();
-
-/* ═══ FUNCIONÁRIOS PAGE ═══ */
-const FuncPage = (() => {
-  function render() {
-    const s=State.get();
-    const q=(document.getElementById('funcSearch')?.value||'').toLowerCase();
-    const sort=document.getElementById('funcSort')?.value||'nome';
-    let ws=[...s.workers];
-    if(q) ws=ws.filter(w=>w.nome.toLowerCase().includes(q)||w.funcao.toLowerCase().includes(q));
-    ws.sort((a,b)=>{
-      if(sort==='nome_z') return String(b.nome||'').localeCompare(String(a.nome||''),'pt-BR');
-      if(sort==='cargo') return String(a.funcao||'').localeCompare(String(b.funcao||''),'pt-BR');
-      if(sort==='equipe') { const ea=(State.getEquipe(a.equipe)||{}).nome||''; const eb=(State.getEquipe(b.equipe)||{}).nome||''; return ea.localeCompare(eb,'pt-BR'); }
-      if(sort==='obra') return String(a.obra||'').localeCompare(String(b.obra||''),'pt-BR');
-      return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR');
-    });
-    const el=document.getElementById('funcList');
-    if(!el) return;
-    if(!ws.length){el.innerHTML=`<div class="empty">Nenhum funcionário encontrado.</div>`;return;}
-    el.innerHTML=ws.map(w=>{
-      const eq=State.getEquipe(w.equipe);
-      const cor=eq?eq.cor:'#8b92b0';
-      return `<div class="func-card">
-        <div class="func-info">
-          <div class="func-name">${Utils.esc(w.nome)}</div>
-          <div class="func-meta"><span class="team-badge" style="background:${cor}22;color:${cor};border:1px solid ${cor}44">${Utils.esc(eq?eq.nome:w.equipe)}</span> ${Utils.esc(w.funcao)} · ${Utils.esc(w.obra)}</div>
-        </div>
-        <div class="func-actions">
-          <button class="icon-btn" onclick="Modals.openWorker('${w.id}')">✏️</button>
-          <button class="icon-btn" onclick="Modals.openMove('${w.id}')">↗</button>
-          <button class="icon-btn danger" onclick="FuncPage.remove('${w.id}')">✕</button>
-        </div>
-      </div>`;
-    }).join('');
-  }
-  function save() {
-    const nome=document.getElementById('wName').value.trim();
-    const funcao=document.getElementById('wRole').value.trim();
-    const equipe=document.getElementById('wTeam').value;
-    const obra=document.getElementById('wObra').value;
-    const eid=document.getElementById('wEditId').value;
-    if(!nome||!funcao){Utils.toast('Preencha nome e função.','warn');return;}
-    if(eid) State.updateWorker(eid,{nome,funcao,equipe,obra});
-    else State.addWorker({nome,funcao,equipe,obra});
-    Modals.close('modalWorker');
-    render();
-    if(typeof EfPage!=='undefined') EfPage.render();
-    Utils.toast(eid?'Atualizado!':'Adicionado!','success');
-  }
-  function remove(id) {
-    const w=State.getWorker(id);
-    if(!w||!confirm(`Remover "${w.nome}"?`)) return;
-    State.removeWorker(id); render();
-    if(typeof EfPage!=='undefined') EfPage.render();
-    Utils.toast('Removido.','info');
-  }
-  function confirmMove() {
-    const id=document.getElementById('mvWid').value;
-    const obra=document.getElementById('mvObra').value;
-    State.updateWorker(id,{obra});
-    Modals.close('modalMove'); render();
-    if(typeof EfPage!=='undefined') EfPage.render();
-    Utils.toast('Movido.','success');
-  }
-  function importW() {
-    const text=document.getElementById('impText').value.trim();
-    const obra=document.getElementById('impObra').value;
-    const equipe=document.getElementById('impEquipe').value;
-    if(!text){Utils.toast('Cole a lista.','warn');return;}
-    let n=0;
-    text.split('\n').filter(l=>l.trim()).forEach(line=>{
-      const p=line.split(/–|-/).map(x=>x.trim());
-      if(p[0]){State.addWorker({nome:p[0],funcao:p[1]||'Ajudante',equipe,obra});n++;}
-    });
-    Modals.close('modalImport'); render();
-    if(typeof EfPage!=='undefined') EfPage.render();
-    Utils.toast(`${n} importados!`,'success');
-  }
-  return {render,save,remove,confirmMove,importW};
-})();
-
-/* ═══ DESEMPENHO PAGE ═══ */
-const StatPage = (() => {
-  function render() {
-    const s=State.get(); const obra=App.obra(); const date=App.date();
-    const ws=s.workers.filter(w=>w.obra===obra);
-    const att={};
-    if(s.dailyData[obra]) {
-      Object.entries(s.dailyData[obra]).forEach(([d,dayMap])=>{
-        Object.entries(dayMap).forEach(([wid,dd])=>{
-          if(!att[wid]) att[wid]={dias:0,total:0};
-          att[wid].total++;
-          if(dd.presente) att[wid].dias++;
+async function carregarDados(){
+  document.getElementById('mapa-wrap').innerHTML='<div class="loading"><div class="spinner"></div>Carregando...</div>';
+  try{
+    var r=await fetch(DATA_URL+'?t='+Date.now());
+    var json=await r.json();
+    if(json.unidades){
+      UNIDADES=json.unidades.map(function(u){return {u:String(u.unidade),a:u.andar,prog:u.progresso||0};});
+      json.unidades.forEach(function(u){
+        DADOS[String(u.unidade)]={};
+        Object.entries(u.etapas||{}).forEach(function(entry){
+          DADOS[String(u.unidade)][entry[0]]=entry[1].valor!==undefined?entry[1].valor:entry[1];
         });
       });
+      jsonKPIs=json.kpis||{};
     }
-    const hoje=ws.filter(w=>{ const dd=s.dailyData[obra]?.[date]?.[w.id]; return !dd||dd.presente; }).length;
-    const rel=s.historico.filter(h=>h.obra===obra).length;
-    const avg=ws.length?Math.round(ws.reduce((sum,w)=>{const a=att[w.id];return sum+(a&&a.total?a.dias/a.total*100:100);},0)/ws.length):0;
-    const el=document.getElementById('statContent');
-    if(!el) return;
-    el.innerHTML=`
-      <div class="stats-grid">
-        <div class="stat-card"><div class="stat-lbl">Funcionários</div><div class="stat-val">${ws.length}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Hoje</div><div class="stat-val" style="color:var(--gn)">${hoje}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Relatórios</div><div class="stat-val">${rel}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Assiduidade</div><div class="stat-val" style="color:${avg>=90?'var(--gn)':avg>=75?'var(--ac)':'var(--rd)'}">${avg}%</div></div>
-      </div>
-      <div class="att-list">
-        ${ws.map(w=>{
-          const a=att[w.id]||{dias:0,total:0};
-          const pct=a.total?Math.round(a.dias/a.total*100):100;
-          const cls=pct>=90?'good':pct>=75?'warn':'danger';
-          const cor=pct>=90?'var(--gn)':pct>=75?'var(--ac)':'var(--rd)';
-          const eq=State.getEquipe(w.equipe); const ecor=eq?eq.cor:'#8b92b0';
-          return `<div class="att-card">
-            <div class="att-top">
-              <div class="att-info">
-                <div class="att-name">${Utils.esc(w.nome)}</div>
-                <div class="att-role"><span class="team-badge" style="background:${ecor}22;color:${ecor};border:1px solid ${ecor}44">${Utils.esc(eq?eq.nome:w.equipe)}</span> ${Utils.esc(w.funcao)}</div>
-              </div>
-              <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:${cor}">${pct}%</div>
-            </div>
-            <div class="bar-wrap"><div class="bar-bg"><div class="bar-fill ${cls}" style="width:${pct}%"></div></div><span style="font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace">${a.dias}/${a.total}</span></div>
-          </div>`;
-        }).join('')}
-      </div>`;
+    renderKPIs();renderMapa();renderRel();
+    var ts=json.meta&&json.meta.gerado_em?new Date(json.meta.gerado_em).toLocaleString('pt-BR'):'--';
+    document.getElementById('update-bar').textContent='Atualizado: '+ts;
+  }catch(e){
+    document.getElementById('mapa-wrap').innerHTML='<div class="loading" style="color:var(--red)">Erro ao carregar. Toque para tentar novamente.</div>';
+    console.error(e);
   }
-  return {render};
-})();
-
-/* ═══ HISTÓRICO PAGE ═══ */
-const HistPage = (() => {
-  let cur='';
-  function render() {
-    const s=State.get(); const obra=App.obra();
-    const hist=s.historico.filter(h=>h.obra===obra);
-    const el=document.getElementById('histContent');
-    if(!el) return;
-    if(!hist.length){el.innerHTML=`<div class="empty">Nenhum relatório gerado ainda.</div>`;return;}
-    el.innerHTML=`<div class="hist-list">${hist.map((h,i)=>`
-      <div class="hist-card" onclick="HistPage.open(${i})">
-        <div><div style="font-family:'Bebas Neue',sans-serif;font-size:30px;color:var(--ac)">${Utils.pad(Utils.dateFrom(h.data).getDate())}</div>
-          <div style="font-size:10px;color:var(--t3)">${Utils.monthShort(h.data)}</div></div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:12px;font-weight:600">${Utils.esc(h.obra)}</div>
-          <div style="font-size:11px;color:var(--t3)">${Utils.weekday(h.data)}</div>
-          <div style="font-size:12px;color:var(--t2);font-family:'JetBrains Mono',monospace;margin-top:4px">👷 ${h.total}</div>
-        </div>
-        <div style="color:var(--t3);font-size:20px">›</div>
-      </div>`).join('')}</div>`;
-  }
-  function open(i) {
-    const s=State.get(); const obra=App.obra();
-    const hist=s.historico.filter(h=>h.obra===obra);
-    const h=hist[i]; if(!h) return;
-    cur=h.texto;
-    document.getElementById('histDetailTitle').textContent=`Efetivo – ${Utils.fmtPT(h.data)}`;
-    document.getElementById('histDetailText').textContent=h.texto;
-    Modals.open('modalHistDetail');
-  }
-  function copyCur() { Utils.copy(cur,'Copiado!'); }
-  return {render,open,copyCur};
-})();
-
-/* ═══ CONFIG PAGE ═══ */
-const CfgPage = (() => {
-  function render() {
-    const s=State.get();
-    const el=document.getElementById('cfgContent');
-    if(!el) return;
-    el.innerHTML=`
-      ${blk('🏢 Andares / Locais',
-        s.andares.map((a,i)=>itm(a,`CfgPage.rmAndar(${i})`)).join(''),
-        `<div class="add-item-row"><input id="newAndar" placeholder="ex: 17º Pavimento"><button class="btn btn-accent" onclick="CfgPage.addAndar()">Add</button></div>`)}
-      ${blk('⚒ Atividades',
-        s.tarefas.map((t,i)=>itmTarefa(t,i,s.equipes)).join(''),
-        `<div class="add-item-row"><input id="newTarefa" placeholder="ex: Instalação elétrica"><button class="btn btn-accent" onclick="CfgPage.addTarefa()">Add</button></div>`)}
-      ${blk('👥 Equipes',
-        s.equipes.map(e=>`<div class="settings-item"><span class="color-dot" style="background:${e.cor}"></span><span style="flex:1">${Utils.esc(e.nome)}</span><button class="icon-btn danger" onclick="CfgPage.rmEquipe('${e.id}')">✕</button></div>`).join(''),
-        `<div class="add-item-row"><input id="newEquipe" placeholder="Nova equipe"><input type="color" id="newEquipeCor" value="#22c55e" style="width:40px;padding:3px;border-radius:6px;border:1px solid var(--bd2);cursor:pointer;background:none"><button class="btn btn-accent" onclick="CfgPage.addEquipe()">Add</button></div>`)}
-      ${blk('🏗 Obras',
-        s.obras.map((o,i)=>`<div class="settings-item"><span style="flex:1">${Utils.esc(o)}</span>${i===0?'<span style="font-size:10px;color:var(--t3)">principal</span>':`<button class="icon-btn danger" onclick="CfgPage.rmObra('${Utils.esc(o)}')">✕</button>`}</div>`).join(''),
-        `<div class="add-item-row"><input id="newObra" placeholder="Nova obra"><button class="btn btn-accent" onclick="CfgPage.addObra()">Add</button></div>`)}
-      ${blk('🔗 Google Sheets',
-        `<div class="form-g"><label>URL do Web App</label><input class="finput" id="gsUrl" placeholder="https://script.google.com/macros/s/…/exec" value="${Utils.esc(s.gsUrl)}" style="font-size:11px;font-family:'JetBrains Mono',monospace"></div>
-         <div class="form-g"><label>ID da Planilha</label><input class="finput" id="gsSheetId" placeholder="1BxiMVs0XRA5…" value="${Utils.esc(s.gsSheetId)}" style="font-family:'JetBrains Mono',monospace"></div>
-         <div style="display:flex;gap:8px;margin-top:6px">
-           <button class="btn btn-accent" onclick="CfgPage.saveGS()">Salvar</button>
-           <button class="btn btn-ghost" onclick="CfgPage.testGS()">Testar</button>
-           <button class="btn btn-ghost" onclick="CfgPage.showScript()">Ver código Script</button>
-         </div>`,
-        '')}
-    `;
-  }
-  function blk(title,body,footer) {
-    return `<div class="settings-section"><div class="settings-section-title">${title}</div><div class="settings-section-body">${body}${footer}</div></div>`;
-  }
-  function itm(text,fn) {
-    return `<div class="settings-item"><span style="flex:1">${Utils.esc(text)}</span><button class="icon-btn danger" style="width:24px;height:24px;font-size:11px" onclick="${fn}">✕</button></div>`;
-  }
-  function itmTarefa(t, i, equipes) {
-    const nome = typeof t==='string' ? t : (t.nome||'');
-    const eqsVinc = typeof t==='string' ? [] : (t.equipes||[]);
-    const chips = equipes.map(e => {
-      const sel = eqsVinc.includes(e.nome);
-      return `<span onclick="CfgPage.toggleTarefaEq(${i},'${Utils.esc(e.nome)}')" style="cursor:pointer;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;border:1px solid ${sel?e.cor+'88':'var(--bd2)'};background:${sel?e.cor+'22':'transparent'};color:${sel?e.cor:'var(--t3)'};transition:all .15s">${Utils.esc(e.nome)}</span>`;
-    }).join('');
-    return `<div class="settings-item" style="flex-direction:column;align-items:flex-start;gap:6px;padding:10px 12px">
-      <div style="display:flex;width:100%;align-items:center;gap:8px">
-        <span style="flex:1;font-size:13px">${Utils.esc(nome)}</span>
-        <button class="icon-btn" style="width:24px;height:24px;font-size:11px;flex-shrink:0" onclick="CfgPage.editTarefa(${i})">✏️</button>
-      <button class="icon-btn danger" style="width:24px;height:24px;font-size:11px;flex-shrink:0" onclick="CfgPage.rmTarefa(${i})">✕</button>
-      </div>
-      <div style="display:flex;flex-wrap:wrap;gap:4px">${chips || '<span style="font-size:10px;color:var(--t3)">Global (todas as equipes)</span>'}</div>
-    </div>`;
-  }
-  function addAndar(){const v=document.getElementById('newAndar').value.trim();if(!v)return;State.addAndar(v);document.getElementById('newAndar').value='';render();if(typeof EfPage!=='undefined')EfPage.renderFilters();}
-  function rmAndar(i){State.removeAndar(i);render();if(typeof EfPage!=='undefined')EfPage.renderFilters();}
-  function addTarefa(){const v=document.getElementById('newTarefa').value.trim();if(!v)return;State.addTarefa(v);document.getElementById('newTarefa').value='';render();}
-  function rmTarefa(i){State.removeTarefa(i);render();}
-  function editTarefa(i){
-    const s=State.get();
-    const t=s.tarefas[i];
-    const nome=typeof t==='string'?t:t.nome;
-    const novo=prompt('Editar atividade:',nome);
-    if(!novo||!novo.trim()||novo.trim()===nome) return;
-    if(typeof t==='string') s.tarefas[i]={nome:novo.trim(),equipes:[]};
-    else t.nome=novo.trim();
-    State.save('config');
-    render();
-  }
-  function setTarefaEqs(i, sel) {
-    const s = State.get();
-    const t = s.tarefas[i];
-    if (!t) return;
-    const eqs = Array.from(sel.selectedOptions).map(o=>o.value);
-    if (typeof t === 'string') s.tarefas[i] = {nome:t, equipes:eqs};
-    else t.equipes = eqs;
-    State.save('config');
-  }
-  function toggleTarefaEq(i, eqNome) {
-    const s = State.get();
-    const t = s.tarefas[i];
-    if (!t) return;
-    if (typeof t === 'string') s.tarefas[i] = {nome:t, equipes:[eqNome]};
-    else {
-      const idx = t.equipes.indexOf(eqNome);
-      if (idx >= 0) t.equipes.splice(idx,1);
-      else t.equipes.push(eqNome);
-    }
-    State.save('config');
-    render();
-  }
-  function addEquipe(){const n=document.getElementById('newEquipe').value.trim();const c=document.getElementById('newEquipeCor').value;if(!n)return;State.addEquipe({nome:n,cor:c});document.getElementById('newEquipe').value='';render();if(typeof EfPage!=='undefined')EfPage.renderFilters();}
-  function rmEquipe(id){State.removeEquipe(id);render();if(typeof EfPage!=='undefined')EfPage.renderFilters();}
-  function addObra(){const v=document.getElementById('newObra').value.trim();if(!v)return;State.addObra(v);document.getElementById('newObra').value='';render();App.rebuildObraSelects();}
-  function rmObra(n){if(n===App.obra()){Utils.toast('Não pode remover a obra ativa.','warn');return;}if(!confirm(`Remover "${n}"?`))return;State.removeObra(n);render();App.rebuildObraSelects();}
-  function saveGS(){const s=State.get();s.gsUrl=document.getElementById('gsUrl').value.trim();s.gsSheetId=document.getElementById('gsSheetId').value.trim();State.save();Utils.toast('Salvo!','success');App.updateGSIndicator();}
-  async function testGS(){const url=document.getElementById('gsUrl').value.trim();if(!url){Utils.toast('Configure a URL.','warn');return;}Utils.toast('Testando…','info');const ok=await Sheets.ping(url);ok?Utils.toast('OK!','success'):Utils.toast('Falhou.','error');}
-  function showScript(){document.getElementById('scriptCode').textContent=Sheets.CODE;Modals.open('modalScript');}
-  return {render,addAndar,rmAndar,addTarefa,rmTarefa,editTarefa,setTarefaEqs,toggleTarefaEq,addEquipe,rmEquipe,addObra,rmObra,saveGS,testGS,showScript};
-})();
-
-/* ═══ HORAS EXTRAS PAGE ═══ */
-const HEPage = (() => {
-  let _sel = [];
-
-  function render() {
-    const s=State.get(), obra=App.obra();
-    const entries=(s.horasExtras&&s.horasExtras[obra])||[];
-    const el=document.getElementById('heContent');
-    if(!el) return;
-    const meses=[...new Set(entries.map(e=>e.data.substring(0,7)))].sort().reverse();
-    const mesSel=document.getElementById('heMesFiltro')?.value||(meses[0]||'');
-    const filtradas=mesSel?entries.filter(e=>e.data.startsWith(mesSel)):entries;
-    const mesOpts=meses.map(m=>`<option value="${m}" ${m===mesSel?'selected':''}>${_fmtMes(m)}</option>`).join('');
-    let html=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px">
-      <div><div style="font-family:Bebas Neue,sans-serif;font-size:28px;letter-spacing:1px">HORAS EXTRAS</div>
-      <div style="font-size:11px;color:var(--t3)">${Utils.esc(obra)}</div></div>
-      <button class="btn btn-accent" onclick="HEPage.openStep1()">+ Lançar Dia</button></div>`;
-    if(meses.length) html+=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px">
-      <label style="font-size:12px;color:var(--t3)">Mês:</label>
-      <select id="heMesFiltro" class="form-input" style="flex:1;font-size:12px" onchange="HEPage.render()">
-        <option value="">Todos</option>${mesOpts}</select>
-      <button class="btn btn-ghost" style="font-size:11px;padding:6px 10px" onclick="HEPage.gerarRelatorio()">📋 Relatório</button></div>`;
-    if(!filtradas.length){
-      html+=`<div style="padding:40px 0;text-align:center;color:var(--t3)">Nenhum lançamento. Clique em <strong>+ Lançar Dia</strong>.</div>`;
-    } else {
-      html+=`<div style="display:flex;flex-direction:column;gap:10px">`;
-      filtradas.forEach(e=>{
-        const p100=Utils.isSunday(e.data)||e.tipo==='100';
-        const tipoLabel=p100
-          ?`<span style="background:rgba(239,68,68,.15);color:#ef4444;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">100% Feriado/Dom.</span>`
-          :`<span style="background:rgba(240,165,0,.15);color:var(--ac);padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">60% Normal</span>`;
-        const total=e.registros.reduce((s,r)=>s+Number(r.horas),0);
-        let rows=e.registros.map(r=>{
-          const w=State.getWorker(r.wid);
-          return `<div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:5px 0;border-bottom:1px solid var(--bd)">
-            <span>${w?Utils.esc(w.nome):'?'}</span>
-            <span style="font-family:JetBrains Mono,monospace;color:var(--ac);font-weight:700">${r.horas}h</span></div>`;
-        }).join('');
-        html+=`<div style="background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:16px">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-            <div><span style="font-family:Bebas Neue,sans-serif;font-size:20px;color:var(--ac)">${Utils.fmtPT(e.data)}</span>
-            <div style="margin-top:4px;display:flex;gap:6px;align-items:center">${tipoLabel}
-            <span style="font-size:11px;color:var(--t3)">${Utils.weekday(e.data)}</span></div></div>
-            <div style="display:flex;align-items:center;gap:10px">
-            <span style="font-family:JetBrains Mono,monospace;font-size:14px;color:var(--ac);font-weight:700">${total}h</span>
-            <button class="icon-btn danger" onclick="HEPage.remove('${e.id}')">✕</button></div></div>
-          <div style="display:flex;flex-direction:column">${rows}</div></div>`;
-      });
-      html+=`</div>`;
-    }
-    el.innerHTML=html;
-  }
-
-  function _fmtMes(ym){
-    const ms=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-    const [y,m]=ym.split('-'); return (ms[parseInt(m)-1]||m)+'/'+y;
-  }
-
-  function openStep1(){
-    _sel=[];
-    const s=State.get(), obra=App.obra();
-    const ws=s.workers.filter(w=>w.obra===obra).sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'));
-    document.getElementById('heDate').value=App.date();
-    document.getElementById('heTipo').value='60';
-    document.getElementById('heStep1').innerHTML=ws.map(w=>{
-      const eq=State.getEquipe(w.equipe), cor=eq?eq.cor:'#8b92b0';
-      return `<div class="he-row" id="hesel-${w.id}" onclick="HEPage.toggleSel('${w.id}')" style="cursor:pointer;border:1px solid var(--bd);border-radius:8px;padding:12px;display:flex;align-items:center;gap:12px;transition:all .15s">
-        <div id="hecheck-${w.id}" style="width:24px;height:24px;border-radius:6px;border:2px solid var(--bd2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:14px"></div>
-        <div style="flex:1"><div style="font-size:14px;font-weight:600">${Utils.esc(w.nome)}</div>
-        <div style="font-size:11px;color:var(--t3)">${Utils.esc(w.funcao)}</div></div>
-        <span style="background:${cor}22;color:${cor};border:1px solid ${cor}44;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:600">${Utils.esc(eq?eq.nome:w.equipe)}</span></div>`;
-    }).join('');
-    document.getElementById('heStep1Wrap').style.display='flex';
-    document.getElementById('heStep2Wrap').style.display='none';
-    document.getElementById('heStep2Wrap').style.flexDirection='column';
-    document.getElementById('heModalTitle').textContent='Selecionar Funcionários';
-    document.getElementById('heBtnLancar').style.display='block';
-    document.getElementById('heBtnSalvar').style.display='none';
-    Modals.open('modalHE');
-    document.getElementById('modalHE').style.display='flex';
-    // Definir altura do scroll após modal abrir
-    setTimeout(()=>{
-      const scr=document.getElementById('heListScroll');
-      const modal=document.getElementById('modalHE');
-      if(scr&&modal){
-        const used=modal.querySelector('.modal-header').offsetHeight
-          +(modal.querySelector('[style*="heDate"]')||modal.querySelectorAll('[style*="flex-shrink:0"]')[1])?.offsetHeight||60
-          +50+60; // titulo+data+filtro+footer
-        scr.style.maxHeight=(window.innerHeight*0.75-used)+'px';
-        scr.style.overflowY='scroll';
-      }
-    },50);
-  }
-
-  function toggleSel(wid){
-    const idx=_sel.indexOf(wid);
-    const el=document.getElementById('hesel-'+wid);
-    const chk=document.getElementById('hecheck-'+wid);
-    if(idx>=0){
-      _sel.splice(idx,1);
-      if(el){el.style.background='';el.style.borderColor='var(--bd)';}
-      if(chk){chk.innerHTML='';chk.style.background='';chk.style.borderColor='var(--bd2)';}
-    } else {
-      _sel.push(wid);
-      if(el){el.style.background='var(--acd)';el.style.borderColor='var(--ac)';}
-      if(chk){chk.innerHTML='✓';chk.style.background='var(--ac)';chk.style.borderColor='var(--ac)';chk.style.color='#000';}
-    }
-  }
-
-  function selectAll(){
-    const s=State.get(), obra=App.obra();
-    _sel=[];
-    s.workers.filter(w=>w.obra===obra).forEach(w=>{
-      _sel.push(w.id);
-      const el=document.getElementById('hesel-'+w.id);
-      const chk=document.getElementById('hecheck-'+w.id);
-      if(el){el.style.background='var(--acd)';el.style.borderColor='var(--ac)';}
-      if(chk){chk.innerHTML='✓';chk.style.background='var(--ac)';chk.style.borderColor='var(--ac)';chk.style.color='#000';}
-    });
-  }
-
-  function goStep2(){
-    if(!_sel.length){Utils.toast('Selecione ao menos um funcionário.','warn');return;}
-    document.getElementById('heStep2').innerHTML=_sel.map(wid=>{
-      const w=State.getWorker(wid);
-      return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--bd)">
-        <div style="flex:1"><div style="font-size:14px;font-weight:600">${w?Utils.esc(w.nome):'?'}</div>
-        <div style="font-size:11px;color:var(--t3)">${w?Utils.esc(w.funcao):''}</div></div>
-        <input type="number" id="heh-${wid}" min="0.5" max="24" step="0.5" placeholder="h"
-          style="width:70px;background:var(--sf2);border:1px solid var(--bd2);color:var(--t1);font-family:JetBrains Mono,monospace;font-size:16px;padding:8px;border-radius:8px;outline:none;text-align:center"></div>`;
-    }).join('');
-    document.getElementById('heStep1Wrap').style.display='none';
-    document.getElementById('heStep2Wrap').style.display='flex';
-    document.getElementById('heStep2Wrap').style.flexDirection='column';
-    document.getElementById('heModalTitle').textContent=`Lançar Horas (${_sel.length} func.)`;
-    document.getElementById('heBtnLancar').style.display='none';
-    document.getElementById('heBtnSalvar').style.display='block';
-  }
-
-  function setTodosIgual(){
-    const val=document.getElementById('heTodosH').value;
-    if(!val){Utils.toast('Informe o valor.','warn');return;}
-    _sel.forEach(wid=>{const inp=document.getElementById('heh-'+wid);if(inp)inp.value=val;});
-  }
-
-  function saveAdd(){
-    const s=State.get(), obra=App.obra();
-    const date=document.getElementById('heDate').value;
-    const tipo=document.getElementById('heTipo').value||'60';
-    if(!date){Utils.toast('Selecione a data.','warn');return;}
-    const registros=_sel.map(wid=>{
-      const w=State.getWorker(wid);
-      const hi=document.getElementById('heh-'+wid);
-      return hi&&hi.value&&Number(hi.value)>0?{wid,horas:Number(hi.value),nome:w?w.nome:'',funcao:w?w.funcao:''}:null;
-    }).filter(Boolean);
-    if(!registros.length){Utils.toast('Informe as horas de ao menos um funcionário.','warn');return;}
-    if(!s.horasExtras)s.horasExtras={};
-    if(!s.horasExtras[obra])s.horasExtras[obra]=[];
-    const entry={id:'he'+Date.now(),data:date,tipo,registros};
-    s.horasExtras[obra].unshift(entry);
-    State.save();
-    Sheets.saveHE(obra,[entry]);
-    Modals.close('modalHE');
-    render();
-    Utils.toast('✅ Lançamento salvo!','success');
-  }
-
-  function remove(id){
-    if(!confirm('Remover este lançamento?'))return;
-    const s=State.get(), obra=App.obra();
-    if(s.horasExtras&&s.horasExtras[obra]) s.horasExtras[obra]=s.horasExtras[obra].filter(e=>e.id!==id);
-    State.save(); Sheets.deleteHE(id); render();
-  }
-
-  function gerarRelatorio(){
-    const s=State.get(), obra=App.obra();
-    const mes=document.getElementById('heMesFiltro')?.value;
-    const entries=(s.horasExtras&&s.horasExtras[obra])||[];
-    const filtered=mes?entries.filter(e=>e.data.startsWith(mes)):entries;
-    if(!filtered.length){Utils.toast('Nenhum lançamento.','warn');return;}
-    const map60={}, map100={};
-    filtered.forEach(e=>{
-      const p100=Utils.isSunday(e.data)||e.tipo==='100';
-      e.registros.forEach(r=>{
-        const w=State.getWorker(r.wid);
-        const nome=r.nome||(w?w.nome:'?');
-        if(p100){map100[nome]=(map100[nome]||0)+Number(r.horas);}
-        else{map60[nome]=(map60[nome]||0)+Number(r.horas);}
-      });
-    });
-    const nomes=[...new Set([...Object.keys(map60),...Object.keys(map100)])].sort();
-    let txt=`⏰ RELATÓRIO DE HORAS EXTRAS\n${mes?_fmtMes(mes):'Todo o período'}\nObra: ${obra}\n\n`;
-    nomes.forEach(n=>{
-      const p=[]; if(map60[n])p.push(`${map60[n]}h (60%)`); if(map100[n])p.push(`${map100[n]}h (100%)`);
-      txt+=`${n}: ${p.join(' + ')}\n`;
-    });
-    document.getElementById('previewText').textContent=txt;
-    Modals.open('modalPreview');
-  }
-
-  return {render,openStep1,toggleSel,selectAll,goStep2,setTodosIgual,saveAdd,remove,gerarRelatorio};
-})();
-
-/* ═══ GERADOR DE TEXTO DO EFETIVO ═══ */
-function buildReportText(obra, date) {
-  const s = State.get();
-  const ws = s.workers.filter(w => w.obra === obra);
-  const dayMap = s.dailyData?.[obra]?.[date] || {};
-  const presentes = ws.filter(w => { const dd=dayMap[w.id]; return !dd||dd.presente; });
-  const ausentes  = ws.filter(w => { const dd=dayMap[w.id]; return dd&&!dd.presente; });
-
-  let txt = '*' + obra.toUpperCase() + ' \u2013 ' + Utils.fmtLong(date) + '*\n\n';
-
-  const pg = s.producaoGeral?.[obra] || {};
-  txt += '*INFORMA\u00c7\u00d5ES GERAIS*\n';
-  if (pg.areaAlv)   txt += '\u2022 \u00c1rea Alv. Estrutural: ' + pg.areaAlv + ' m\u00b2/andar\n';
-  if (pg.areaLaje)  txt += '\u2022 \u00c1rea da Laje: ' + pg.areaLaje + ' m\u00b2\n';
-  if (pg.volGraute) txt += '\u2022 Volume de Graute: ' + pg.volGraute + ' m\u00b3/andar\n';
-  if (pg.volArg)    txt += '\u2022 Volume de Argamassa: ' + pg.volArg + ' m\u00b3/andar\n';
-  if (pg.volConc)   txt += '\u2022 Volume de Concreto: ' + pg.volConc + ' m\u00b3/andar\n';
-  if (pg.acoAlv)    txt += '\u2022 A\u00e7o Alv. Estrutural: ' + pg.acoAlv + ' kg\n';
-  if (pg.acoLaje)   txt += '\u2022 A\u00e7o Lajes e Vigas: ' + pg.acoLaje + ' kg\n';
-  txt += '\n';
-
-  const pd = s.producaoDiaria?.[obra]?.[date] || {};
-  txt += '*INFORMA\u00c7\u00d5ES SOBRE PRODU\u00c7\u00c3O*\n';
-  if (pd.alvEst && pd.alvEst.vol) {
-    const m2 = pd.alvEst.qtd ? (pd.alvEst.vol/pd.alvEst.qtd).toFixed(2) : '\u2014';
-    txt += '\u2022 Alv. Estrutural: ' + pd.alvEst.vol + ' m\u00b2';
-    if (pd.alvEst.qtd) txt += ' | ' + pd.alvEst.qtd + ' func. | ' + m2 + ' m\u00b2/func.';
-    txt += '\n';
-  }
-  if (pd.alvVed && pd.alvVed.vol) {
-    const m2v = pd.alvVed.qtd ? (pd.alvVed.vol/pd.alvVed.qtd).toFixed(2) : '\u2014';
-    txt += '\u2022 Alv. de Veda\u00e7\u00e3o: ' + pd.alvVed.vol + ' m\u00b2';
-    if (pd.alvVed.qtd) txt += ' | ' + pd.alvVed.qtd + ' func. | ' + m2v + ' m\u00b2/func.';
-    txt += '\n';
-  }
-  txt += '\n';
-
-  txt += '*CONCRETAGENS PROGRAMADAS*\n';
-  const conc = pd.concretagens || [];
-  if (conc.length) conc.forEach(function(c){ txt += '\u2022 ' + (c.data?Utils.fmtPT(c.data)+' \u2013 ':'') + c.local + ' \u2013 ' + c.volume + ' m\u00b3\n'; });
-  else txt += '\u2022 N\u00e3o h\u00e1 concretagens programadas.\n';
-  txt += '\n';
-
-  const eqAdm = s.equipes.find(function(e){ return e.nome === 'Administra\u00e7\u00e3o'; });
-  const admId = eqAdm ? eqAdm.id : 'eq1';
-  const admPresentes = presentes.filter(function(w){ return w.equipe === admId; });
-  if (admPresentes.length) {
-    txt += '*ADMINISTRA\u00c7\u00c3O E OPERACIONAL*\n';
-    admPresentes.sort(function(a,b){ return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'); }).forEach(function(w){
-      txt += '\u2022 ' + w.nome + ' \u2013 ' + w.funcao + '\n';
-      const dd = dayMap[w.id] || {};
-      (dd.tarefas||[]).sort(function(a,b){ return String(a||'').localeCompare(String(b||''),'pt-BR'); }).forEach(function(t){ txt += '  \u25e6 ' + t + '\n'; });
-    });
-    txt += '\n';
-  }
-
-  const nonAdm = presentes.filter(function(w){ return w.equipe !== admId; });
-  const byAndar = {};
-  nonAdm.forEach(function(w){
-    const dd = dayMap[w.id] || {};
-    const andarRaw = dd.andar || '';
-    // Chave é exatamente o que foi selecionado (ex: "Cobertura, Atico" vira um grupo só)
-    const andares = andarRaw ? andarRaw.split(',').map(function(a){return a.trim();}).filter(Boolean) : [];
-    const chave = andares.length ? andares.join(', ') : 'SEM LOCAL DEFINIDO';
-    if (!byAndar[chave]) byAndar[chave] = { tarefas: [], workers: [] };
-    byAndar[chave].workers.push(w);
-    (dd.tarefas||[]).forEach(function(t){ if(!byAndar[chave].tarefas.includes(t)) byAndar[chave].tarefas.push(t); });
-  });
-
-  const andaresCfg = s.andares.filter(function(a,i){ return s.andares.indexOf(a)===i; });
-  const _seen = {};
-  const ordered = andaresCfg.filter(function(a){ return byAndar[a]; })
-    .concat(Object.keys(byAndar).filter(function(a){ return !andaresCfg.includes(a); }).sort())
-    .filter(function(a){ if(_seen[a]) return false; _seen[a]=true; return true; });
-
-  ordered.forEach(function(andar){
-    const grp = byAndar[andar];
-    txt += '*' + andar.toUpperCase() + '*\n';
-    const tf = grp.tarefas.slice().sort(function(a,b){ return String(a||'').localeCompare(String(b||''),'pt-BR'); });
-    if (tf.length) {
-      txt += '*Tarefas:*\n';
-      tf.forEach(function(t){ txt += '\u2022 ' + t + '\n'; });
-    }
-    txt += '*Funcion\u00e1rios:*\n';
-    grp.workers.sort(function(a,b){ return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'); })
-      .forEach(function(w){ txt += '\u2022 ' + w.nome + ' \u2013 ' + w.funcao + '\n'; });
-    txt += '\n';
-  });
-
-  txt += '*TOTAL DE FUNCION\u00c1RIOS: ' + presentes.length + '*\n';
-  if (ausentes.length) {
-    txt += '\n*FALTANTES*\n';
-    ausentes.sort(function(a,b){ return String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'); }).forEach(function(w){
-      const dd = dayMap[w.id] || {};
-      txt += '\u2022 ' + w.nome + ' \u2013 ' + (dd.motivo||'Sem justificativa') + '\n';
-    });
-  }
-  return txt;
 }
 
+function renderKPIs(){
+  document.getElementById('kpi-prog').textContent=(jsonKPIs.progresso_geral||0).toFixed(1)+'%';
+  document.getElementById('kpi-bar').style.width=(jsonKPIs.progresso_geral||0)+'%';
+  document.getElementById('kpi-done').textContent=jsonKPIs.done||0;
+  document.getElementById('kpi-doing').textContent=jsonKPIs.doing||0;
+  document.getElementById('kpi-late').textContent=jsonKPIs.late||0;
+  document.getElementById('kpi-idle').textContent=jsonKPIs.idle||0;
+}
 
-/* ═══ PRODUÇÃO PAGE ═══ */
-const ProdPage = (() => {
-  function render() {
-    const s=State.get(); const obra=App.obra(); const date=App.date();
-    const pg=s.producaoGeral?.[obra]||{};
-    const pd=s.producaoDiaria?.[obra]?.[date]||{};
-    const el=document.getElementById('prodContent');
-    if(!el) return;
-    const conc=pd.concretagens||[];
+function statusOf(v){if(v==='NP')return'np';if(v==='ATR')return'late';var n=Number(v);if(!n)return'idle';if(n===100)return'done';return'doing';}
+function symbolOf(v){if(v==='NP')return'NP';if(v==='ATR')return'ATR';var n=Number(v);if(!n)return'&#9633;';if(n===100)return'&#10003;';return'&#9679;';}
+function isLate(v,prev){if(v==='NP'||Number(v)===100)return false;return prev&&new Date(prev)<TODAY;}
 
-    el.innerHTML=`
-      <!-- Informações Gerais fixas por obra -->
-      <div class="prod-section">
-        <div class="prod-section-title">📐 Informações Gerais da Obra <span style="font-size:11px;color:var(--t3)">(salvo por obra, não muda todo dia)</span></div>
-        <div class="prod-grid">
-          <div class="form-group"><label>Área Alv. Estrutural (m²/andar)</label><input class="form-input" id="pgAreaAlv" value="${Utils.esc(pg.areaAlv||'')}" placeholder="554,75"></div>
-          <div class="form-group"><label>Área da Laje (m²)</label><input class="form-input" id="pgAreaLaje" value="${Utils.esc(pg.areaLaje||'')}" placeholder="557,58"></div>
-          <div class="form-group"><label>Vol. Graute (m³/andar)</label><input class="form-input" id="pgVolGraute" value="${Utils.esc(pg.volGraute||'')}" placeholder="17,67"></div>
-          <div class="form-group"><label>Vol. Argamassa (m³/andar)</label><input class="form-input" id="pgVolArg" value="${Utils.esc(pg.volArg||'')}" placeholder="1,89"></div>
-          <div class="form-group"><label>Vol. Concreto (m³/andar)</label><input class="form-input" id="pgVolConc" value="${Utils.esc(pg.volConc||'')}" placeholder="103,49"></div>
-          <div class="form-group"><label>Aço Alv. Estrutural (kg)</label><input class="form-input" id="pgAcoAlv" value="${Utils.esc(pg.acoAlv||'')}" placeholder="2.789"></div>
-          <div class="form-group"><label>Aço Lajes e Vigas (kg)</label><input class="form-input" id="pgAcoLaje" value="${Utils.esc(pg.acoLaje||'')}" placeholder="4.051"></div>
-        </div>
-        <button class="btn btn-accent" onclick="ProdPage.saveGeral()" style="margin-top:10px">Salvar Informações Gerais</button>
-      </div>
-
-      <!-- Produção do dia -->
-      <div class="prod-section">
-        <div class="prod-section-title">📅 Produção do Dia — ${Utils.fmtPT(date)}</div>
-
-        <div style="font-size:13px;font-weight:600;color:var(--t2);margin-bottom:8px">🧱 Alvenaria Estrutural</div>
-        <div class="prod-grid" style="margin-bottom:12px">
-          <div class="form-group"><label>Volume executado (m²)</label><input class="form-input" type="number" id="pdAlvEstVol" value="${pd.alvEst?.vol||''}" placeholder="0" oninput="ProdPage.calcAlvEst()"></div>
-          <div class="form-group"><label>Nº de funcionários</label><input class="form-input" type="number" id="pdAlvEstQtd" value="${pd.alvEst?.qtd||''}" placeholder="0" oninput="ProdPage.calcAlvEst()"></div>
-          <div class="form-group"><label>m² por funcionário (auto)</label><input class="form-input" id="pdAlvEstM2" readonly style="opacity:.6;background:var(--sf3)" value="${pd.alvEst?.vol&&pd.alvEst?.qtd?(pd.alvEst.vol/pd.alvEst.qtd).toFixed(2):''}"></div>
-        </div>
-
-        <div style="font-size:13px;font-weight:600;color:var(--t2);margin-bottom:8px">🏗 Alvenaria de Vedação</div>
-        <div class="prod-grid" style="margin-bottom:12px">
-          <div class="form-group"><label>Volume executado (m²)</label><input class="form-input" type="number" id="pdAlvVedVol" value="${pd.alvVed?.vol||''}" placeholder="0" oninput="ProdPage.calcAlvVed()"></div>
-          <div class="form-group"><label>Nº de funcionários</label><input class="form-input" type="number" id="pdAlvVedQtd" value="${pd.alvVed?.qtd||''}" placeholder="0" oninput="ProdPage.calcAlvVed()"></div>
-          <div class="form-group"><label>m² por funcionário (auto)</label><input class="form-input" id="pdAlvVedM2" readonly style="opacity:.6;background:var(--sf3)" value="${pd.alvVed?.vol&&pd.alvVed?.qtd?(pd.alvVed.vol/pd.alvVed.qtd).toFixed(2):''}"></div>
-        </div>
-
-        <button class="btn btn-accent" onclick="ProdPage.saveDaily()" style="margin-bottom:16px">Salvar Produção do Dia</button>
-      </div>
-
-      <!-- Concretagens — separado -->
-      <div class="prod-section">
-        <div class="prod-section-title">🚧 Concretagens Programadas — ${Utils.fmtPT(date)}</div>
-        <div id="concList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">
-          ${conc.map((c,i)=>`
-            <div style="display:flex;gap:8px;align-items:center;background:var(--sf2);border:1px solid var(--bd2);border-radius:var(--rs);padding:10px 12px">
-              <div style="display:flex;flex-direction:column;gap:6px;flex:1">
-                <input class="form-input" value="${Utils.esc(c.data||'')}" type="date" placeholder="Data" style="max-width:180px" onchange="ProdPage.updConc(${i},'data',this.value)">
-                <input class="form-input" value="${Utils.esc(c.local||'')}" placeholder="Local (ex: 14º Pavimento)" onchange="ProdPage.updConc(${i},'local',this.value)">
-                <input class="form-input" type="number" value="${c.volume||''}" placeholder="Volume (m³)" style="max-width:160px;font-family:'JetBrains Mono',monospace" onchange="ProdPage.updConc(${i},'volume',this.value)">
-              </div>
-              <button class="icon-btn danger" onclick="ProdPage.rmConc(${i})">✕</button>
-            </div>`).join('')}
-        </div>
-        <button class="btn btn-ghost" onclick="ProdPage.addConc()">+ Adicionar concretagem</button>
-        <button class="btn btn-accent" onclick="ProdPage.saveConc()" style="margin-top:8px">💾 Salvar Concretagens</button>
-      </div>
-    `;
-  }
-
-  function calcAlvEst(){const v=Number(document.getElementById('pdAlvEstVol').value),q=Number(document.getElementById('pdAlvEstQtd').value);document.getElementById('pdAlvEstM2').value=v&&q?(v/q).toFixed(2):'';}
-  function calcAlvVed(){const v=Number(document.getElementById('pdAlvVedVol').value),q=Number(document.getElementById('pdAlvVedQtd').value);document.getElementById('pdAlvVedM2').value=v&&q?(v/q).toFixed(2):'';}
-
-  function saveGeral(){
-    const s=State.get();const obra=App.obra();
-    if(!s.producaoGeral)s.producaoGeral={};
-    s.producaoGeral[obra]={
-      areaAlv:document.getElementById('pgAreaAlv').value,
-      areaLaje:document.getElementById('pgAreaLaje').value,
-      volGraute:document.getElementById('pgVolGraute').value,
-      volArg:document.getElementById('pgVolArg').value,
-      volConc:document.getElementById('pgVolConc').value,
-      acoAlv:document.getElementById('pgAcoAlv').value,
-      acoLaje:document.getElementById('pgAcoLaje').value,
-    };
-    State.save();
-    const _s=State.get(),_o=App.obra(),_d=App.date();
-    Sheets.saveProd(_d,_o,_s.producaoGeral?.[_o]||{},_s.producaoDiaria?.[_o]?.[_d]||{});
-    Utils.toast('✅ Informações gerais salvas!','success');
-    const _btn1=document.querySelector('[onclick="ProdPage.saveGeral()"]');if(_btn1){const _t=_btn1.textContent;_btn1.textContent='✅ Salvo!';_btn1.disabled=true;setTimeout(()=>{_btn1.textContent=_t;_btn1.disabled=false;},2000);}
-  }
-
-  function _getDailyData(){
-    const s=State.get();const obra=App.obra();const date=App.date();
-    if(!s.producaoDiaria)s.producaoDiaria={};
-    if(!s.producaoDiaria[obra])s.producaoDiaria[obra]={};
-    if(!s.producaoDiaria[obra][date])s.producaoDiaria[obra][date]={concretagens:[]};
-    return s.producaoDiaria[obra][date];
-  }
-
-  function saveDaily(){
-    const pd=_getDailyData();
-    pd.alvEst={vol:Number(document.getElementById('pdAlvEstVol').value)||0,qtd:Number(document.getElementById('pdAlvEstQtd').value)||0};
-    pd.alvVed={vol:Number(document.getElementById('pdAlvVedVol').value)||0,qtd:Number(document.getElementById('pdAlvVedQtd').value)||0};
-    State.save();
-    const _s2=State.get(),_o2=App.obra(),_d2=App.date();
-    Sheets.saveProd(_d2,_o2,_s2.producaoGeral?.[_o2]||{},_s2.producaoDiaria?.[_o2]?.[_d2]||{});
-    Utils.toast('✅ Produção do dia salva!','success');
-    const _btn2=document.querySelector('[onclick="ProdPage.saveDaily()"]');if(_btn2){const _t=_btn2.textContent;_btn2.textContent='✅ Salvo!';_btn2.disabled=true;setTimeout(()=>{_btn2.textContent=_t;_btn2.disabled=false;},2000);}
-  }
-
-  function addConc(){const pd=_getDailyData();if(!pd.concretagens)pd.concretagens=[];pd.concretagens.push({data:'',local:'',volume:''});State.save();render();}
-  function rmConc(i){const pd=_getDailyData();pd.concretagens?.splice(i,1);State.save();render();}
-  function updConc(i,field,val){const pd=_getDailyData();if(pd.concretagens?.[i])pd.concretagens[i][field]=val;State.save();}
-
-  function saveConc(){
-    const _s3=State.get(),_o3=App.obra(),_d3=App.date();
-    State.save();
-    Sheets.saveProd(_d3,_o3,_s3.producaoGeral?.[_o3]||{},_s3.producaoDiaria?.[_o3]?.[_d3]||{});
-    Utils.toast('✅ Concretagens salvas!','success');
-    const _btn3=document.querySelector('[onclick="ProdPage.saveConc()"]');if(_btn3){const _t=_btn3.textContent;_btn3.textContent='✅ Salvo!';_btn3.disabled=true;setTimeout(()=>{_btn3.textContent=_t;_btn3.disabled=false;},2000);}
-  }
-  return {render,calcAlvEst,calcAlvVed,saveGeral,saveDaily,addConc,rmConc,updConc,saveConc};
-})();
-
-
-/* ═══ EFETIVO PAGE — DESKTOP ═══ */
-const EfPage = (() => {
-  let activeTeam = 'all';
-  let sortCol = null, sortDir = 'asc';
-
-  function render() { renderFilters(); renderTable(); }
-
-  function renderFilters() {
-    const s = State.get();
-    const wrap = document.getElementById('teamFilters');
-    if (!wrap) return;
-    const teams = [{id:'all',nome:'Todos'}, ...s.equipes];
-    wrap.innerHTML = teams.map(t =>
-      `<div class="filter-chip ${activeTeam===t.id?'active':''}" data-team="${t.id}" onclick="EfPage.setTeam('${t.id}')">${t.nome}</div>`
-    ).join('');
-  }
-
-  function setTeam(t) {
-    activeTeam = t;
-    document.querySelectorAll('.chip').forEach(c => c.classList.toggle('active', c.dataset.team===t));
-    renderTable();
-  }
-
-  function setSort(col) {
-    sortDir = sortCol===col ? (sortDir==='asc'?'desc':'asc') : 'asc';
-    sortCol = col;
-    renderTable();
-    document.querySelectorAll('th[data-col]').forEach(th => {
-      const arrow = th.querySelector('.sarrow');
-      if (!arrow) return;
-      th.classList.toggle('sorted', th.dataset.col===sortCol);
-      arrow.textContent = th.dataset.col===sortCol ? (sortDir==='asc'?' ↑':' ↓') : ' ⇅';
+function renderMapa(){
+  if(!UNIDADES.length){document.getElementById('mapa-wrap').innerHTML='<div class="loading" style="color:var(--text3)">Sem dados.</div>';return;}
+  var h='<table><thead><tr class="grp-row"><th class="corner"></th>';
+  GRUPOS.forEach(function(g){h+='<th class="grp-'+g.id+'" colspan="'+g.etapas.length+'">'+g.nome+'</th>';});
+  h+='</tr><tr class="lbl-row"><th class="ap-th">AP</th>';
+  ETAPAS.forEach(function(e){h+='<th class="'+(e.projeto?'col-proj':'')+'" title="'+e.nome+'">'+e.abrev+'</th>';});
+  h+='</tr></thead><tbody>';
+  var lastA=-1;
+  UNIDADES.forEach(function(un){
+    var div=un.a!==lastA;lastA=un.a;
+    h+='<tr class="'+(div?'floor-div':'')+'"><td class="ap-td">'+un.u+'</td>';
+    ETAPAS.forEach(function(e){
+      var v=(DADOS[un.u]||{})[e.id];
+      var val=v!==undefined?v:0;
+      var st=statusOf(val);
+      var sym=symbolOf(val);
+      var pct=typeof val==='number'&&val>0&&val<100;
+      var lw=isLate(val,e.prev);
+      h+='<td class="'+(e.projeto?'col-proj':'')+'"><div class="cell s-'+st+(lw?' late-warn':'')+'"><span>'+sym+'</span>';
+      if(pct)h+='<span class="cell-pct">'+val+'</span>';
+      h+='</div></td>';
     });
-  }
+    h+='</tr>';
+  });
+  h+='</tbody></table>';
+  document.getElementById('mapa-wrap').innerHTML=h;
+}
 
-  function renderTable() {
-    const s = State.get(); const obra = App.obra(); const date = App.date();
-    const dayMap = s.dailyData?.[obra]?.[date] || {};
-    let ws = s.workers.filter(w => w.obra===obra);
-    if (activeTeam !== 'all') ws = ws.filter(w => w.equipe===activeTeam);
-    if (sortCol) ws = [...ws].sort((a,b) => {
-      let va, vb;
-      if (sortCol==='nome') { va=a.nome.toLowerCase(); vb=b.nome.toLowerCase(); }
-      else if (sortCol==='equipe') { va=(State.getEquipe(a.equipe)||{}).nome||''; vb=(State.getEquipe(b.equipe)||{}).nome||''; va=va.toLowerCase(); vb=vb.toLowerCase(); }
-      else if (sortCol==='andar') { const ia=s.andares.indexOf((dayMap[a.id]||{}).andar||''); const ib=s.andares.indexOf((dayMap[b.id]||{}).andar||''); va=ia<0?999:ia; vb=ib<0?999:ib; }
-      else if (sortCol==='pres') { va=(dayMap[a.id]?.presente!==false)?0:1; vb=(dayMap[b.id]?.presente!==false)?0:1; }
-      const r = va<vb?-1:va>vb?1:0;
-      return sortDir==='asc'?r:-r;
+function renderRel(){
+  var sorted=[].concat(UNIDADES).sort(function(a,b){return b.prog-a.prog;});
+  function card(title,list){
+    var c='<div class="rel-card"><div class="rel-card-title">'+title+'</div>';
+    list.forEach(function(u){
+      var p=u.prog.toFixed(1);
+      var cor=u.prog>=100?'var(--green)':u.prog>50?'var(--yellow)':'var(--red)';
+      c+='<div class="rel-row"><span class="rel-ap">'+u.u+'</span><div class="rel-bar-wrap"><div class="rel-bar" style="width:'+u.prog+'%;background:'+cor+'"></div></div><span class="rel-pct" style="color:'+cor+'">'+p+'%</span></div>';
     });
-
-    const tbody = document.getElementById('workerTableBody');
-    if (!tbody) return;
-    if (!ws.length) { tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--t3)">Nenhum funcionário.</td></tr>`; App.updateTopbar(); return; }
-
-    const andarOpts = ['',...s.andares].map(a=>`<option value="${Utils.esc(a)}">${Utils.esc(a)||'— Selecionar local —'}</option>`).join('');
-
-    tbody.innerHTML = ws.map(w => {
-      const dd = dayMap[w.id] || {presente:true, andar:'', tarefas:[], motivo:''};
-      const eq = State.getEquipe(w.equipe); const cor = eq?eq.cor:'#8b92b0';
-      const absent = dd.presente === false;
-      const tags = (dd.tarefas||[]).map(t =>
-        `<span class="activity-tag">${Utils.esc(t)}<button onclick="EfPage.rmTag('${w.id}','${t.replace(/'/g,"\\'")}')">×</button></span>`
-      ).join('');
-      const _eqNome = eq ? eq.nome : w.equipe;
-      const _tarNomes = s.tarefas.map(t => typeof t === 'string' ? t : t.nome);
-      const _tarFiltradas = s.tarefas.filter(t => {
-        const nome = typeof t === 'string' ? t : t.nome;
-        const eqs = typeof t === 'string' ? [] : (t.equipes||[]);
-        if (eqs.length === 0) return true; // global
-        return eqs.includes(_eqNome);
-      }).map(t => typeof t === 'string' ? t : t.nome);
-      const tarefaOpts = _tarFiltradas.filter(t=>!(dd.tarefas||[]).includes(t)).map(t=>`<option value="${Utils.esc(t)}">${Utils.esc(t)}</option>`).join('');
-      const _curAndares = (dd.andar||'').split(',').map(s=>s.trim()).filter(Boolean);
-      const andarChips = s.andares.map(a=>{
-        const sel=_curAndares.includes(a);
-        return `<span data-andar-wid="${w.id}" data-andar-val="${Utils.esc(a)}" onclick="event.stopPropagation();EfPage.toggleAndar('${w.id}','${Utils.esc(a)}')" style="cursor:pointer;display:inline-block;padding:2px 8px;margin:2px;border-radius:10px;font-size:11px;border:1px solid ${sel?'var(--ac)':'var(--bd2)'};background:${sel?'var(--acd)':'transparent'};color:${sel?'var(--ac)':'var(--t3)'};white-space:nowrap">${Utils.esc(a)}</span>`;
-      }).join('');
-
-      return `<tr id="drow-${w.id}" class="${absent?'absent':''}">
-        <td>
-          <label class="presence-toggle">
-            <input type="checkbox" ${!absent?'checked':''} onchange="EfPage.togglePres('${w.id}',this.checked)">
-            <span class="presence-slider"></span>
-          </label>
-        </td>
-        <td>
-          <div class="worker-name">${Utils.esc(w.nome)}</div>
-          <div class="worker-role">${Utils.esc(w.funcao)}</div>
-          ${absent?`<div style="margin-top:4px"><input class="finput" placeholder="Motivo da falta" value="${Utils.esc(dd.motivo||'')}" onchange="EfPage.setMotivo('${w.id}',this.value)" style="font-size:11px;padding:4px 8px;width:100%"></div>`:''}
-        </td>
-        <td><span class="team-badge" style="background:${cor}22;color:${cor};border:1px solid ${cor}44">${Utils.esc(eq?eq.nome:w.equipe)}</span></td>
-        <td style="position:relative">
-          <div onclick="(function(e){e.stopPropagation();var d=document.getElementById('adrop-${w.id}');var open=d.style.display==='flex';document.querySelectorAll('[id^=adrop-]').forEach(function(x){x.style.display='none';});if(!open){d.style.display='flex';var r=e.currentTarget.getBoundingClientRect();var spaceBelow=window.innerHeight-r.bottom;if(spaceBelow<220){d.style.top='auto';d.style.bottom='100%';d.style.marginTop='0';d.style.marginBottom='4px';}else{d.style.top='100%';d.style.bottom='auto';d.style.marginTop='4px';d.style.marginBottom='0';}};})(event)" style="cursor:pointer;padding:5px 10px;background:var(--sf2);border:1px solid var(--bd2);border-radius:8px;font-size:12px;color:${_curAndares.length?'var(--t1)':'var(--t3)'};display:flex;justify-content:space-between;align-items:center;min-width:140px;user-select:none">
-            <span id="alabel-${w.id}" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${_curAndares.length?_curAndares.join(', '):'— Local —'}</span><span style="margin-left:6px;font-size:9px;flex-shrink:0">▼</span>
-          </div>
-          <div id="adrop-${w.id}" style="display:none;position:absolute;z-index:200;background:var(--sf);border:1px solid var(--bd2);border-radius:8px;padding:8px;flex-wrap:wrap;gap:4px;max-width:300px;max-height:200px;overflow-y:auto;box-shadow:0 4px 20px rgba(0,0,0,.5);top:100%;left:0;margin-top:4px">${andarChips}</div>
-        </td>
-        <td>
-          <div style="display:flex;flex-wrap:wrap;gap:3px;margin-bottom:${absent?'0':'5px'}">${tags}</div>
-          ${!absent?`<div style="display:flex;gap:5px;align-items:center">
-            <select class="inline-select" id="dactsel-${w.id}" style="min-width:180px">
-              <option value="">Selecionar atividade existente</option>${tarefaOpts}
-            </select>
-            <button class="add-btn" onclick="EfPage.addTag('${w.id}')">+</button>
-          </div>
-          <div style="display:flex;gap:5px;align-items:center;margin-top:4px">
-            <input class="inline-select" id="newact-${w.id}" placeholder="Nova atividade…" style="min-width:180px;font-size:12px">
-            <button class="add-btn" onclick="EfPage.addNewTag('${w.id}')">+</button>
-          </div>`:''}
-        </td>
-        <td>
-          <div style="display:flex;gap:4px">
-            <button class="icon-btn" onclick="Modals.openWorker('${w.id}')">✏️</button>
-            <button class="icon-btn" onclick="Modals.openMove('${w.id}')">↗</button>
-            <button class="icon-btn danger" onclick="FuncPage.remove('${w.id}')">✕</button>
-          </div>
-        </td>
-      </tr>`;
-    }).join('');
-
-    App.updateTopbar();
+    return c+'</div>';
   }
+  document.getElementById('rel-wrap').innerHTML=
+    card('Top 10 - Mais avancados',sorted.slice(0,10))+
+    card('Bottom 10 - Mais atrasados',[].concat(sorted).reverse().slice(0,10));
+}
 
-  function togglePres(wid, checked) {
-    State.setDayField(App.obra(), App.date(), wid, 'presente', checked);
-    const row = document.getElementById('drow-'+wid);
-    if (row) { row.classList.toggle('absent', !checked); }
-    renderTable(); // re-render to show/hide motivo field
-  }
+function toggleProj(btn){
+  var wrap=document.getElementById('mapa-wrap');
+  var t=wrap.querySelector('table');if(!t)return;
+  t.classList.toggle('hide-proj');
+  var on=t.classList.contains('hide-proj');
+  btn.classList.toggle('on',on);
+  btn.textContent=on?'Sem Projetos':'Projetos';
+}
 
-  function setAndar(wid, val) { State.setDayField(App.obra(), App.date(), wid, 'andar', val); }
-  function toggleAndar(wid, val) {
-    const obra=App.obra(), date=App.date();
-    const dd=State.getDayData(obra,date,wid);
-    const cur=(dd.andar||'').split(',').map(s=>s.trim()).filter(Boolean);
-    const idx=cur.indexOf(val);
-    if(idx>=0) cur.splice(idx,1); else cur.push(val);
-    State.setDayField(obra,date,wid,'andar',cur.join(', '));
-    // Atualizar visualmente sem re-renderizar
-    const label = cur.length ? cur.join(', ') : '— Selecionar local —';
-    const labelEl = document.getElementById('alabel-'+wid);
-    if (labelEl) labelEl.textContent = label;
-    // Atualizar chip clicado
-    document.querySelectorAll('[data-andar-wid="'+wid+'"]').forEach(function(chip){
-      const a = chip.dataset.andarVal;
-      const sel = cur.includes(a);
-      chip.style.borderColor = sel ? 'var(--ac)' : 'var(--bd2)';
-      chip.style.background = sel ? 'var(--acd)' : 'transparent';
-      chip.style.color = sel ? 'var(--ac)' : 'var(--t3)';
-    });
-  }
-  function setMotivo(wid, val) { State.setDayField(App.obra(), App.date(), wid, 'motivo', val); }
-
-  function addTag(wid) {
-    const sel = document.getElementById('dactsel-'+wid);
-    if (!sel) return;
-    if (!sel.value) { Utils.toast('Selecione uma atividade primeiro.','warn'); return; }
-    const t = sel.value;
-    const obra=App.obra(); const date=App.date();
-    const dd = State.getDayData(obra, date, wid);
-    const tarefas = [...(dd.tarefas||[])];
-    if (!tarefas.includes(t)) { tarefas.push(t); State.setDayField(obra,date,wid,'tarefas',tarefas); }
-    renderTable();
-  }
-
-  function addNewTag(wid) {
-    const inp = document.getElementById('newact-'+wid);
-    if (!inp||!inp.value.trim()) { Utils.toast('Digite a nova atividade.','warn'); return; }
-    const tarefa = inp.value.trim();
-    const obra=App.obra(); const date=App.date();
-    const dd = State.getDayData(obra, date, wid);
-    const tarefas = [...(dd.tarefas||[])];
-    if (!tarefas.includes(tarefa)) {
-      tarefas.push(tarefa);
-      State.setDayField(obra, date, wid, 'tarefas', tarefas);
-      const s2 = State.get();
-      const w2 = s2.workers.find(x=>x.id===wid);
-      const eq2 = w2 ? State.getEquipe(w2.equipe) : null;
-      const tarNomes = s2.tarefas.map(t=>typeof t==='string'?t:t.nome);
-      if (!tarNomes.includes(tarefa)) {
-        State.addTarefa({nome: tarefa, equipes: eq2 ? [eq2.nome] : []});
-      }
-    }
-    inp.value = '';
-    renderTable();
-    Utils.toast('"'+tarefa+'" adicionada!','success');
-  }
-
-  function rmTag(wid, tarefa) {
-    const obra=App.obra(); const date=App.date();
-    const dd = State.getDayData(obra, date, wid);
-    State.setDayField(obra, date, wid, 'tarefas', (dd.tarefas||[]).filter(t=>t!==tarefa));
-    renderTable();
-  }
-
-  function preview() {
-    const txt = buildReportText(App.obra(), App.date());
-    document.getElementById('previewText').textContent = txt;
-    Modals.open('modalPreview');
-  }
-
-  function salvarRelatorio() {
-    const s=State.get(), obra=App.obra(), date=App.date();
-    const txt=document.getElementById('previewText').textContent;
-    if (!txt) { Utils.toast('Gere o relatório primeiro.','warn'); return; }
-    const dayMap=s.dailyData?.[obra]?.[date]||{};
-    const presentes=s.workers.filter(w=>w.obra===obra&&dayMap[w.id]?.presente!==false);
-    Sheets.saveEfetivo(date, obra);
-    Sheets.saveRelatorio(date, obra, presentes.length, txt);
-    Utils.toast('✅ Salvo no Sheets!','success');
-    Modals.close('modalPreview');
-  }
-  function copyReport() { Utils.copy(document.getElementById('previewText').textContent,'Copiado!'); }
-
-  async function gerar() {
-    const obra=App.obra(); const date=App.date(); const s=State.get();
-    const txt = buildReportText(obra, date);
-    const ws = s.workers.filter(w=>w.obra===obra);
-    const dayMap = s.dailyData?.[obra]?.[date]||{};
-    const presentes = ws.filter(w=>{ const dd=dayMap[w.id]; return !dd||dd.presente; });
-
-    State.addHistorico({ts:Date.now(),data:date,obra,texto:txt,total:presentes.length});
-
-    document.getElementById('previewText').textContent = txt;
-    Modals.open('modalPreview');
-    Utils.toast('Relatório salvo!','success');
-
-    if (s.gsUrl) {
-      await Sheets.send({
-        data:date, obra, texto:txt, total:presentes.length,
-        workers: ws.map(w=>({
-          nome:w.nome, funcao:w.funcao,
-          equipe:(State.getEquipe(w.equipe)||{}).nome||w.equipe,
-          presente:!(dayMap[w.id]?.presente===false),
-          motivo:dayMap[w.id]?.motivo||'',
-          andar:dayMap[w.id]?.andar||'',
-          tarefas:(dayMap[w.id]?.tarefas||[]).join('; '),
-        }))
-      });
-    }
-    App.updateTopbar();
-  }
-
-  return { render, renderFilters, setTeam, setSort, togglePres, setAndar, setMotivo, addTag, addNewTag, rmTag, preview, copyReport, salvarRelatorio, gerar, toggleAndar };
-})();
-
-
-/* ═══ APP CORE ═══ */
-const App = (() => {
-  let _date = Utils.todayStr();
-  let _obra = '';
-
-  function init() {
-    State.load();
-    // Garantir URL e ID do Sheets em qualquer dispositivo
-    (function(){
-      const s = State.get();
-      if (!s.gsUrl) { s.gsUrl = 'https://script.google.com/macros/s/AKfycbz2WSboxUbnfKM_hp_91DIu04b2WFWfHSXdj6RG2ITkyLq7W9eDAtVdpN3ogcFUa-JM/exec'; State.save(); }
-      if (!s.gsSheetId) { s.gsSheetId = '1Zilh_8iKHIaiXqOg8OwHW6HUUjVERxYuLzUA6LoC6rQ'; State.save(); }
-    })();
-    _date = Utils.todayStr();
-    _obra = State.get().activeObra || State.get().obras[0];
-    document.getElementById('datePicker').value = _date;
-    document.getElementById('datePicker').addEventListener('change', e => {
-      _date = e.target.value;
-      document.getElementById('weekdayLabel').textContent = Utils.weekday(_date);
-      if (typeof EfPage !== 'undefined') EfPage.render();
-    });
-    document.getElementById('weekdayLabel').textContent = Utils.weekday(_date);
-    rebuildObraSelects();
-    updateGSIndicator();
-    if (typeof EfPage !== 'undefined') EfPage.render();
-    _updateTopbar();
-    // Try to load fresh state from Sheets (cross-device sync)
-    _loadFromSheets();
-  }
-
-  async function _loadFromSheets() {
-    const s = State.get();
-    if (!s.gsUrl || !s.gsSheetId) return;
-    try {
-      const res = await fetch(s.gsUrl + '?sheetId=' + s.gsSheetId, {method:'GET', mode:'cors'});
-      const json = await res.json();
-      if (!json.ok || !json.state) return;
-      // Only use if sheets version is newer (has more data)
-      const sheetState = json.state;
-      // Merge: prefer sheets version for shared data
-      const local = State.get();
-      // Use sheets version as base, but keep local daily edits if same date
-      localStorage.setItem('efetivo_v3', JSON.stringify(sheetState));
-      State.load();
-      if (typeof EfPage !== 'undefined') EfPage.render();
-      if (typeof FuncPage !== 'undefined' && document.getElementById('funcList')?.offsetParent !== null) FuncPage.render();
-      Utils.toast('Dados sincronizados!', 'info');
-    } catch(e) {
-      // No internet or sheets not configured - use localStorage
-    }
-  }
-
-  function obra() { return _obra; }
-  function date() { return _date; }
-
-  function setObra(v) {
-    _obra = v; State.get().activeObra = v; State.save();
-    rebuildObraSelects();
-    document.getElementById('obraLabel').textContent = v;
-    const pill = document.getElementById('obraPill');
-    if (pill) pill.textContent = v.length > 14 ? v.slice(0,13)+'…' : v;
-    _updateTopbar();
-    if (typeof EfPage !== 'undefined') EfPage.render();
-  }
-
-  function showPage(id, el) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('[data-page]').forEach(n => n.classList.remove('active'));
-    document.getElementById('page-' + id)?.classList.add('active');
-    document.querySelectorAll(`[data-page="${id}"]`).forEach(n => n.classList.add('active'));
-    const titles = {
-      efetivo:'DO DIA', producao:'EXECUÇÃO', funcionarios:'EQUIPE',
-      relatorios:'DESEMPENHO', historico:'HISTÓRICO',
-      configuracoes:'CONFIG', horasextras:'HORAS EXTRAS'
-    };
-    document.getElementById('topbarTitle').textContent = titles[id] || id.toUpperCase();
-    if (id==='relatorios')   StatPage.render();
-    if (id==='historico')    HistPage.render();
-    if (id==='configuracoes') CfgPage.render();
-    if (id==='funcionarios') FuncPage.render();
-    if (id==='horasextras')  HEPage.render();
-    if (id==='producao' && typeof ProdPage !== 'undefined') ProdPage.render();
-  }
-
-  function openDrawer() {
-    document.getElementById('drawer')?.classList.add('open');
-    document.getElementById('drawerBg')?.classList.add('open');
-  }
-  function closeDrawer() {
-    document.getElementById('drawer')?.classList.remove('open');
-    document.getElementById('drawerBg')?.classList.remove('open');
-  }
-
-  function addObra() {
-    const v = document.getElementById('newObraInput').value.trim();
-    if (!v) return;
-    State.addObra(v);
-    document.getElementById('newObraInput').value = '';
-    rebuildObraSelects();
-    Modals._renderObraOpts?.() || document.getElementById('obraOptions')?.querySelector('.obra-option');
-  }
-
-  function rebuildObraSelects() {
-    const s = State.get();
-    const opts = s.obras.map(o => `<option value="${Utils.esc(o)}" ${o===_obra?'selected':''}>${Utils.esc(o)}</option>`).join('');
-    ['obraSelectDesktop'].forEach(id => { const el=document.getElementById(id); if(el) el.innerHTML=opts; });
-    const lbl = document.getElementById('obraLabel'); if(lbl) lbl.textContent = _obra;
-    const pill = document.getElementById('obraPill'); if(pill) pill.textContent = _obra.length>14?_obra.slice(0,13)+'…':_obra;
-  }
-
-  function _updateTopbar() {
-    const s = State.get();
-    const ws = s.workers.filter(w => w.obra === _obra);
-    const dayMap = s.dailyData?.[_obra]?.[_date] || {};
-    const presentes = ws.filter(w => { const dd=dayMap[w.id]; return !dd||dd.presente; }).length;
-    ['topbarPresentes','dNavPresentes'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent=presentes; });
-    const dnt = document.getElementById('dNavTotal'); if(dnt) dnt.textContent=ws.length;
-    const bnav = document.getElementById('bnavBadge');
-    if(bnav) { bnav.textContent=presentes; bnav.style.display=presentes>0?'':'none'; }
-    ['pillPresentes','pillAusentes','pillTotal'].forEach((id,i)=>{
-      const el=document.getElementById(id); if(!el) return;
-      if(i===0) el.textContent=`${presentes} presentes`;
-      if(i===1) el.textContent=`${ws.length-presentes} ausentes`;
-      if(i===2) el.textContent=`${ws.length} total`;
-    });
-  }
-
-  function updateTopbar() { _updateTopbar(); }
-
-  function updateGSIndicator() {
-    const s = State.get();
-    ['gsInd','gsIndDrawer'].forEach(id => {
-      const el=document.getElementById(id);
-      if(el) el.className='gs-ind'+(s.gsUrl?' on':'');
-    });
-  }
-
-  async function syncNow() { await _loadFromSheets(); }
-
-  return { init, obra, date, setObra, showPage, openDrawer, closeDrawer,
-           addObra, rebuildObraSelects, updateTopbar, updateGSIndicator, syncNow };
-})();
-
-document.addEventListener('click', function(){
-  document.querySelectorAll('[id^=adrop-]').forEach(function(x){x.style.display='none';});
+document.querySelectorAll('.ftab').forEach(function(b){
+  b.addEventListener('click',function(){
+    document.querySelectorAll('.ftab').forEach(function(x){x.classList.remove('active');});
+    b.classList.add('active');
+    filtrarStatus(b.dataset.f);
+  });
 });
-document.addEventListener('DOMContentLoaded', App.init);
 
+function filtrarStatus(f){
+  document.querySelectorAll('tbody tr').forEach(function(tr){
+    var ap=tr.querySelector('.ap-td');if(!ap)return;
+    var u=ap.textContent.trim();
+    var un=UNIDADES.find(function(x){return x.u===u;});
+    var show=true;
+    if(f==='atrasados')show=ETAPAS.some(function(e){return (DADOS[u]||{})[e.id]==='ATR';});
+    else if(f==='emexec')show=un&&un.prog>0&&un.prog<100;
+    else if(f==='concluidos')show=un&&un.prog>=99.5;
+    tr.style.display=show?'':'none';
+  });
+}
+
+function filtrarBusca(q){
+  document.querySelectorAll('tbody tr').forEach(function(tr){
+    var ap=tr.querySelector('.ap-td');if(!ap)return;
+    tr.style.display=(!q||ap.textContent.includes(q))?'':'none';
+  });
+}
+
+function switchPage(btn){
+  document.querySelectorAll('.nav-btn').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  document.querySelectorAll('.page').forEach(function(p){p.classList.remove('active');});
+  document.getElementById('page-'+btn.dataset.page).classList.add('active');
+}
+
+carregarDados();
+setInterval(carregarDados,5*60*1000);
 </script>
 </body>
 </html>
