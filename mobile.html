@@ -1033,8 +1033,16 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
     return _post({action:'saveConfig', andares:s.andares, tarefas:s.tarefas, equipes:s.equipes, obras:s.obras});
   }
 
-  async function saveHE(obra, registros) {
-    return _post({action:'saveHE', obra, registros});
+  async function saveHE(obra, entries) {
+    // entries é array de {id, data, tipo, registros:[{wid,nome,funcao,horas}]}
+    // Flatten para linhas individuais para o Apps Script
+    const rows = [];
+    (entries||[]).forEach(function(entry) {
+      (entry.registros||[]).forEach(function(r) {
+        rows.push({id:entry.id+'_'+r.wid, data:entry.data, tipo:entry.tipo, nome:r.nome, funcao:r.funcao, horas:r.horas});
+      });
+    });
+    return _post({action:'saveHE', obra, registros:rows});
   }
 
   async function deleteHE(id) {
