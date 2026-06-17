@@ -1790,8 +1790,12 @@ const ProdPage = (() => {
 
   function saveDaily(){
     const pd=_getDailyData();
-    pd.alvEst={vol:Number(document.getElementById('pdAlvEstVol').value)||0,qtd:Number(document.getElementById('pdAlvEstQtd').value)||0};
-    pd.alvVed={vol:Number(document.getElementById('pdAlvVedVol').value)||0,qtd:Number(document.getElementById('pdAlvVedQtd').value)||0};
+    const _alvEstVol=Number(document.getElementById('pdAlvEstVol').value)||0;
+    const _alvEstQtd=Number(document.getElementById('pdAlvEstQtd').value)||0;
+    const _alvVedVol=Number(document.getElementById('pdAlvVedVol').value)||0;
+    const _alvVedQtd=Number(document.getElementById('pdAlvVedQtd').value)||0;
+    pd.alvEst={vol:_alvEstVol,qtd:_alvEstQtd,exec:_alvEstVol,m2porBloqueiro:_alvEstQtd?(_alvEstVol/_alvEstQtd).toFixed(2):0};
+    pd.alvVed={vol:_alvVedVol,qtd:_alvVedQtd,exec:_alvVedVol,m2porPedreiro:_alvVedQtd?(_alvVedVol/_alvVedQtd).toFixed(2):0};
     State.save();
     const _s2=State.get(),_o2=App.obra(),_d2=App.date();
     Sheets.saveProd(_d2,_o2,_s2.producaoGeral?.[_o2]||{},_s2.producaoDiaria?.[_o2]?.[_d2]||{});
