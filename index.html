@@ -2098,11 +2098,26 @@ const App = (() => {
       const res = await fetch(s.gsUrl + '?sheetId=' + s.gsSheetId, {method:'GET', mode:'cors'});
       const json = await res.json();
       if (!json.ok || !json.state) return;
-      // Only use if sheets version is newer (has more data)
       const sheetState = json.state;
-      // Merge: prefer sheets version for shared data
-      const local = State.get();
-      // Use sheets version as base, but keep local daily edits if same date
+      // Preservar gsUrl e gsSheetId locais
+      sheetState.gsUrl = s.gsUrl;
+      sheetState.gsSheetId = s.gsSheetId;
+      // Normalizar horasExtras: agrupar linhas individuais em lançamentos
+      if (sheetState.horasExtras) {
+        Object.keys(sheetState.horasExtras).forEach(function(obra) {
+          const entries = sheetState.horasExtras[obra];
+          const needsGrouping = entries.length > 0 && !entries[0].registros;
+          if (needsGrouping) {
+            const map = {};
+            entries.forEach(function(e) {
+              const entryId = e.id.replace(/_w[^_]+$/, '');
+              if (!map[entryId]) map[entryId] = {id:entryId, data:e.data, tipo:e.tipo||'60', registros:[]};
+              map[entryId].registros.push({wid:e.wid, nome:e.nome, funcao:e.funcao, horas:e.horas});
+            });
+            sheetState.horasExtras[obra] = Object.values(map).sort(function(a,b){return b.data.localeCompare(a.data);});
+          }
+        });
+      }
       localStorage.setItem('efetivo_v3', JSON.stringify(sheetState));
       State.load();
       if (typeof EfPage !== 'undefined') EfPage.render();

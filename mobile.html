@@ -2154,6 +2154,23 @@ const App = (() => {
       if (!state) return;
       state.gsUrl = s.gsUrl;
       state.gsSheetId = s.gsSheetId;
+      // Normalizar horasExtras: agrupar linhas individuais em lançamentos
+      if (state.horasExtras) {
+        Object.keys(state.horasExtras).forEach(function(obra) {
+          const entries = state.horasExtras[obra];
+          // Verificar se já está no formato correto (tem registros[])
+          const needsGrouping = entries.length > 0 && !entries[0].registros;
+          if (needsGrouping) {
+            const map = {};
+            entries.forEach(function(e) {
+              const entryId = e.id.replace(/_w[^_]+$/, '');
+              if (!map[entryId]) map[entryId] = {id:entryId, data:e.data, tipo:e.tipo||'60', registros:[]};
+              map[entryId].registros.push({wid:e.wid, nome:e.nome, funcao:e.funcao, horas:e.horas});
+            });
+            state.horasExtras[obra] = Object.values(map).sort(function(a,b){return b.data.localeCompare(a.data);});
+          }
+        });
+      }
       localStorage.setItem('efetivo_v3', JSON.stringify(state));
       State.load();
       rebuildObraSelects();
