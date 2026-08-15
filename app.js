@@ -72,6 +72,7 @@ const State = (() => {
     // configPorObra[obra] = {andares:[], tarefas:[{nome,equipes}], equipes:[]}
     // Cada obra tem seus próprios andares, tarefas e equipes.
     configPorObra: {},
+    cfgMigrado: false,
     // dailyData[obra][date][wid] = {presente, andar, tarefas[], motivo}
     dailyData: {},
     // producao[obra] = {areaAlv, areaLaje, volGraute, volArg, volConc, acoAlv, acoLaje, mestre, engenheiro, encarregado, almoxarife, assistente, administrativo}
@@ -187,11 +188,8 @@ const State = (() => {
     obra = obra || d.activeObra || (d.obras && d.obras[0]) || '';
     if (!d.configPorObra) d.configPorObra = {};
     if (!d.configPorObra[obra]) {
-      d.configPorObra[obra] = {
-        andares: JSON.parse(JSON.stringify(d.andares || [])),
-        tarefas: JSON.parse(JSON.stringify(d.tarefas || [])),
-        equipes: JSON.parse(JSON.stringify(d.equipes || []))
-      };
+      // Obra nova nasce VAZIA. Só a migração inicial herda a lista antiga.
+      d.configPorObra[obra] = {andares: [], tarefas: [], equipes: []};
     }
     const c = d.configPorObra[obra];
     if (!c.andares) c.andares = [];
@@ -206,7 +204,24 @@ const State = (() => {
   // Roda uma vez: distribui a config global para todas as obras existentes.
   function _migrarConfig() {
     if (!d.configPorObra) d.configPorObra = {};
-    (d.obras || []).forEach(function(o) { _cfg(o); });
+    if (d.cfgMigrado) return;              // só na primeira vez
+    (d.obras || []).forEach(function(o) {
+      if (!d.configPorObra[o] || !d.configPorObra[o].andares.length) {
+        d.configPorObra[o] = {
+          andares: JSON.parse(JSON.stringify(d.andares || [])),
+          tarefas: JSON.parse(JSON.stringify(d.tarefas || [])),
+          equipes: JSON.parse(JSON.stringify(d.equipes || []))
+        };
+      }
+    });
+    d.cfgMigrado = true;
+  }
+
+  // Copia a configuração de uma obra para outra (setup rápido de obra nova).
+  function copiarConfig(de, para) {
+    const o = _cfg(de);
+    d.configPorObra[para || d.activeObra] = JSON.parse(JSON.stringify(o));
+    save('config');
   }
 
   function getEquipe(id, obra) {
@@ -241,7 +256,7 @@ const State = (() => {
   function removeHE(obra, id) { d.horasExtras[obra]=getHE(obra).filter(e=>e.id!==id); save(); }
 
   return { load,save,get, isDirty, getDayData,setDayField, getEquipe,getWorker,
-    andares, tarefas, equipes, cfgObra:_cfg,
+    andares, tarefas, equipes, cfgObra:_cfg, copiarConfig,
     addWorker,updateWorker,removeWorker, addObra,removeObra,
     addAndar,removeAndar, addTarefa,removeTarefa, addEquipe,removeEquipe,
     addHistorico, getHE,addHE,removeHE };
@@ -576,10 +591,12 @@ function _saveConfig(ss, p) {
   if (!sh) return;
   var last = sh.getLastRow();
   if (last > 4) sh.deleteRows(5, last-4);
-  var andares = p.andares||[], tarefas = p.tarefas||[], equipes = p.equipes||[], obras = p.obras||[];
-  var maxLen = Math.max(andares.length, tarefas.length, equipes.length, obras.length);
-  for (var i = 0; i < maxLen; i++) {
-    sh.appendRow([andares[i]||'','',_tarefaStr(tarefas[i]),'',equipes[i]?(equipes[i].id+'|'+equipes[i].nome+'|'+equipes[i].cor):'','',obras[i]||'','']);
+  // Esta aba guarda apenas a lista de obras. Andares, tarefas e equipes
+  // ficam em ABA_CFGOB, separados por obra: gravar aqui a config da obra
+  // ativa fazia dela o molde de todas as outras.
+  var obras = p.obras||[];
+  for (var i = 0; i < obras.length; i++) {
+    sh.appendRow(['','','','','','',obras[i]||'','']);
   }
 }
 
@@ -729,8 +746,10 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
 
   async function saveConfig() {
     const s = State.get();
-    return _post({action:'saveConfig', configPorObra:s.configPorObra||{}, obras:s.obras,
-                   andares:State.andares(), tarefas:State.tarefas(), equipes:State.equipes()});
+    // Só a lista de obras é global. Andares/tarefas/equipes vão em
+    // configPorObra — antes a config da obra ativa era gravada na aba global
+    // e virava o molde de todas as outras.
+    return _post({action:'saveConfig', configPorObra:s.configPorObra||{}, obras:s.obras});
   }
 
   async function saveHE(obra, entries) {
@@ -772,6 +791,17 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
 */
 const Versoes = (() => {
   const LISTA = [
+    {
+      v: '1.2.1',
+      data: '2026-08-15',
+      titulo: 'Configuração realmente separada por obra',
+      notas: [
+        {tipo:'correcao', texto:'Obras diferentes apareciam com a mesma configuração: a planilha gravava andares, tarefas e equipes da obra ativa numa lista global, e essa lista virava o molde de todas as outras. Agora só a lista de obras é global.'},
+        {tipo:'correcao', texto:'Obra nova passa a começar com a configuração vazia, em vez de herdar a de outra obra.'},
+        {tipo:'novo', texto:'Botão para copiar andares, tarefas e equipes de outra obra, para montar uma obra nova rapidamente quando a estrutura for parecida.'},
+        {tipo:'melhoria', texto:'Conferido que todo dado de trabalho vai para a planilha: efetivo, funcionários, obras, configuração, produção, horas extras e relatórios. Só ficam no aparelho a chave de acesso, a obra selecionada e a preferência de layout.'},
+      ]
+    },
     {
       v: '1.2.0',
       data: '2026-08-15',
@@ -1194,6 +1224,15 @@ const CfgPage = (() => {
       ${blk('🏗 Obras',
         s.obras.map((o,i)=>`<div class="settings-item"><span style="flex:1">${Utils.esc(o)}</span>${i===0?'<span style="font-size:10px;color:var(--t3)">principal</span>':`<button class="icon-btn danger" onclick="CfgPage.rmObra('${Utils.esc(o)}')">✕</button>`}</div>`).join(''),
         `<div class="add-item-row"><input id="newObra" placeholder="Nova obra"><button class="btn btn-accent" onclick="CfgPage.addObra()">Add</button></div>`)}
+      ${blk('📋 Copiar configuração de outra obra',
+        s.obras.filter(o=>o!==App.obra()).length
+          ? `<div style="font-size:11px;color:var(--t3);margin-bottom:8px;line-height:1.5">Traz andares, tarefas e equipes da obra escolhida para <strong>${Utils.esc(App.obra())}</strong>, substituindo o que existe aqui.</div>
+             <div class="add-item-row">
+               <select class="form-input" id="cfgCopiarDe" style="flex:1">${s.obras.filter(o=>o!==App.obra()).map(o=>`<option value="${Utils.esc(o)}">${Utils.esc(o)}</option>`).join('')}</select>
+               <button class="btn btn-accent" onclick="CfgPage.copiarDe()">Copiar</button>
+             </div>`
+          : `<div style="font-size:11px;color:var(--t3)">Só existe uma obra cadastrada.</div>`,
+        '')}
       ${blk('🔗 Google Sheets',
         `<div class="form-g"><label>URL do Web App</label><input class="finput" id="gsUrl" placeholder="https://script.google.com/macros/s/…/exec" value="${Utils.esc(s.gsUrl)}" style="font-size:11px;font-family:'JetBrains Mono',monospace"></div>
          <div class="form-g"><label>ID da Planilha</label><input class="finput" id="gsSheetId" placeholder="1BxiMVs0XRA5…" value="${Utils.esc(s.gsSheetId)}" style="font-family:'JetBrains Mono',monospace"></div>
@@ -1270,10 +1309,20 @@ const CfgPage = (() => {
   function rmEquipe(id){State.removeEquipe(id);render();if(typeof EfPage!=='undefined')EfPage.renderFilters();}
   function addObra(){const v=document.getElementById('newObra').value.trim();if(!v)return;State.addObra(v);document.getElementById('newObra').value='';render();App.rebuildObraSelects();}
   function rmObra(n){if(n===App.obra()){Utils.toast('Não pode remover a obra ativa.','warn');return;}if(!confirm(`Remover "${n}"?`))return;State.removeObra(n);render();App.rebuildObraSelects();}
+  function copiarDe(){
+    const de=document.getElementById('cfgCopiarDe')?.value;
+    if(!de) return;
+    if(!confirm(`Substituir a configuração de "${App.obra()}" pela de "${de}"?`)) return;
+    State.copiarConfig(de, App.obra());
+    render();
+    if(typeof EfPage!=='undefined') EfPage.render();
+    Utils.toast('Configuração copiada de '+de,'success');
+  }
+
   function saveGS(){const s=State.get();s.gsUrl=document.getElementById('gsUrl').value.trim();s.gsSheetId=document.getElementById('gsSheetId').value.trim();const k=document.getElementById('gsKey');if(k)s.gsKey=k.value.trim();State.save();Utils.toast('Salvo!','success');App.updateGSIndicator();}
   async function testGS(){const url=document.getElementById('gsUrl').value.trim();const key=(document.getElementById('gsKey')||{}).value||'';if(!url){Utils.toast('Configure a URL.','warn');return;}Utils.toast('Testando…','info');const ok=await Sheets.ping(url,key.trim());ok?Utils.toast('Conectado!','success'):Utils.toast('Falhou — confira URL e chave.','error');}
   function showScript(){document.getElementById('scriptCode').textContent=Sheets.CODE;Modals.open('modalScript');}
-  return {render,addAndar,rmAndar,addTarefa,rmTarefa,editTarefa,setTarefaEqs,toggleTarefaEq,addEquipe,rmEquipe,addObra,rmObra,saveGS,testGS,showScript};
+  return {render,addAndar,rmAndar,addTarefa,rmTarefa,editTarefa,setTarefaEqs,toggleTarefaEq,addEquipe,rmEquipe,addObra,rmObra,saveGS,testGS,showScript, copiarDe};
 })();
 
 /* ═══ HORAS EXTRAS PAGE ═══ */

@@ -323,10 +323,12 @@ function _saveConfig(ss, p) {
   if (!sh) return;
   var last = sh.getLastRow();
   if (last > 4) sh.deleteRows(5, last-4);
-  var andares = p.andares||[], tarefas = p.tarefas||[], equipes = p.equipes||[], obras = p.obras||[];
-  var maxLen = Math.max(andares.length, tarefas.length, equipes.length, obras.length);
-  for (var i = 0; i < maxLen; i++) {
-    sh.appendRow([andares[i]||'','',_tarefaStr(tarefas[i]),'',equipes[i]?(equipes[i].id+'|'+equipes[i].nome+'|'+equipes[i].cor):'','',obras[i]||'','']);
+  // Esta aba guarda apenas a lista de obras. Andares, tarefas e equipes
+  // ficam em ABA_CFGOB, separados por obra: gravar aqui a config da obra
+  // ativa fazia dela o molde de todas as outras.
+  var obras = p.obras||[];
+  for (var i = 0; i < obras.length; i++) {
+    sh.appendRow(['','','','','','',obras[i]||'','']);
   }
 }
 
