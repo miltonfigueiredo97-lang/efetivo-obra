@@ -773,6 +773,19 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
 const Versoes = (() => {
   const LISTA = [
     {
+      v: '1.2.0',
+      data: '2026-08-15',
+      titulo: 'Assiduidade detalhada, edição de horas extras e lista mais enxuta',
+      notas: [
+        {tipo:'novo', texto:'Clique na porcentagem de assiduidade para ver, dia a dia, quando o funcionário veio e quando faltou, com local, atividades e motivo da falta.'},
+        {tipo:'novo', texto:'Lançamentos de horas extras já salvos podem ser editados pelo botão de lápis: dá para corrigir data, tipo e as horas de cada um.'},
+        {tipo:'melhoria', texto:'Relatório de horas extras refeito: tabela alinhada com 60%, 100% e total por funcionário, linha de totais e o detalhe de cada dia.'},
+        {tipo:'correcao', texto:'A assiduidade contava como falta um registro sem marcação definida, divergindo da tela do efetivo, que o considerava presente.'},
+        {tipo:'correcao', texto:'O cálculo de altura da lista de funcionários nas horas extras tinha uma conta malformada e podia cortar a lista. Agora o dimensionamento é do próprio layout.'},
+        {tipo:'melhoria', texto:'Lista de funcionários no desktop em duas colunas, cards mais baixos e botões menores, que aparecem ao passar o mouse.'},
+      ]
+    },
+    {
       v: '1.1.0',
       data: '2026-08-15',
       titulo: 'Cada obra com seus próprios dados',
@@ -1051,7 +1064,7 @@ const StatPage = (() => {
         Object.entries(dayMap).forEach(([wid,dd])=>{
           if(!att[wid]) att[wid]={dias:0,total:0};
           att[wid].total++;
-          if(dd.presente) att[wid].dias++;
+          if(dd.presente!==false) att[wid].dias++;
         });
       });
     }
@@ -1080,14 +1093,52 @@ const StatPage = (() => {
                 <div class="att-name">${Utils.esc(w.nome)}</div>
                 <div class="att-role"><span class="team-badge" style="background:${ecor}22;color:${ecor};border:1px solid ${ecor}44">${Utils.esc(eq?eq.nome:w.equipe)}</span> ${Utils.esc(w.funcao)}</div>
               </div>
-              <div style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:${cor}">${pct}%</div>
+              <div onclick="StatPage.verDias('${w.id}')" title="Ver dias de presença e falta" style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:${cor};cursor:pointer;padding:2px 8px;border-radius:8px;border:1px solid transparent" onmouseover="this.style.borderColor='${cor}';this.style.background='${cor}18'" onmouseout="this.style.borderColor='transparent';this.style.background='none'">${pct}%</div>
             </div>
             <div class="bar-wrap"><div class="bar-bg"><div class="bar-fill ${cls}" style="width:${pct}%"></div></div><span style="font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace">${a.dias}/${a.total}</span></div>
           </div>`;
         }).join('')}
       </div>`;
   }
-  return {render};
+  // Detalhe de assiduidade: lista dia a dia quem veio e quem faltou.
+  function verDias(wid) {
+    const s=State.get(), obra=App.obra();
+    const w=State.getWorker(wid); if(!w) return;
+    const dd=s.dailyData?.[obra]||{};
+    const dias=Object.keys(dd).filter(d=>dd[d][wid]).sort((a,b)=>b.localeCompare(a));
+    const pres=dias.filter(d=>dd[d][wid].presente!==false);
+    const falt=dias.filter(d=>dd[d][wid].presente===false);
+    const pct=dias.length?Math.round(pres.length/dias.length*100):100;
+    const cor=pct>=90?'var(--gn)':pct>=75?'var(--ac)':'var(--rd)';
+
+    const linhas = dias.length ? dias.map(d=>{
+      const r=dd[d][wid], veio=r.presente!==false;
+      const det = veio
+        ? [r.andar||'', (r.tarefas||[]).join(', ')].filter(Boolean).join(' · ')
+        : (r.motivo||'Sem justificativa');
+      return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--bd)">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--t2);min-width:78px">${Utils.fmtPT(d)}</span>
+        <span style="font-size:10px;color:var(--t3);min-width:78px">${Utils.weekday(d)}</span>
+        <span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:10px;min-width:60px;text-align:center;
+          background:${veio?'var(--gnd)':'var(--rdd)'};color:${veio?'var(--gn)':'var(--rd)'}">${veio?'VEIO':'FALTOU'}</span>
+        <span style="flex:1;font-size:11px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Utils.esc(det)}</span>
+      </div>`;
+    }).join('') : '<div class="empty">Nenhum dia registrado para este funcionário.</div>';
+
+    document.getElementById('histDetailTitle').innerHTML =
+      `${Utils.esc(w.nome)} <span style="font-size:12px;color:var(--t3);font-weight:400">· ${Utils.esc(w.funcao)}</span>`;
+    document.getElementById('histDetailText').innerHTML = `
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <span class="pill green">${pres.length} presenças</span>
+        <span class="pill red">${falt.length} faltas</span>
+        <span class="pill orange">${dias.length} dias</span>
+        <span class="pill" style="background:${cor}22;color:${cor}">${pct}%</span>
+      </div>
+      <div style="border:1px solid var(--bd);border-radius:var(--rs);overflow:hidden">${linhas}</div>`;
+    Modals.open('modalHistDetail');
+  }
+
+  return {render, verDias};
 })();
 
 /* ═══ HISTÓRICO PAGE ═══ */
@@ -1228,6 +1279,7 @@ const CfgPage = (() => {
 /* ═══ HORAS EXTRAS PAGE ═══ */
 const HEPage = (() => {
   let _sel = [];
+  let _editId = null;   // lançamento sendo editado (null = novo)
 
   function render() {
     const s=State.get(), obra=App.obra();
@@ -1271,7 +1323,8 @@ const HEPage = (() => {
             <span style="font-size:11px;color:var(--t3)">${Utils.weekday(e.data)}</span></div></div>
             <div style="display:flex;align-items:center;gap:10px">
             <span style="font-family:JetBrains Mono,monospace;font-size:14px;color:var(--ac);font-weight:700">${total}h</span>
-            <button class="icon-btn danger" onclick="HEPage.remove('${e.id}')">✕</button></div></div>
+            <button class="icon-btn" title="Editar lançamento" onclick="HEPage.editar('${e.id}')">✎</button>
+            <button class="icon-btn danger" title="Remover" onclick="HEPage.remove('${e.id}')">✕</button></div></div>
           <div style="display:flex;flex-direction:column">${rows}</div></div>`;
       });
       html+=`</div>`;
@@ -1285,7 +1338,7 @@ const HEPage = (() => {
   }
 
   function openStep1(){
-    _sel=[];
+    _sel=[]; _editId=null;
     const s=State.get(), obra=App.obra();
     const ws=s.workers.filter(w=>w.obra===obra).sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'));
     document.getElementById('heDate').value=App.date();
@@ -1306,18 +1359,39 @@ const HEPage = (() => {
     document.getElementById('heBtnSalvar').style.display='none';
     Modals.open('modalHE');
     document.getElementById('modalHE').style.display='flex';
-    // Definir altura do scroll após modal abrir
-    setTimeout(()=>{
-      const scr=document.getElementById('heListScroll');
-      const modal=document.getElementById('modalHE');
-      if(scr&&modal){
-        const used=modal.querySelector('.modal-header').offsetHeight
-          +(modal.querySelector('[style*="heDate"]')||modal.querySelectorAll('[style*="flex-shrink:0"]')[1])?.offsetHeight||60
-          +50+60; // titulo+data+filtro+footer
-        scr.style.maxHeight=(window.innerHeight*0.75-used)+'px';
-        scr.style.overflowY='scroll';
-      }
-    },50);
+  }
+
+  // Abre um lançamento já salvo direto na etapa de horas, preenchido.
+  function editar(id){
+    const s=State.get(), obra=App.obra();
+    const e=((s.horasExtras&&s.horasExtras[obra])||[]).find(x=>x.id===id);
+    if(!e){Utils.toast('Lançamento não encontrado.','error');return;}
+    _editId=id;
+    _sel=(e.registros||[]).map(r=>r.wid).filter(Boolean);
+    document.getElementById('heDate').value=e.data;
+    document.getElementById('heTipo').value=String(e.tipo||'60');
+    _montarStep2((e.registros||[]).reduce((m,r)=>{m[r.wid]=r.horas;return m;},{}));
+    document.getElementById('heStep1Wrap').style.display='none';
+    document.getElementById('heStep2Wrap').style.display='flex';
+    document.getElementById('heStep2Wrap').style.flexDirection='column';
+    document.getElementById('heModalTitle').textContent='Editar '+Utils.fmtPT(e.data);
+    document.getElementById('heBtnLancar').style.display='none';
+    document.getElementById('heBtnSalvar').style.display='block';
+    Modals.open('modalHE');
+    document.getElementById('modalHE').style.display='flex';
+  }
+
+  function _montarStep2(valores){
+    valores=valores||{};
+    document.getElementById('heStep2').innerHTML=_sel.map(wid=>{
+      const w=State.getWorker(wid);
+      const v=valores[wid]!==undefined?valores[wid]:'';
+      return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--bd)">
+        <div style="flex:1"><div style="font-size:14px;font-weight:600">${w?Utils.esc(w.nome):'?'}</div>
+        <div style="font-size:11px;color:var(--t3)">${w?Utils.esc(w.funcao):''}</div></div>
+        <input type="number" id="heh-${wid}" min="0" max="24" step="0.5" placeholder="h" value="${v}"
+          style="width:70px;background:var(--sf2);border:1px solid var(--bd2);color:var(--t1);font-family:JetBrains Mono,monospace;font-size:16px;padding:8px;border-radius:8px;outline:none;text-align:center"></div>`;
+    }).join('');
   }
 
   function toggleSel(wid){
@@ -1349,14 +1423,7 @@ const HEPage = (() => {
 
   function goStep2(){
     if(!_sel.length){Utils.toast('Selecione ao menos um funcionário.','warn');return;}
-    document.getElementById('heStep2').innerHTML=_sel.map(wid=>{
-      const w=State.getWorker(wid);
-      return `<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--bd)">
-        <div style="flex:1"><div style="font-size:14px;font-weight:600">${w?Utils.esc(w.nome):'?'}</div>
-        <div style="font-size:11px;color:var(--t3)">${w?Utils.esc(w.funcao):''}</div></div>
-        <input type="number" id="heh-${wid}" min="0.5" max="24" step="0.5" placeholder="h"
-          style="width:70px;background:var(--sf2);border:1px solid var(--bd2);color:var(--t1);font-family:JetBrains Mono,monospace;font-size:16px;padding:8px;border-radius:8px;outline:none;text-align:center"></div>`;
-    }).join('');
+    _montarStep2();
     document.getElementById('heStep1Wrap').style.display='none';
     document.getElementById('heStep2Wrap').style.display='flex';
     document.getElementById('heStep2Wrap').style.flexDirection='column';
@@ -1384,13 +1451,22 @@ const HEPage = (() => {
     if(!registros.length){Utils.toast('Informe as horas de ao menos um funcionário.','warn');return;}
     if(!s.horasExtras)s.horasExtras={};
     if(!s.horasExtras[obra])s.horasExtras[obra]=[];
-    const entry={id:'he'+Date.now(),data:date,tipo,registros};
-    s.horasExtras[obra].unshift(entry);
+    const entry={id:_editId||('he'+Date.now()),data:date,tipo,registros};
+    if(_editId){
+      // Regrava por cima: remove as linhas antigas antes de reenviar.
+      const i=s.horasExtras[obra].findIndex(x=>x.id===_editId);
+      if(i>=0) s.horasExtras[obra][i]=entry; else s.horasExtras[obra].unshift(entry);
+      Sheets.deleteHE(_editId);
+    } else {
+      s.horasExtras[obra].unshift(entry);
+    }
+    s.horasExtras[obra].sort((a,b)=>String(b.data||'').localeCompare(String(a.data||'')));
     State.save();
     Sheets.saveHE(obra,[entry]);
     Modals.close('modalHE');
+    const editou=!!_editId; _editId=null;
     render();
-    Utils.toast('✅ Lançamento salvo!','success');
+    Utils.toast(editou?'✅ Lançamento atualizado!':'✅ Lançamento salvo!','success');
   }
 
   function remove(id){
@@ -1416,17 +1492,45 @@ const HEPage = (() => {
         else{map60[nome]=(map60[nome]||0)+Number(r.horas);}
       });
     });
-    const nomes=[...new Set([...Object.keys(map60),...Object.keys(map100)])].sort();
-    let txt=`⏰ RELATÓRIO DE HORAS EXTRAS\n${mes?_fmtMes(mes):'Todo o período'}\nObra: ${obra}\n\n`;
+    const nomes=[...new Set([...Object.keys(map60),...Object.keys(map100)])]
+      .sort((x,y)=>x.localeCompare(y,'pt-BR'));
+    const t60=Object.values(map60).reduce((a,b)=>a+b,0);
+    const t100=Object.values(map100).reduce((a,b)=>a+b,0);
+    const larg=Math.min(38,Math.max(...nomes.map(n=>n.length),12));
+
+    let txt='*RELATÓRIO DE HORAS EXTRAS*\n';
+    txt+=`${obra}\n${mes?_fmtMes(mes):'Todo o período'}\n`;
+    txt+=`${filtered.length} lançamento(s) · ${nomes.length} funcionário(s)\n\n`;
+
+    txt+='```\n';
+    txt+='FUNCIONÁRIO'.padEnd(larg)+'   60%    100%   TOTAL\n';
+    txt+='─'.repeat(larg+24)+'\n';
     nomes.forEach(n=>{
-      const p=[]; if(map60[n])p.push(`${map60[n]}h (60%)`); if(map100[n])p.push(`${map100[n]}h (100%)`);
-      txt+=`${n}: ${p.join(' + ')}\n`;
+      const a60=map60[n]||0, a100=map100[n]||0;
+      txt+=(n.length>larg?n.slice(0,larg-1)+'…':n).padEnd(larg)
+         + String(a60?a60+'h':'–').padStart(6)
+         + String(a100?a100+'h':'–').padStart(8)
+         + String((a60+a100)+'h').padStart(8) + '\n';
     });
+    txt+='─'.repeat(larg+24)+'\n';
+    txt+='TOTAL'.padEnd(larg)+String(t60+'h').padStart(6)+String(t100+'h').padStart(8)+String((t60+t100)+'h').padStart(8)+'\n';
+    txt+='```\n\n';
+
+    txt+='*DETALHE POR DIA*\n';
+    filtered.slice().sort((x,y)=>String(x.data).localeCompare(String(y.data))).forEach(e=>{
+      const p100=Utils.isSunday(e.data)||e.tipo==='100';
+      const tot=(e.registros||[]).reduce((a,r)=>a+Number(r.horas||0),0);
+      txt+=`\n*${Utils.fmtPT(e.data)}* – ${Utils.weekday(e.data)} · ${p100?'100%':'60%'} · ${tot}h\n`;
+      (e.registros||[]).slice()
+        .sort((a,b)=>String(a.nome||'').localeCompare(String(b.nome||''),'pt-BR'))
+        .forEach(r=>{ txt+=`• ${r.nome||'?'} – ${r.horas}h\n`; });
+    });
+
     document.getElementById('previewText').textContent=txt;
     Modals.open('modalPreview');
   }
 
-  return {render,openStep1,toggleSel,selectAll,goStep2,setTodosIgual,saveAdd,remove,gerarRelatorio};
+  return {render,openStep1,editar,toggleSel,selectAll,goStep2,setTodosIgual,saveAdd,remove,gerarRelatorio};
 })();
 
 /* ═══ GERADOR DE TEXTO DO EFETIVO ═══ */

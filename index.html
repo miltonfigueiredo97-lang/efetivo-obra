@@ -178,12 +178,21 @@ select.form-input{cursor:pointer;}
 .search-bar svg{color:var(--t3);flex-shrink:0;}
 .filter-row{display:flex;gap:8px;margin-bottom:12px;}
 .filter-row select{background:var(--sf2);border:1px solid var(--bd2);color:var(--t1);font-family:'DM Sans',sans-serif;font-size:12px;padding:8px 12px;border-radius:var(--rs);outline:none;cursor:pointer;}
-.func-list,.att-list,.hist-list{display:flex;flex-direction:column;gap:6px;}
-.func-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:12px 14px;display:flex;align-items:center;gap:10px;}
+.att-list,.hist-list{display:flex;flex-direction:column;gap:6px;}
+/* Duas colunas no desktop: os cards ficavam esticados na largura toda. */
+.func-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(430px,1fr));gap:6px;align-items:start;}
+@media(max-width:1100px){.func-list{grid-template-columns:1fr;}}
+.func-card{min-width:0;}
+.func-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.func-meta{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.func-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:9px 12px;display:flex;align-items:center;gap:10px;transition:border-color .13s;}
+.func-card:hover{border-color:var(--bd2);}
 .func-info{flex:1;min-width:0;}
 .func-name{font-weight:600;font-size:13px;}
 .func-meta{font-size:11px;color:var(--t3);margin-top:3px;}
-.func-actions{display:flex;gap:5px;flex-shrink:0;margin-left:auto;}
+.func-actions{display:flex;gap:4px;flex-shrink:0;margin-left:auto;opacity:.45;transition:opacity .13s;}
+.func-card:hover .func-actions{opacity:1;}
+.func-actions .icon-btn{width:26px;height:26px;font-size:11px;}
 
 /* ATT */
 .att-card{background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:12px 14px;}
@@ -495,8 +504,8 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
   </div>
 <div class="toast-container" id="toastContainer"></div>
 <span id="lastSaved" style="display:none"></span>
-<script src="config.js?v=1.1.0"></script>
-<script src="app.js?v=1.1.0"></script>
+<script src="config.js?v=1.2.0"></script>
+<script src="app.js?v=1.2.0"></script>
 <script>
 /* ═══ EFETIVO PAGE — DESKTOP ═══ */
 const EfPage = (() => {
