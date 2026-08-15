@@ -91,10 +91,22 @@ const State = (() => {
   let d = {};
 
   function load() {
+    let primeiraVez = false;
     try {
       const raw = localStorage.getItem(KEY);
+      primeiraVez = !raw;
       d = raw ? _merge(DEF, JSON.parse(raw)) : JSON.parse(JSON.stringify(DEF));
-    } catch(e) { d = JSON.parse(JSON.stringify(DEF)); }
+    } catch(e) { d = JSON.parse(JSON.stringify(DEF)); primeiraVez = true; }
+    // Aparelho novo começa VAZIO e espera a planilha. Antes ele nascia com os
+    // 47 funcionários de exemplo; se a leitura falhasse, o usuário via a lista
+    // errada e a primeira edição sobrescrevia a planilha real com o exemplo.
+    if (primeiraVez) {
+      d.workers = [];
+      d.dailyData = {}; d.historico = []; d.horasExtras = {};
+      d.producaoGeral = {}; d.producaoDiaria = {};
+      d.configPorObra = {}; d.cfgMigrado = true;
+      d.andares = []; d.tarefas = []; d.equipes = [];
+    }
     // Garantir URL e ID sempre presentes
     if (!d.gsUrl) d.gsUrl = (window.EFETIVO_CONFIG||{}).gsUrl || '';
     if (!d.gsSheetId) d.gsSheetId = (window.EFETIVO_CONFIG||{}).gsSheetId || '';
@@ -690,6 +702,14 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
   async function _post(payload) {
     const s = State.get();
     if (!s.gsUrl || !s.gsSheetId) return false;
+    // TRAVA: enquanto este aparelho não tiver lido a planilha com sucesso,
+    // ele não grava nada. Sem isso, um aparelho que falhou na leitura ficava
+    // com os dados padrão e, na primeira edição, sobrescrevia a planilha
+    // inteira (saveWorkers/saveEfetivo/saveConfigObra apagam e regravam).
+    if (!Sync.podeGravar()) {
+      Sync.avisarBloqueio();
+      return false;
+    }
     const body = JSON.stringify({...payload, sheetId: s.gsSheetId, key: s.gsKey || ''});
     // Tenta em modo 'cors' para conseguir LER a resposta e saber se gravou.
     // O Apps Script responde com CORS no redirect, e Content-Type text/plain
@@ -798,6 +818,19 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
 */
 const Versoes = (() => {
   const LISTA = [
+    {
+      v: '1.4.0',
+      data: '2026-08-15',
+      titulo: 'Sincronização entre aparelhos e proteção contra sobrescrita',
+      notas: [
+        {tipo:'correcao', texto:'Quando a leitura da planilha falhava, o aplicativo não avisava nada e mostrava a lista de exemplo. Em outro celular parecia que os dados não tinham sido salvos.'},
+        {tipo:'correcao', texto:'Pior: ao editar qualquer coisa nesse estado, o aparelho enviava a lista de exemplo e apagava os dados reais da planilha. Agora nenhum aparelho grava antes de conseguir ler a planilha ao menos uma vez.'},
+        {tipo:'correcao', texto:'Aparelho novo começa vazio e espera a planilha, em vez de nascer com os funcionários de exemplo.'},
+        {tipo:'novo', texto:'Faixa vermelha fixa no topo quando não há conexão com a planilha, avisando que nada está sendo salvo, com botão para tentar de novo.'},
+        {tipo:'novo', texto:'O botão Testar agora faz um diagnóstico completo: diz quantos funcionários e obras existem na planilha, e aponta a causa provável quando falha, como chave de acesso errada ou implantação não publicada.'},
+        {tipo:'melhoria', texto:'A mensagem de sincronização passa a informar quantos funcionários vieram da planilha.'},
+      ]
+    },
     {
       v: '1.3.3',
       data: '2026-08-15',
@@ -984,6 +1017,86 @@ const Versoes = (() => {
   }
 
   return { render, toggle, atual, lista };
+})();
+
+/* ═══ SINCRONIZAÇÃO: ESTADO E DIAGNÓSTICO ═══ */
+const Sync = (() => {
+  let _leituraOk = false;      // já leu a planilha com sucesso nesta sessão?
+  let _ultimoErro = '';
+  let _ultimaLeitura = null;
+  let _avisado = false;
+
+  function marcarLeituraOk(qtd) {
+    _leituraOk = true; _ultimoErro = ''; _ultimaLeitura = new Date();
+    _avisado = false;
+    _pintarBarra();
+  }
+  function marcarErro(msg) {
+    _leituraOk = false; _ultimoErro = String(msg || 'erro desconhecido');
+    _pintarBarra();
+  }
+  function podeGravar() { return _leituraOk; }
+  function leituraOk()  { return _leituraOk; }
+  function erro()       { return _ultimoErro; }
+  function ultimaLeitura() { return _ultimaLeitura; }
+
+  function avisarBloqueio() {
+    if (_avisado) return;
+    _avisado = true;
+    Utils.toast('Não salvo: sem conexão com a planilha. Suas alterações estão só neste aparelho.', 'error');
+  }
+
+  // Faixa fixa no topo enquanto a planilha não responder.
+  function _pintarBarra() {
+    let el = document.getElementById('syncBanner');
+    if (_leituraOk) { if (el) el.remove(); return; }
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'syncBanner';
+      el.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#7f1d1d;color:#fff;'
+        + 'font-size:12px;padding:8px 14px;display:flex;align-items:center;gap:10px;justify-content:center;'
+        + 'font-family:DM Sans,sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.4)';
+      document.body.appendChild(el);
+    }
+    el.innerHTML = '<span>⚠️ <strong>Sem conexão com a planilha.</strong> '
+      + 'Nada será salvo e outros aparelhos não verão estas alterações.'
+      + (_ultimoErro ? ' <span style="opacity:.8">(' + Utils.esc(_ultimoErro) + ')</span>' : '')
+      + '</span>'
+      + '<button onclick="App.syncNow()" style="background:#fff;color:#7f1d1d;border:none;padding:4px 12px;'
+      + 'border-radius:6px;font-weight:700;cursor:pointer;font-size:12px">Tentar de novo</button>';
+  }
+
+  // Diagnóstico detalhado para o botão Testar.
+  async function diagnosticar() {
+    const s = State.get();
+    const linhas = [];
+    if (!s.gsUrl)     linhas.push('❌ URL do Web App não configurada.');
+    if (!s.gsSheetId) linhas.push('❌ ID da planilha não configurado.');
+    if (linhas.length) return {ok:false, texto:linhas.join('\n')};
+    try {
+      const res = await fetch(s.gsUrl + '?sheetId=' + s.gsSheetId + '&key=' + encodeURIComponent(s.gsKey||''),
+                              {method:'GET', mode:'cors'});
+      const json = await res.json();
+      if (json.ok === false) {
+        const e = String(json.error||'');
+        if (/chave/i.test(e)) return {ok:false, texto:'❌ Chave de acesso incorreta ou não preenchida.\nPreencha o campo "Chave de acesso" com a mesma senha da propriedade CHAVE_ACESSO do Apps Script.'};
+        return {ok:false, texto:'❌ A planilha respondeu com erro:\n' + e};
+      }
+      const st = json.state || {};
+      return {ok:true, texto:
+        '✅ Conectado.\n' +
+        'Funcionários na planilha: ' + (st.workers||[]).length + '\n' +
+        'Obras: ' + (st.obras||[]).join(', ') + '\n' +
+        'Obras com configuração própria: ' + Object.keys(st.configPorObra||{}).length +
+        ((st.configPorObra && Object.keys(st.configPorObra).length) ? '' :
+          '\n\n⚠️ Nenhuma configuração por obra na planilha. Verifique se o Apps Script publicado é o que tem a aba "Config por Obra".')};
+    } catch(e) {
+      return {ok:false, texto:'❌ Não consegui falar com a planilha.\n' + e.message +
+        '\n\nCausas comuns: URL de implantação errada, implantação não publicada como "Qualquer pessoa", ou sem internet.'};
+    }
+  }
+
+  return {marcarLeituraOk, marcarErro, podeGravar, leituraOk, erro, ultimaLeitura, avisarBloqueio, diagnosticar};
 })();
 
 /* ═══ MODALS ═══ */
@@ -1390,7 +1503,14 @@ const CfgPage = (() => {
   }
 
   function saveGS(){const s=State.get();s.gsUrl=document.getElementById('gsUrl').value.trim();s.gsSheetId=document.getElementById('gsSheetId').value.trim();const k=document.getElementById('gsKey');if(k)s.gsKey=k.value.trim();State.save();Utils.toast('Salvo!','success');App.updateGSIndicator();}
-  async function testGS(){const url=document.getElementById('gsUrl').value.trim();const key=(document.getElementById('gsKey')||{}).value||'';if(!url){Utils.toast('Configure a URL.','warn');return;}Utils.toast('Testando…','info');const ok=await Sheets.ping(url,key.trim());ok?Utils.toast('Conectado!','success'):Utils.toast('Falhou — confira URL e chave.','error');}
+  async function testGS(){
+    saveGS();
+    Utils.toast('Testando…','info');
+    const r = await Sync.diagnosticar();
+    document.getElementById('histDetailTitle').textContent = r.ok ? 'Conexão OK' : 'Problema na conexão';
+    document.getElementById('histDetailText').textContent = r.texto;
+    Modals.open('modalHistDetail');
+  }
   function showScript(){document.getElementById('scriptCode').textContent=Sheets.CODE;Modals.open('modalScript');}
   return {render,addAndar,rmAndar,addTarefa,rmTarefa,editTarefa,setTarefaEqs,toggleTarefaEq,addEquipe,rmEquipe,addObra,rmObra,saveGS,testGS,showScript, copiarDe};
 })();
@@ -1996,13 +2116,16 @@ const App = (() => {
 
   async function _loadFromSheets(force) {
     const s = State.get();
-    if (!s.gsUrl || !s.gsSheetId) return;
+    if (!s.gsUrl || !s.gsSheetId) { Sync.marcarErro('planilha não configurada'); return; }
     // Não puxa por cima de alterações locais que ainda não subiram.
     if (!force && State.isDirty()) return;
     try {
       const res = await fetch(s.gsUrl + '?sheetId=' + s.gsSheetId + '&key=' + encodeURIComponent(s.gsKey||''), {method:'GET', mode:'cors'});
       const json = await res.json();
-      if (!json.ok || !json.state) return;
+      if (!json.ok || !json.state) {
+        Sync.marcarErro(json.error || 'resposta inválida da planilha');
+        return;
+      }
       const sheetState = json.state;
       // Preservar gsUrl e gsSheetId locais
       sheetState.gsUrl = s.gsUrl;
@@ -2058,9 +2181,10 @@ const App = (() => {
       State.load();
       if (typeof EfPage !== 'undefined') EfPage.render();
       if (typeof FuncPage !== 'undefined' && document.getElementById('funcList')?.offsetParent !== null) FuncPage.render();
-      Utils.toast('Dados sincronizados!', 'info');
+      Sync.marcarLeituraOk();
+      Utils.toast('Sincronizado: ' + (sheetState.workers||[]).length + ' funcionários', 'success');
     } catch(e) {
-      // No internet or sheets not configured - use localStorage
+      Sync.marcarErro(e && e.message ? e.message : 'sem conexão');
     }
   }
 
