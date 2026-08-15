@@ -83,7 +83,7 @@ function _buildState(ss) {
     var eqId = 1;
     cfgData.forEach(function(r) {
       if (r[0]) state.andares.push(String(r[0]).trim());
-      if (r[2]) state.tarefas.push(String(r[2]).trim());
+      if (r[2]) state.tarefas.push(_tarefaObj(String(r[2]).trim()));
       if (r[4]) {
         var parts = String(r[4]).split('|');
         if (parts.length >= 3) {
@@ -288,7 +288,7 @@ function _saveConfig(ss, p) {
   var andares = p.andares||[], tarefas = p.tarefas||[], equipes = p.equipes||[], obras = p.obras||[];
   var maxLen = Math.max(andares.length, tarefas.length, equipes.length, obras.length);
   for (var i = 0; i < maxLen; i++) {
-    sh.appendRow([andares[i]||'','',tarefas[i]||'','',equipes[i]?(equipes[i].id+'|'+equipes[i].nome+'|'+equipes[i].cor):'','',obras[i]||'','']);
+    sh.appendRow([andares[i]||'','',_tarefaStr(tarefas[i]),'',equipes[i]?(equipes[i].id+'|'+equipes[i].nome+'|'+equipes[i].cor):'','',obras[i]||'','']);
   }
 }
 
@@ -319,6 +319,21 @@ function _deleteHE(ss, p) {
   for (var i = vals.length-1; i >= 0; i--) {
     if (String(vals[i][0]) === String(p.id)) sh.deleteRow(i+4);
   }
+}
+
+// Tarefas sao objetos {nome, equipes} no app. Na planilha viram uma unica
+// celula "nome::eq1,eq2". Antes o objeto era gravado direto e virava
+// "[object Object]", corrompendo o nome e perdendo o vinculo com as equipes.
+function _tarefaStr(t) {
+  if (!t) return '';
+  if (typeof t === 'string') return t;
+  var eqs = (t.equipes || []).join(',');
+  return eqs ? (t.nome + '::' + eqs) : String(t.nome || '');
+}
+function _tarefaObj(s) {
+  if (!s) return {nome: '', equipes: []};
+  var p = String(s).split('::');
+  return {nome: p[0].trim(), equipes: p[1] ? p[1].split(',').map(function(x){return x.trim();}).filter(Boolean) : []};
 }
 
 function _getOrCreate(ss, name, headers, headerRow) {

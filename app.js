@@ -96,9 +96,25 @@ const State = (() => {
     if (!d.gsSheetId) d.gsSheetId = (window.EFETIVO_CONFIG||{}).gsSheetId || '';
     // Deduplicar andares e tarefas
     if (d.andares) d.andares = d.andares.filter(function(a,i){return d.andares.indexOf(a)===i;});
-    // Normalizar tarefas antigas (strings) para objetos {nome, equipes}
-    if (d.tarefas && d.tarefas.length > 0 && typeof d.tarefas[0] === 'string') {
-      d.tarefas = d.tarefas.map(function(t){ return {nome:t, equipes:[]}; });
+    // Normalizar TODAS as tarefas para {nome, equipes}. Antes só o primeiro
+    // item era inspecionado, então uma lista mista (depois de sincronizar)
+    // deixava strings soltas que quebravam a tela de configurações.
+    if (d.tarefas) {
+      d.tarefas = d.tarefas
+        .map(function(t) {
+          if (typeof t === 'string') {
+            var p = t.split('::');
+            return {nome: p[0].trim(), equipes: p[1] ? p[1].split(',').map(function(x){return x.trim();}).filter(Boolean) : []};
+          }
+          return {nome: String((t && t.nome) || ''), equipes: (t && t.equipes) || []};
+        })
+        .filter(function(t) { return t.nome && t.nome !== '[object Object]'; });
+      // Deduplicar por nome, mantendo o primeiro (que traz as equipes)
+      var vistos = {};
+      d.tarefas = d.tarefas.filter(function(t) {
+        if (vistos[t.nome]) return false;
+        vistos[t.nome] = true; return true;
+      });
     }
   }
 
@@ -311,7 +327,7 @@ function _buildState(ss) {
     var eqId = 1;
     cfgData.forEach(function(r) {
       if (r[0]) state.andares.push(String(r[0]).trim());
-      if (r[2]) state.tarefas.push(String(r[2]).trim());
+      if (r[2]) state.tarefas.push(_tarefaObj(String(r[2]).trim()));
       if (r[4]) {
         var parts = String(r[4]).split('|');
         if (parts.length >= 3) {
@@ -480,7 +496,7 @@ function _saveConfig(ss, p) {
   var andares = p.andares||[], tarefas = p.tarefas||[], equipes = p.equipes||[], obras = p.obras||[];
   var maxLen = Math.max(andares.length, tarefas.length, equipes.length, obras.length);
   for (var i = 0; i < maxLen; i++) {
-    sh.appendRow([andares[i]||'','',tarefas[i]||'','',equipes[i]?(equipes[i].id+'|'+equipes[i].nome+'|'+equipes[i].cor):'','',obras[i]||'','']);
+    sh.appendRow([andares[i]||'','',_tarefaStr(tarefas[i]),'',equipes[i]?(equipes[i].id+'|'+equipes[i].nome+'|'+equipes[i].cor):'','',obras[i]||'','']);
   }
 }
 
@@ -511,6 +527,21 @@ function _deleteHE(ss, p) {
   for (var i = vals.length-1; i >= 0; i--) {
     if (String(vals[i][0]) === String(p.id)) sh.deleteRow(i+4);
   }
+}
+
+// Tarefas sao objetos {nome, equipes} no app. Na planilha viram uma unica
+// celula "nome::eq1,eq2". Antes o objeto era gravado direto e virava
+// "[object Object]", corrompendo o nome e perdendo o vinculo com as equipes.
+function _tarefaStr(t) {
+  if (!t) return '';
+  if (typeof t === 'string') return t;
+  var eqs = (t.equipes || []).join(',');
+  return eqs ? (t.nome + '::' + eqs) : String(t.nome || '');
+}
+function _tarefaObj(s) {
+  if (!s) return {nome: '', equipes: []};
+  var p = String(s).split('::');
+  return {nome: p[0].trim(), equipes: p[1] ? p[1].split(',').map(function(x){return x.trim();}).filter(Boolean) : []};
 }
 
 function _getOrCreate(ss, name, headers, headerRow) {
@@ -657,6 +688,20 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
 */
 const Versoes = (() => {
   const LISTA = [
+    {
+      v: '1.0.1',
+      data: '2026-08-15',
+      titulo: 'Revisão geral do sistema',
+      notas: [
+        {tipo:'correcao', texto:'Tarefas eram gravadas na planilha como "[object Object]": o nome era corrompido e o vínculo com as equipes se perdia a cada sincronização. Agora usam o formato nome::equipes.'},
+        {tipo:'correcao', texto:'Lixo de sincronizações anteriores é descartado e tarefas duplicadas são unificadas, mantendo a que tem equipes associadas.'},
+        {tipo:'correcao', texto:'Só a primeira tarefa da lista era normalizada; listas mistas deixavam itens quebrados na tela de configurações.'},
+        {tipo:'correcao', texto:'Tarefas passam a ser preservadas no merge, como os demais cadastros.'},
+        {tipo:'correcao', texto:'A obra selecionada voltava sozinha para a primeira da lista a cada sincronização.'},
+        {tipo:'melhoria', texto:'Versão agora aparece no cabeçalho, em todas as telas: um toque abre estas notas. Antes só era visível dentro do menu.'},
+        {tipo:'correcao', texto:'O mobile tinha dois botões de sincronizar idênticos no cabeçalho; um foi removido.'},
+      ]
+    },
     {
       v: '1.0.0',
       data: '2026-08-15',
@@ -1617,6 +1662,11 @@ const App = (() => {
       sheetState.gsUrl = s.gsUrl;
       sheetState.gsSheetId = s.gsSheetId;
       sheetState.gsKey = s.gsKey || '';
+      // A obra ativa é escolha do aparelho. O Apps Script devolve sempre a
+      // primeira da lista, o que trocava a obra selecionada a cada sync.
+      if (s.activeObra && (sheetState.obras||[]).indexOf(s.activeObra) >= 0) {
+        sheetState.activeObra = s.activeObra;
+      }
       // Normalizar horasExtras: agrupar linhas individuais em lançamentos
       if (sheetState.horasExtras) {
         Object.keys(sheetState.horasExtras).forEach(function(obra) {
@@ -1650,6 +1700,7 @@ const App = (() => {
       sheetState.equipes = _mergeLista(local.equipes, sheetState.equipes, 'id');
       sheetState.obras   = _mergeSimples(local.obras,   sheetState.obras);
       sheetState.andares = _mergeSimples(local.andares, sheetState.andares);
+      sheetState.tarefas = _mergeLista(local.tarefas, sheetState.tarefas, 'nome');
       sheetState.horasExtras    = _mergeById(local.horasExtras,      sheetState.horasExtras);
 
       localStorage.setItem('efetivo_v3', JSON.stringify(sheetState));
