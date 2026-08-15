@@ -689,6 +689,16 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
 const Versoes = (() => {
   const LISTA = [
     {
+      v: '1.0.2',
+      data: '2026-08-15',
+      titulo: 'Escolha de layout entre desktop e mobile',
+      notas: [
+        {tipo:'correcao', texto:'O desktop abria a versão mobile e não havia volta: o mobile nunca redirecionava de: agora quem abre a versão mobile numa tela grande volta sozinho para o desktop.'},
+        {tipo:'melhoria', texto:'A escolha de layout fica salva no aparelho. Use o link "mobile" no rodapé do desktop, ou "Versão desktop" no menu do celular, para forçar um dos dois.'},
+        {tipo:'melhoria', texto:'A detecção passou a considerar tela de toque, não só a largura: uma janela estreita no computador não joga mais para o mobile.'},
+      ]
+    },
+    {
       v: '1.0.1',
       data: '2026-08-15',
       titulo: 'Revisão geral do sistema',
