@@ -204,9 +204,12 @@ const State = (() => {
   // Roda uma vez: distribui a config global para todas as obras existentes.
   function _migrarConfig() {
     if (!d.configPorObra) d.configPorObra = {};
-    if (d.cfgMigrado) return;              // só na primeira vez
+    if (d.cfgMigrado) return;
+    // Só preenche obra que NUNCA teve config. Obra com lista vazia é uma
+    // escolha do usuário (ele apagou), não um caso de migração — antes ela
+    // era reabastecida com a lista global a cada carregamento.
     (d.obras || []).forEach(function(o) {
-      if (!d.configPorObra[o] || !d.configPorObra[o].andares.length) {
+      if (!d.configPorObra[o]) {
         d.configPorObra[o] = {
           andares: JSON.parse(JSON.stringify(d.andares || [])),
           tarefas: JSON.parse(JSON.stringify(d.tarefas || [])),
@@ -215,6 +218,8 @@ const State = (() => {
       }
     });
     d.cfgMigrado = true;
+    // Zera o legado para ele não poder mais servir de fonte a nada.
+    d.andares = []; d.tarefas = []; d.equipes = [];
   }
 
   // Copia a configuração de uma obra para outra (setup rápido de obra nova).
@@ -792,6 +797,17 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
 */
 const Versoes = (() => {
   const LISTA = [
+    {
+      v: '1.3.2',
+      data: '2026-08-15',
+      titulo: 'Configuração por obra: exclusões e edições agora ficam',
+      notas: [
+        {tipo:'correcao', texto:'Excluir um andar, tarefa ou equipe não valia: a sincronização unia as listas dos dois lados, então o item voltava e as obras acabavam com o mesmo conteúdo. Agora a configuração de cada obra é substituída pelo último estado salvo.'},
+        {tipo:'correcao', texto:'Uma obra com a lista vazia era reabastecida com a lista antiga a cada carregamento, desfazendo o que tinha sido apagado.'},
+        {tipo:'correcao', texto:'A marca de que a migração já rodou se perdia na volta da planilha, fazendo a migração recomeçar depois de cada sincronização.'},
+        {tipo:'melhoria', texto:'As listas antigas são zeradas após a migração, para não voltarem a servir de fonte para nenhuma obra.'},
+      ]
+    },
     {
       v: '1.3.1',
       data: '2026-08-15',
@@ -1915,15 +1931,16 @@ const App = (() => {
   }
 
   // Mescla {obra:{andares,tarefas,equipes}} sem perder o que só existe local.
+  // A config de cada obra é substituída por inteiro pelo que veio da
+  // planilha — que é sempre o último estado salvo por algum aparelho.
+  // Antes isto unia as listas, então excluir um andar/tarefa/equipe nunca
+  // valia: o item voltava no sync seguinte e as obras ficavam idênticas.
+  // Alterações locais ainda não enviadas não chegam aqui: State.isDirty()
+  // bloqueia o carregamento remoto até o envio terminar.
   function _mergeCfgObra(local, remote) {
     const out = JSON.parse(JSON.stringify(remote || {}));
     Object.keys(local || {}).forEach(function(obra) {
-      const l = local[obra] || {};
-      if (!out[obra]) { out[obra] = l; return; }
-      const r = out[obra];
-      r.andares = _mergeSimples(l.andares, r.andares);
-      r.tarefas = _mergeLista(l.tarefas, r.tarefas, 'nome');
-      r.equipes = _mergeLista(l.equipes, r.equipes, 'id');
+      if (!out[obra]) out[obra] = local[obra];   // obra que só existe aqui
     });
     return out;
   }
@@ -1981,6 +1998,9 @@ const App = (() => {
       sheetState.gsUrl = s.gsUrl;
       sheetState.gsSheetId = s.gsSheetId;
       sheetState.gsKey = s.gsKey || '';
+      // O Apps Script não conhece este campo; sem preservá-lo a migração
+      // voltava a rodar depois de cada sincronização.
+      sheetState.cfgMigrado = s.cfgMigrado === true;
       // A obra ativa é escolha do aparelho. O Apps Script devolve sempre a
       // primeira da lista, o que trocava a obra selecionada a cada sync.
       if (s.activeObra && (sheetState.obras||[]).indexOf(s.activeObra) >= 0) {
