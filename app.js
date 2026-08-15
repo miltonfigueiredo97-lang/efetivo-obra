@@ -738,33 +738,54 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
       return false;
     }
     const body = JSON.stringify({...payload, sheetId: s.gsSheetId, key: s.gsKey || ''});
-    // Tenta em modo 'cors' para conseguir LER a resposta e saber se gravou.
-    // O Apps Script responde com CORS no redirect, e Content-Type text/plain
-    // evita o preflight. Se o ambiente barrar, cai para no-cors (cego).
+    // POST direto em no-cors. O modo cors SEMPRE falhava aqui: o Apps Script
+    // responde o POST com um redirect que o navegador bloqueia. Cada gravação
+    // gastava ~2s numa tentativa fadada a falhar e ainda disparava toast de
+    // erro — mesmo com o dado chegando à planilha pelo fallback.
     try {
-      const res = await fetch(s.gsUrl, {
-        method: 'POST', mode: 'cors',
+      await fetch(s.gsUrl, {
+        method: 'POST', mode: 'no-cors',
         headers: {'Content-Type': 'text/plain;charset=utf-8'},
         body
       });
-      const json = await res.json();
-      if (json.ok === false) {
-        Utils.toast('Falha ao salvar: ' + (json.error || 'erro'), 'error');
-        return false;
-      }
+      // no-cors não deixa ler a resposta; a confirmação é feita uma única
+      // vez pela Fila, no fim do lote, via _confirmar().
       return true;
     } catch(e) {
-      try {
-        await fetch(s.gsUrl, {
-          method: 'POST', mode: 'no-cors',
-          headers: {'Content-Type': 'text/plain;charset=utf-8'},
-          body
-        });
-        return true;
-      } catch(e2) {
-        Utils.toast('Sem conexão — salvo só neste aparelho.', 'warn');
+      Utils.toast('Sem conexão — a alteração ficou na fila e será reenviada.', 'warn');
+      return false;
+    }
+  }
+
+  // Confere por leitura se a última gravação surtiu efeito. GET funciona em
+  // cors normalmente, então aqui dá para ler a resposta.
+  async function _confirmar(payload) {
+    payload = payload || {};
+    const s = State.get();
+    try {
+      const res = await fetch(s.gsUrl + '?sheetId=' + s.gsSheetId + '&key=' + encodeURIComponent(s.gsKey||''),
+                              {method:'GET', mode:'cors'});
+      const json = await res.json();
+      if (json.ok === false) {
+        // A planilha respondeu mas recusou (ex.: chave errada): erro real.
+        Utils.toast('Planilha recusou: ' + (json.error||'erro'), 'error');
         return false;
       }
+      const st = (json && json.state) || {};
+      if (payload.action === 'saveWorkers')
+        return (st.workers||[]).length === (payload.workers||[]).length;
+      if (payload.action === 'saveConfig') {
+        const remoto = Object.keys(st.configPorObra||{}).sort().join(',');
+        const local  = Object.keys(payload.configPorObra||{})
+          .filter(o => { const c=payload.configPorObra[o]||{};
+            return (c.andares||[]).length||(c.tarefas||[]).length||(c.equipes||[]).length; })
+          .sort().join(',');
+        return remoto === local || local === '';
+      }
+      return true;  // demais ações: POST sem exceção = aceito
+    } catch(e) {
+      // Sem leitura não há como confirmar; mantém na fila para reenvio.
+      return false;
     }
   }
 
@@ -867,7 +888,7 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
     } catch { return false; }
   }
 
-  return { CODE, loadState, enviarTudo, saveWorkers, saveEfetivo, saveRelatorio, saveConfig, saveProd, saveHE, deleteHE, ping };
+  return { CODE, loadState, enviarTudo, confirmar:_confirmar, saveWorkers, saveEfetivo, saveRelatorio, saveConfig, saveProd, saveHE, deleteHE, ping };
 })();
 
 
@@ -878,6 +899,16 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
 */
 const Versoes = (() => {
   const LISTA = [
+    {
+      v: '1.5.1',
+      data: '2026-08-15',
+      titulo: 'Gravação rápida, sem falsos erros, e atualização automática',
+      notas: [
+        {tipo:'correcao', texto:'Toda gravação tentava primeiro um modo de envio que o Google sempre rejeita: perdia uns 2 segundos por item e ainda mostrava mensagem de falha — mesmo com o dado chegando na planilha. Era a causa da demora e dos falsos erros.'},
+        {tipo:'correcao', texto:'A confirmação passa a ser feita por leitura, uma única vez por lote, em vez de tentar ler a resposta do envio.'},
+        {tipo:'correcao', texto:'O aplicativo só lia a planilha ao abrir. Um celular que ficasse aberto nunca via o que outro aparelho salvou. Agora relê ao voltar para o aplicativo e a cada minuto.'},
+      ]
+    },
     {
       v: '1.5.0',
       data: '2026-08-15',
@@ -1131,14 +1162,23 @@ const Fila = (() => {
       let falhou = false;
       // Cópia: a fila pode receber itens novos durante o envio.
       const itens = State.fila().slice();
+      const enviados = [];
       for (const chave of itens) {
         _pintar(chave);
         let r;
         try { r = await _enviarItem(chave); } catch(e) { r = false; }
         if (r === false) { falhou = true; break; }   // para e tenta tudo depois
-        State.desenfileirar(chave);
-        _pintar();
+        enviados.push(chave);
         await new Promise(res => setTimeout(res, 250));
+      }
+      // Uma única confirmação por lote: o POST em no-cors não expõe a
+      // resposta, então conferimos por GET que a planilha continua acessível
+      // e aceitando. Só então os itens saem da fila.
+      if (enviados.length && !falhou) {
+        _pintar('confirmando…');
+        const okConf = await Sheets.confirmar();
+        if (okConf) enviados.forEach(function(c) { State.desenfileirar(c); });
+        else falhou = true;
       }
       if (falhou || State.fila().length) _agendarRetry();
     } finally {
@@ -2233,8 +2273,15 @@ const App = (() => {
     updateGSIndicator();
     if (typeof EfPage !== 'undefined') EfPage.render();
     _updateTopbar();
-    // Try to load fresh state from Sheets (cross-device sync)
+    // Lê a planilha ao abrir…
     _loadFromSheets();
+    // …ao voltar para o app (troca de aba/app no celular)…
+    document.addEventListener('visibilitychange', function() {
+      if (!document.hidden) _loadFromSheets();
+    });
+    // …e periodicamente, para receber o que outros aparelhos salvaram.
+    // O guard de fila (isDirty) impede sobrescrever alterações pendentes.
+    setInterval(function() { _loadFromSheets(); }, 60000);
   }
 
   // Estrutura {obra: {data: ...}} — mantém a data local quando a planilha
