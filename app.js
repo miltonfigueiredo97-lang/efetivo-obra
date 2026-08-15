@@ -276,6 +276,7 @@ const Utils = (() => {
   function weekday(s) { return WD[dateFrom(s).getDay()]; }
   function monthShort(s) { return MS[dateFrom(s).getMonth()]; }
   function isSunday(s) { return dateFrom(s).getDay()===0; }
+  function isSaturday(s) { return dateFrom(s).getDay()===6; }
   function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
   function toast(msg, type='success') {
@@ -297,7 +298,7 @@ const Utils = (() => {
     });
   }
 
-  return { todayStr,dateFrom,pad,fmtPT,fmtLong,weekday,monthShort,isSunday,esc,toast,copy };
+  return { todayStr,dateFrom,pad,fmtPT,fmtLong,weekday,monthShort,isSunday,isSaturday,esc,toast,copy };
 })();
 
 /* ═══ GOOGLE SHEETS ═══ */
@@ -792,6 +793,16 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
 const Versoes = (() => {
   const LISTA = [
     {
+      v: '1.3.0',
+      data: '2026-08-15',
+      titulo: 'Faltas de sábado contadas à parte',
+      notas: [
+        {tipo:'novo', texto:'O desempenho separa faltas de sábado das faltas em dia útil, com dois totais no topo da tela.'},
+        {tipo:'novo', texto:'Cada funcionário mostra quantas faltas foram em sábado, quantas em dia útil, e o aproveitamento só dos sábados.'},
+        {tipo:'novo', texto:'No detalhe dia a dia, sábados aparecem destacados e as faltas em sábado ficam marcadas em vermelho.'},
+      ]
+    },
+    {
       v: '1.2.1',
       data: '2026-08-15',
       titulo: 'Configuração realmente separada por obra',
@@ -1088,16 +1099,23 @@ const StatPage = (() => {
   function render() {
     const s=State.get(); const obra=App.obra(); const date=App.date();
     const ws=s.workers.filter(w=>w.obra===obra);
+    // Faltas contadas separando sábado de dia de semana.
     const att={};
     if(s.dailyData[obra]) {
       Object.entries(s.dailyData[obra]).forEach(([d,dayMap])=>{
+        const sab=Utils.isSaturday(d);
         Object.entries(dayMap).forEach(([wid,dd])=>{
-          if(!att[wid]) att[wid]={dias:0,total:0};
+          if(!att[wid]) att[wid]={dias:0,total:0,faltaSab:0,faltaSem:0,totalSab:0,presSab:0};
           att[wid].total++;
-          if(dd.presente!==false) att[wid].dias++;
+          if(sab) att[wid].totalSab++;
+          if(dd.presente!==false){ att[wid].dias++; if(sab) att[wid].presSab++; }
+          else if(sab) att[wid].faltaSab++;
+          else att[wid].faltaSem++;
         });
       });
     }
+    const totFaltaSab=Object.values(att).reduce((a,x)=>a+x.faltaSab,0);
+    const totFaltaSem=Object.values(att).reduce((a,x)=>a+x.faltaSem,0);
     const hoje=ws.filter(w=>{ const dd=s.dailyData[obra]?.[date]?.[w.id]; return !dd||dd.presente; }).length;
     const rel=s.historico.filter(h=>h.obra===obra).length;
     const avg=ws.length?Math.round(ws.reduce((sum,w)=>{const a=att[w.id];return sum+(a&&a.total?a.dias/a.total*100:100);},0)/ws.length):0;
@@ -1107,13 +1125,21 @@ const StatPage = (() => {
       <div class="stats-grid">
         <div class="stat-card"><div class="stat-lbl">Funcionários</div><div class="stat-val">${ws.length}</div></div>
         <div class="stat-card"><div class="stat-lbl">Hoje</div><div class="stat-val" style="color:var(--gn)">${hoje}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Relatórios</div><div class="stat-val">${rel}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Faltas em Sábado</div><div class="stat-val" style="color:${totFaltaSab?'var(--rd)':'var(--gn)'}">${totFaltaSab}</div></div>
+        <div class="stat-card"><div class="stat-lbl">Faltas Dia Útil</div><div class="stat-val" style="color:${totFaltaSem?'var(--ac)':'var(--gn)'}">${totFaltaSem}</div></div>
         <div class="stat-card"><div class="stat-lbl">Assiduidade</div><div class="stat-val" style="color:${avg>=90?'var(--gn)':avg>=75?'var(--ac)':'var(--rd)'}">${avg}%</div></div>
       </div>
       <div class="att-list">
         ${ws.map(w=>{
-          const a=att[w.id]||{dias:0,total:0};
+          const a=att[w.id]||{dias:0,total:0,faltaSab:0,faltaSem:0,totalSab:0,presSab:0};
           const pct=a.total?Math.round(a.dias/a.total*100):100;
+          const pctSab=a.totalSab?Math.round(a.presSab/a.totalSab*100):null;
+          const selos=[
+            a.faltaSab?`<span style="background:var(--rdd);color:var(--rd);padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">${a.faltaSab} falta${a.faltaSab>1?'s':''} SÁB</span>`:'',
+            a.faltaSem?`<span style="background:var(--acd);color:var(--ac);padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">${a.faltaSem} falta${a.faltaSem>1?'s':''} útil</span>`:'',
+            (!a.faltaSab&&!a.faltaSem&&a.total)?`<span style="background:var(--gnd);color:var(--gn);padding:2px 8px;border-radius:10px;font-size:10px;font-weight:700">sem faltas</span>`:'',
+            pctSab!==null?`<span style="background:var(--sf3);color:var(--t2);padding:2px 8px;border-radius:10px;font-size:10px;font-family:'JetBrains Mono',monospace">sáb ${a.presSab}/${a.totalSab}</span>`:''
+          ].filter(Boolean).join(' ');
           const cls=pct>=90?'good':pct>=75?'warn':'danger';
           const cor=pct>=90?'var(--gn)':pct>=75?'var(--ac)':'var(--rd)';
           const eq=State.getEquipe(w.equipe); const ecor=eq?eq.cor:'#8b92b0';
@@ -1126,6 +1152,7 @@ const StatPage = (() => {
               <div onclick="StatPage.verDias('${w.id}')" title="Ver dias de presença e falta" style="font-family:'Bebas Neue',sans-serif;font-size:26px;color:${cor};cursor:pointer;padding:2px 8px;border-radius:8px;border:1px solid transparent" onmouseover="this.style.borderColor='${cor}';this.style.background='${cor}18'" onmouseout="this.style.borderColor='transparent';this.style.background='none'">${pct}%</div>
             </div>
             <div class="bar-wrap"><div class="bar-bg"><div class="bar-fill ${cls}" style="width:${pct}%"></div></div><span style="font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace">${a.dias}/${a.total}</span></div>
+            ${selos?`<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px">${selos}</div>`:''}
           </div>`;
         }).join('')}
       </div>`;
@@ -1138,17 +1165,22 @@ const StatPage = (() => {
     const dias=Object.keys(dd).filter(d=>dd[d][wid]).sort((a,b)=>b.localeCompare(a));
     const pres=dias.filter(d=>dd[d][wid].presente!==false);
     const falt=dias.filter(d=>dd[d][wid].presente===false);
+    const faltSab=falt.filter(Utils.isSaturday);
+    const faltSem=falt.filter(d=>!Utils.isSaturday(d));
+    const sabs=dias.filter(Utils.isSaturday);
+    const presSab=sabs.filter(d=>dd[d][wid].presente!==false);
     const pct=dias.length?Math.round(pres.length/dias.length*100):100;
     const cor=pct>=90?'var(--gn)':pct>=75?'var(--ac)':'var(--rd)';
 
     const linhas = dias.length ? dias.map(d=>{
       const r=dd[d][wid], veio=r.presente!==false;
+      const sab = Utils.isSaturday(d);
       const det = veio
         ? [r.andar||'', (r.tarefas||[]).join(', ')].filter(Boolean).join(' · ')
         : (r.motivo||'Sem justificativa');
-      return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--bd)">
+      return `<div style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--bd);${sab&&!veio?'background:rgba(239,68,68,.07)':''}">
         <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--t2);min-width:78px">${Utils.fmtPT(d)}</span>
-        <span style="font-size:10px;color:var(--t3);min-width:78px">${Utils.weekday(d)}</span>
+        <span style="font-size:10px;min-width:78px;${sab?'color:var(--ac);font-weight:700':'color:var(--t3)'}">${Utils.weekday(d)}</span>
         <span style="font-size:11px;font-weight:700;padding:2px 9px;border-radius:10px;min-width:60px;text-align:center;
           background:${veio?'var(--gnd)':'var(--rdd)'};color:${veio?'var(--gn)':'var(--rd)'}">${veio?'VEIO':'FALTOU'}</span>
         <span style="flex:1;font-size:11px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${Utils.esc(det)}</span>
@@ -1160,8 +1192,9 @@ const StatPage = (() => {
     document.getElementById('histDetailText').innerHTML = `
       <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
         <span class="pill green">${pres.length} presenças</span>
-        <span class="pill red">${falt.length} faltas</span>
-        <span class="pill orange">${dias.length} dias</span>
+        <span class="pill red">${faltSab.length} faltas SÁBADO</span>
+        <span class="pill orange">${faltSem.length} faltas dia útil</span>
+        <span class="pill" style="background:var(--sf3);color:var(--t2)">sábados ${presSab.length}/${sabs.length}</span>
         <span class="pill" style="background:${cor}22;color:${cor}">${pct}%</span>
       </div>
       <div style="border:1px solid var(--bd);border-radius:var(--rs);overflow:hidden">${linhas}</div>`;
