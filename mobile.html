@@ -522,8 +522,8 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
   </div>
   <div class="toast-container" id="toastContainer"></div>
 <span id="lastSaved" style="display:none"></span>
-<script src="config.js?v=1.3.0"></script>
-<script src="app.js?v=1.3.0"></script>
+<script src="config.js?v=1.3.1"></script>
+<script src="app.js?v=1.3.1"></script>
 <script>
 
 /* ═══ EFETIVO PAGE — MOBILE ═══ */
@@ -621,7 +621,7 @@ const EfPage = (() => {
           ${absent ? `
             <div>
               <div class="field-label">Motivo da Falta</div>
-              <input class="finput" placeholder="Sem justificativa" value="${Utils.esc(dd.motivo||'')}"
+              <input class="form-input" placeholder="Sem justificativa" value="${Utils.esc(dd.motivo||'')}"
                 onchange="EfPage.setMotivo('${w.id}',this.value)">
             </div>` : `
             <div>

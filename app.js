@@ -793,6 +793,17 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
 const Versoes = (() => {
   const LISTA = [
     {
+      v: '1.3.1',
+      data: '2026-08-15',
+      titulo: 'Correção de campos e cartões sem formatação',
+      notas: [
+        {tipo:'correcao', texto:'Os campos de URL, ID da planilha e chave de acesso apareciam desalinhados e cortados: usavam nomes de classe que não existiam no CSS e ficavam sem formatação nenhuma.'},
+        {tipo:'correcao', texto:'Os cartões de desempenho tinham o mesmo problema, incluindo os contadores de faltas recém-criados.'},
+        {tipo:'correcao', texto:'O seletor de local no efetivo também usava uma classe inexistente, nas duas versões.'},
+        {tipo:'melhoria', texto:'Os cartões de desempenho passam a se ajustar à largura da tela, em vez de ficarem presos em quatro colunas.'},
+      ]
+    },
+    {
       v: '1.3.0',
       data: '2026-08-15',
       titulo: 'Faltas de sábado contadas à parte',
@@ -1123,11 +1134,11 @@ const StatPage = (() => {
     if(!el) return;
     el.innerHTML=`
       <div class="stats-grid">
-        <div class="stat-card"><div class="stat-lbl">Funcionários</div><div class="stat-val">${ws.length}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Hoje</div><div class="stat-val" style="color:var(--gn)">${hoje}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Faltas em Sábado</div><div class="stat-val" style="color:${totFaltaSab?'var(--rd)':'var(--gn)'}">${totFaltaSab}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Faltas Dia Útil</div><div class="stat-val" style="color:${totFaltaSem?'var(--ac)':'var(--gn)'}">${totFaltaSem}</div></div>
-        <div class="stat-card"><div class="stat-lbl">Assiduidade</div><div class="stat-val" style="color:${avg>=90?'var(--gn)':avg>=75?'var(--ac)':'var(--rd)'}">${avg}%</div></div>
+        <div class="stat-card"><div class="stat-label">Funcionários</div><div class="stat-value">${ws.length}</div></div>
+        <div class="stat-card"><div class="stat-label">Hoje</div><div class="stat-value" style="color:var(--gn)">${hoje}</div></div>
+        <div class="stat-card"><div class="stat-label">Faltas em Sábado</div><div class="stat-value" style="color:${totFaltaSab?'var(--rd)':'var(--gn)'}">${totFaltaSab}</div></div>
+        <div class="stat-card"><div class="stat-label">Faltas Dia Útil</div><div class="stat-value" style="color:${totFaltaSem?'var(--ac)':'var(--gn)'}">${totFaltaSem}</div></div>
+        <div class="stat-card"><div class="stat-label">Assiduidade</div><div class="stat-value" style="color:${avg>=90?'var(--gn)':avg>=75?'var(--ac)':'var(--rd)'}">${avg}%</div></div>
       </div>
       <div class="att-list">
         ${ws.map(w=>{
@@ -1267,9 +1278,9 @@ const CfgPage = (() => {
           : `<div style="font-size:11px;color:var(--t3)">Só existe uma obra cadastrada.</div>`,
         '')}
       ${blk('🔗 Google Sheets',
-        `<div class="form-g"><label>URL do Web App</label><input class="finput" id="gsUrl" placeholder="https://script.google.com/macros/s/…/exec" value="${Utils.esc(s.gsUrl)}" style="font-size:11px;font-family:'JetBrains Mono',monospace"></div>
-         <div class="form-g"><label>ID da Planilha</label><input class="finput" id="gsSheetId" placeholder="1BxiMVs0XRA5…" value="${Utils.esc(s.gsSheetId)}" style="font-family:'JetBrains Mono',monospace"></div>
-         <div class="form-g"><label>Chave de acesso</label><input class="finput" type="password" id="gsKey" placeholder="digite uma vez neste aparelho" value="${Utils.esc(s.gsKey||'')}" style="font-family:'JetBrains Mono',monospace">
+        `<div class="form-group"><label>URL do Web App</label><input class="form-input" id="gsUrl" placeholder="https://script.google.com/macros/s/…/exec" value="${Utils.esc(s.gsUrl)}" style="font-size:11px;font-family:'JetBrains Mono',monospace"></div>
+         <div class="form-group"><label>ID da Planilha</label><input class="form-input" id="gsSheetId" placeholder="1BxiMVs0XRA5…" value="${Utils.esc(s.gsSheetId)}" style="font-family:'JetBrains Mono',monospace"></div>
+         <div class="form-group"><label>Chave de acesso</label><input class="form-input" type="password" id="gsKey" placeholder="digite uma vez neste aparelho" value="${Utils.esc(s.gsKey||'')}" style="font-family:'JetBrains Mono',monospace">
            <div style="font-size:10px;color:var(--t3);margin-top:4px;line-height:1.5">Fica salva só neste aparelho. Nunca colocar no código — o site é público.</div></div>
          <div style="display:flex;gap:8px;margin-top:6px">
            <button class="btn btn-accent" onclick="CfgPage.saveGS()">Salvar</button>
