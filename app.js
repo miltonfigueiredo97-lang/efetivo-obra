@@ -69,6 +69,9 @@ const State = (() => {
       {id:'w46',nome:'Jose Ramalho da Silva',funcao:'Carpinteiro',equipe:'eq5',obra:'Essence Residence'},
       {id:'w47',nome:'Thiago da Silva',funcao:'Ajudante',equipe:'eq8',obra:'Essence Residence'},
     ],
+    // configPorObra[obra] = {andares:[], tarefas:[{nome,equipes}], equipes:[]}
+    // Cada obra tem seus próprios andares, tarefas e equipes.
+    configPorObra: {},
     // dailyData[obra][date][wid] = {presente, andar, tarefas[], motivo}
     dailyData: {},
     // producao[obra] = {areaAlv, areaLaje, volGraute, volArg, volConc, acoAlv, acoLaje, mestre, engenheiro, encarregado, almoxarife, assistente, administrativo}
@@ -116,6 +119,7 @@ const State = (() => {
         vistos[t.nome] = true; return true;
       });
     }
+    _migrarConfig();
   }
 
   function save(context) {
@@ -176,19 +180,59 @@ const State = (() => {
     save('efetivo');
   }
 
-  function getEquipe(id) { return d.equipes.find(e=>e.id===id||e.nome===id); }
+  // ═══ CONFIG POR OBRA ═══
+  // Cada obra tem andares/tarefas/equipes próprios. As listas globais viram
+  // apenas o molde para obras novas e a migração da estrutura antiga.
+  function _cfg(obra) {
+    obra = obra || d.activeObra || (d.obras && d.obras[0]) || '';
+    if (!d.configPorObra) d.configPorObra = {};
+    if (!d.configPorObra[obra]) {
+      d.configPorObra[obra] = {
+        andares: JSON.parse(JSON.stringify(d.andares || [])),
+        tarefas: JSON.parse(JSON.stringify(d.tarefas || [])),
+        equipes: JSON.parse(JSON.stringify(d.equipes || []))
+      };
+    }
+    const c = d.configPorObra[obra];
+    if (!c.andares) c.andares = [];
+    if (!c.tarefas) c.tarefas = [];
+    if (!c.equipes) c.equipes = [];
+    return c;
+  }
+  function andares(obra) { return _cfg(obra).andares; }
+  function tarefas(obra) { return _cfg(obra).tarefas; }
+  function equipes(obra) { return _cfg(obra).equipes; }
+
+  // Roda uma vez: distribui a config global para todas as obras existentes.
+  function _migrarConfig() {
+    if (!d.configPorObra) d.configPorObra = {};
+    (d.obras || []).forEach(function(o) { _cfg(o); });
+  }
+
+  function getEquipe(id, obra) {
+    const local = _cfg(obra).equipes.find(e=>e.id===id||e.nome===id);
+    if (local) return local;
+    // Fallback: equipe pode pertencer a outra obra (ex.: lista de funcionários)
+    let achou = (d.equipes||[]).find(e=>e.id===id||e.nome===id);
+    if (achou) return achou;
+    Object.keys(d.configPorObra||{}).some(function(o){
+      const e=(d.configPorObra[o].equipes||[]).find(x=>x.id===id||x.nome===id);
+      if (e) { achou=e; return true; } return false;
+    });
+    return achou;
+  }
   function getWorker(id) { return d.workers.find(w=>w.id===id); }
   function addWorker(w) { w.id='w'+Date.now(); d.workers.push(w); save('workers'); return w; }
   function updateWorker(id,f) { const w=d.workers.find(x=>x.id===id); if(w) Object.assign(w,f); save('workers'); }
   function removeWorker(id) { d.workers=d.workers.filter(w=>w.id!==id); save('workers'); }
   function addObra(n) { if(!d.obras.includes(n)){d.obras.push(n);save('config');} }
   function removeObra(n) { d.obras=d.obras.filter(o=>o!==n); save('config'); }
-  function addAndar(v) { d.andares.push(v); save('config'); }
-  function removeAndar(i) { d.andares.splice(i,1); save('config'); }
-  function addTarefa(v) { d.tarefas.push(typeof v==='string'?{nome:v,equipes:[]}:v); save('config'); }
-  function removeTarefa(i) { d.tarefas.splice(i,1); save('config'); }
-  function addEquipe(e) { e.id='eq'+Date.now(); d.equipes.push(e); save('config'); return e; }
-  function removeEquipe(id) { d.equipes=d.equipes.filter(e=>e.id!==id); save('config'); }
+  function addAndar(v) { andares().push(v); save('config'); }
+  function removeAndar(i) { andares().splice(i,1); save('config'); }
+  function addTarefa(v) { tarefas().push(typeof v==='string'?{nome:v,equipes:[]}:v); save('config'); }
+  function removeTarefa(i) { tarefas().splice(i,1); save('config'); }
+  function addEquipe(e) { e.id='eq'+Date.now(); equipes().push(e); save('config'); return e; }
+  function removeEquipe(id) { const c=_cfg(); c.equipes=c.equipes.filter(e=>e.id!==id); save('config'); }
   function addHistorico(h) { d.historico.unshift(h); if(d.historico.length>200) d.historico=d.historico.slice(0,200); save(); }
 
   // Horas extras
@@ -197,6 +241,7 @@ const State = (() => {
   function removeHE(obra, id) { d.horasExtras[obra]=getHE(obra).filter(e=>e.id!==id); save(); }
 
   return { load,save,get, isDirty, getDayData,setDayField, getEquipe,getWorker,
+    andares, tarefas, equipes, cfgObra:_cfg,
     addWorker,updateWorker,removeWorker, addObra,removeObra,
     addAndar,removeAndar, addTarefa,removeTarefa, addEquipe,removeEquipe,
     addHistorico, getHE,addHE,removeHE };
@@ -264,6 +309,7 @@ var ABA_ASSID  = '👷 Assiduidade';
 var ABA_CFG    = '⚙️ Configurações';
 var ABA_PROD   = '📐 Prod. Técnica';
 var ABA_HE     = '⏰ Horas Extras';
+var ABA_CFGOB  = '⚙️ Config por Obra';
 
 function doGet(e) {
   try {
@@ -296,7 +342,7 @@ function doPost(e) {
     if (act === 'saveWorkers')   { _saveWorkers(ss, p.workers);           return _ok({msg:'Funcionários salvos'}); }
     if (act === 'saveEfetivo')   { _saveEfetivo(ss, p); _syncAssid(ss, p); return _ok({msg:'Efetivo salvo'}); }
     if (act === 'saveRelatorio') { _saveRelatorio(ss, p);                  return _ok({msg:'Relatório salvo'}); }
-    if (act === 'saveConfig')    { _saveConfig(ss, p);                     return _ok({msg:'Config salva'}); }
+    if (act === 'saveConfig')    { _saveConfig(ss, p); _saveConfigObra(ss, p);                     return _ok({msg:'Config salva'}); }
     if (act === 'saveProd')      { _saveProd(ss, p);                       return _ok({msg:'Produção salva'}); }
     if (act === 'saveHE')        { _saveHE(ss, p);                         return _ok({msg:'HE salvas'}); }
     if (act === 'deleteHE')      { _deleteHE(ss, p);                       return _ok({msg:'HE removida'}); }
@@ -308,7 +354,7 @@ function doPost(e) {
 function _buildState(ss) {
   var state = {
     workers: [], equipes: [], andares: [], tarefas: [], obras: [],
-    dailyData: {}, historico: [], horasExtras: {}, producaoGeral: {}, producaoDiaria: {},
+    dailyData: {}, historico: [], horasExtras: {}, producaoGeral: {}, producaoDiaria: {}, configPorObra: {},
     gsUrl: '', gsSheetId: '', activeObra: ''
   };
 
@@ -368,6 +414,8 @@ function _buildState(ss) {
       };
     });
   }
+
+  _lerConfigObra(ss, state);
 
   var shR = ss.getSheetByName(ABA_REL);
   if (shR && shR.getLastRow() > 3) {
@@ -486,6 +534,41 @@ function _syncAssid(ss, p) {
       sh.getRange(i+4, 8).setFontColor(r[7].includes('Regular')?'#22c55e':r[7].includes('Atenção')?'#f59e0b':'#ef4444');
     });
   }
+}
+
+function _saveConfigObra(ss, p) {
+  var cfg = p.configPorObra || {};
+  var sh = _getOrCreate(ss, ABA_CFGOB, ['Obra','Tipo','Valor'], 3);
+  var last = sh.getLastRow();
+  if (last > 3) sh.deleteRows(4, last-3);
+  var rows = [];
+  Object.keys(cfg).forEach(function(obra) {
+    var c = cfg[obra] || {};
+    (c.andares || []).forEach(function(a) { if (a) rows.push([obra, 'andar', a]); });
+    (c.tarefas || []).forEach(function(t) { var v=_tarefaStr(t); if (v) rows.push([obra, 'tarefa', v]); });
+    (c.equipes || []).forEach(function(e) { if (e && e.nome) rows.push([obra, 'equipe', e.id+'|'+e.nome+'|'+e.cor]); });
+  });
+  if (rows.length) sh.getRange(4, 1, rows.length, 3).setValues(rows);
+}
+
+function _lerConfigObra(ss, state) {
+  var sh = ss.getSheetByName(ABA_CFGOB);
+  if (!sh || sh.getLastRow() < 4) return;
+  var rows = sh.getRange(4, 1, sh.getLastRow()-3, 3).getValues();
+  rows.forEach(function(r) {
+    var obra = String(r[0]||'').trim(), tipo = String(r[1]||'').trim(), val = String(r[2]||'').trim();
+    if (!obra || !tipo || !val) return;
+    if (!state.configPorObra[obra]) state.configPorObra[obra] = {andares:[], tarefas:[], equipes:[]};
+    var c = state.configPorObra[obra];
+    if (tipo === 'andar')  c.andares.push(val);
+    if (tipo === 'tarefa') c.tarefas.push(_tarefaObj(val));
+    if (tipo === 'equipe') {
+      var p2 = val.split('|');
+      c.equipes.push(p2.length >= 3
+        ? {id:p2[0].trim(), nome:p2[1].trim(), cor:p2[2].trim()}
+        : {id:'eq'+(c.equipes.length+1), nome:p2[0].trim(), cor:p2[1]||'#8b92b0'});
+    }
+  });
 }
 
 function _saveConfig(ss, p) {
@@ -633,7 +716,7 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
     const dayMap = s.dailyData?.[obra]?.[date] || {};
     const workers = s.workers.filter(w => w.obra === obra).map(w => {
       const dd = dayMap[w.id] || {presente:true, andar:'', tarefas:[]};
-      const eq = s.equipes.find(e => e.id === w.equipe);
+      const eq = State.getEquipe(w.equipe, obra);
       return {nome:w.nome, funcao:w.funcao, equipe:eq?eq.nome:w.equipe,
               presente:dd.presente!==false, andar:dd.andar||'', tarefas:dd.tarefas||[]};
     });
@@ -646,7 +729,8 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
 
   async function saveConfig() {
     const s = State.get();
-    return _post({action:'saveConfig', andares:s.andares, tarefas:s.tarefas, equipes:s.equipes, obras:s.obras});
+    return _post({action:'saveConfig', configPorObra:s.configPorObra||{}, obras:s.obras,
+                   andares:State.andares(), tarefas:State.tarefas(), equipes:State.equipes()});
   }
 
   async function saveHE(obra, entries) {
@@ -688,6 +772,18 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
 */
 const Versoes = (() => {
   const LISTA = [
+    {
+      v: '1.1.0',
+      data: '2026-08-15',
+      titulo: 'Cada obra com seus próprios dados',
+      notas: [
+        {tipo:'correcao', texto:'A tela de Funcionários mostrava gente de todas as obras ao mesmo tempo, ignorando a obra selecionada. Agora lista apenas a obra ativa.'},
+        {tipo:'novo', texto:'Andares, tarefas e equipes passam a ser de cada obra. Antes eram uma lista única, repetida em todas.'},
+        {tipo:'melhoria', texto:'A configuração que já existia foi copiada para cada obra cadastrada, então nada precisa ser redigitado.'},
+        {tipo:'correcao', texto:'O navegador guardava a versão antiga do programa em cache e o número da versão aparecia desatualizado. Cada versão agora força o download do arquivo novo.'},
+        {tipo:'novo', texto:'A planilha ganhou a aba "Config por Obra" para guardar a configuração separada de cada uma.'},
+      ]
+    },
     {
       v: '1.0.2',
       data: '2026-08-15',
@@ -828,7 +924,7 @@ const Modals = (() => {
   }
   function openWorker(wid) {
     const s=State.get();
-    document.getElementById('wTeam').innerHTML=s.equipes.map(e=>`<option value="${e.id}">${e.nome}</option>`).join('');
+    document.getElementById('wTeam').innerHTML=State.equipes().map(e=>`<option value="${e.id}">${e.nome}</option>`).join('');
     document.getElementById('wObra').innerHTML=s.obras.map(o=>`<option value="${Utils.esc(o)}" ${o===App.obra()?'selected':''}>${Utils.esc(o)}</option>`).join('');
     if(wid) {
       const w=State.getWorker(wid);
@@ -856,7 +952,7 @@ const Modals = (() => {
   function openImport() {
     const s=State.get();
     document.getElementById('impObra').innerHTML=s.obras.map(o=>`<option value="${Utils.esc(o)}" ${o===App.obra()?'selected':''}>${Utils.esc(o)}</option>`).join('');
-    document.getElementById('impEquipe').innerHTML=s.equipes.map(e=>`<option value="${e.id}">${e.nome}</option>`).join('');
+    document.getElementById('impEquipe').innerHTML=State.equipes().map(e=>`<option value="${e.id}">${e.nome}</option>`).join('');
     document.getElementById('impText').value='';
     open('modalImport');
   }
@@ -869,7 +965,8 @@ const FuncPage = (() => {
     const s=State.get();
     const q=(document.getElementById('funcSearch')?.value||'').toLowerCase();
     const sort=document.getElementById('funcSort')?.value||'nome';
-    let ws=[...s.workers];
+    // Só os funcionários da obra ativa — antes listava todas as obras juntas.
+    let ws=s.workers.filter(w=>w.obra===App.obra());
     if(q) ws=ws.filter(w=>w.nome.toLowerCase().includes(q)||w.funcao.toLowerCase().includes(q));
     ws.sort((a,b)=>{
       if(sort==='nome_z') return String(b.nome||'').localeCompare(String(a.nome||''),'pt-BR');
@@ -1035,13 +1132,13 @@ const CfgPage = (() => {
     if(!el) return;
     el.innerHTML=`
       ${blk('🏢 Andares / Locais',
-        s.andares.map((a,i)=>itm(a,`CfgPage.rmAndar(${i})`)).join(''),
+        State.andares().map((a,i)=>itm(a,`CfgPage.rmAndar(${i})`)).join(''),
         `<div class="add-item-row"><input id="newAndar" placeholder="ex: 17º Pavimento"><button class="btn btn-accent" onclick="CfgPage.addAndar()">Add</button></div>`)}
       ${blk('⚒ Atividades',
-        s.tarefas.map((t,i)=>itmTarefa(t,i,s.equipes)).join(''),
+        State.tarefas().map((t,i)=>itmTarefa(t,i,State.equipes())).join(''),
         `<div class="add-item-row"><input id="newTarefa" placeholder="ex: Instalação elétrica"><button class="btn btn-accent" onclick="CfgPage.addTarefa()">Add</button></div>`)}
       ${blk('👥 Equipes',
-        s.equipes.map(e=>`<div class="settings-item"><span class="color-dot" style="background:${e.cor}"></span><span style="flex:1">${Utils.esc(e.nome)}</span><button class="icon-btn danger" onclick="CfgPage.rmEquipe('${e.id}')">✕</button></div>`).join(''),
+        State.equipes().map(e=>`<div class="settings-item"><span class="color-dot" style="background:${e.cor}"></span><span style="flex:1">${Utils.esc(e.nome)}</span><button class="icon-btn danger" onclick="CfgPage.rmEquipe('${e.id}')">✕</button></div>`).join(''),
         `<div class="add-item-row"><input id="newEquipe" placeholder="Nova equipe"><input type="color" id="newEquipeCor" value="#22c55e" style="width:40px;padding:3px;border-radius:6px;border:1px solid var(--bd2);cursor:pointer;background:none"><button class="btn btn-accent" onclick="CfgPage.addEquipe()">Add</button></div>`)}
       ${blk('🏗 Obras',
         s.obras.map((o,i)=>`<div class="settings-item"><span style="flex:1">${Utils.esc(o)}</span>${i===0?'<span style="font-size:10px;color:var(--t3)">principal</span>':`<button class="icon-btn danger" onclick="CfgPage.rmObra('${Utils.esc(o)}')">✕</button>`}</div>`).join(''),
@@ -1087,29 +1184,29 @@ const CfgPage = (() => {
   function rmTarefa(i){State.removeTarefa(i);render();}
   function editTarefa(i){
     const s=State.get();
-    const t=s.tarefas[i];
+    const t=State.tarefas()[i];
     const nome=typeof t==='string'?t:t.nome;
     const novo=prompt('Editar atividade:',nome);
     if(!novo||!novo.trim()||novo.trim()===nome) return;
-    if(typeof t==='string') s.tarefas[i]={nome:novo.trim(),equipes:[]};
+    if(typeof t==='string') State.tarefas()[i]={nome:novo.trim(),equipes:[]};
     else t.nome=novo.trim();
     State.save('config');
     render();
   }
   function setTarefaEqs(i, sel) {
     const s = State.get();
-    const t = s.tarefas[i];
+    const t = State.tarefas()[i];
     if (!t) return;
     const eqs = Array.from(sel.selectedOptions).map(o=>o.value);
-    if (typeof t === 'string') s.tarefas[i] = {nome:t, equipes:eqs};
+    if (typeof t === 'string') State.tarefas()[i] = {nome:t, equipes:eqs};
     else t.equipes = eqs;
     State.save('config');
   }
   function toggleTarefaEq(i, eqNome) {
     const s = State.get();
-    const t = s.tarefas[i];
+    const t = State.tarefas()[i];
     if (!t) return;
-    if (typeof t === 'string') s.tarefas[i] = {nome:t, equipes:[eqNome]};
+    if (typeof t === 'string') State.tarefas()[i] = {nome:t, equipes:[eqNome]};
     else {
       const idx = t.equipes.indexOf(eqNome);
       if (idx >= 0) t.equipes.splice(idx,1);
@@ -1375,7 +1472,7 @@ function buildReportText(obra, date) {
   else txt += '\u2022 N\u00e3o h\u00e1 concretagens programadas.\n';
   txt += '\n';
 
-  const eqAdm = s.equipes.find(function(e){ return e.nome === 'Administra\u00e7\u00e3o'; });
+  const eqAdm = State.equipes(obra).find(function(e){ return e.nome === 'Administra\u00e7\u00e3o'; });
   const admId = eqAdm ? eqAdm.id : 'eq1';
   const admPresentes = presentes.filter(function(w){ return w.equipe === admId; });
   if (admPresentes.length) {
@@ -1401,7 +1498,8 @@ function buildReportText(obra, date) {
     (dd.tarefas||[]).forEach(function(t){ if(!byAndar[chave].tarefas.includes(t)) byAndar[chave].tarefas.push(t); });
   });
 
-  const andaresCfg = s.andares.filter(function(a,i){ return s.andares.indexOf(a)===i; });
+  const _ac = State.andares(obra);
+  const andaresCfg = _ac.filter(function(a,i){ return _ac.indexOf(a)===i; });
   const _seen = {};
   const ordered = andaresCfg.filter(function(a){ return byAndar[a]; })
     .concat(Object.keys(byAndar).filter(function(a){ return !andaresCfg.includes(a); }).sort())
@@ -1619,6 +1717,20 @@ const App = (() => {
     return out;
   }
 
+  // Mescla {obra:{andares,tarefas,equipes}} sem perder o que só existe local.
+  function _mergeCfgObra(local, remote) {
+    const out = JSON.parse(JSON.stringify(remote || {}));
+    Object.keys(local || {}).forEach(function(obra) {
+      const l = local[obra] || {};
+      if (!out[obra]) { out[obra] = l; return; }
+      const r = out[obra];
+      r.andares = _mergeSimples(l.andares, r.andares);
+      r.tarefas = _mergeLista(l.tarefas, r.tarefas, 'nome');
+      r.equipes = _mergeLista(l.equipes, r.equipes, 'id');
+    });
+    return out;
+  }
+
   // Une listas de objetos por chave, preservando o que só existe local.
   function _mergeLista(local, remote, chave) {
     const out = (remote || []).slice();
@@ -1711,6 +1823,8 @@ const App = (() => {
       sheetState.obras   = _mergeSimples(local.obras,   sheetState.obras);
       sheetState.andares = _mergeSimples(local.andares, sheetState.andares);
       sheetState.tarefas = _mergeLista(local.tarefas, sheetState.tarefas, 'nome');
+      // Config por obra: mescla obra a obra, item a item.
+      sheetState.configPorObra = _mergeCfgObra(local.configPorObra, sheetState.configPorObra);
       sheetState.horasExtras    = _mergeById(local.horasExtras,      sheetState.horasExtras);
 
       localStorage.setItem('efetivo_v3', JSON.stringify(sheetState));

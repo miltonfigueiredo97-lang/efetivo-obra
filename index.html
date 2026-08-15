@@ -495,8 +495,8 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
   </div>
 <div class="toast-container" id="toastContainer"></div>
 <span id="lastSaved" style="display:none"></span>
-<script src="config.js"></script>
-<script src="app.js"></script>
+<script src="config.js?v=1.1.0"></script>
+<script src="app.js?v=1.1.0"></script>
 <script>
 /* ═══ EFETIVO PAGE — DESKTOP ═══ */
 const EfPage = (() => {
@@ -509,7 +509,7 @@ const EfPage = (() => {
     const s = State.get();
     const wrap = document.getElementById('teamFilters');
     if (!wrap) return;
-    const teams = [{id:'all',nome:'Todos'}, ...s.equipes];
+    const teams = [{id:'all',nome:'Todos'}, ...State.equipes()];
     wrap.innerHTML = teams.map(t =>
       `<div class="filter-chip ${activeTeam===t.id?'active':''}" data-team="${t.id}" onclick="EfPage.setTeam('${t.id}')">${t.nome}</div>`
     ).join('');
@@ -542,7 +542,7 @@ const EfPage = (() => {
       let va, vb;
       if (sortCol==='nome') { va=a.nome.toLowerCase(); vb=b.nome.toLowerCase(); }
       else if (sortCol==='equipe') { va=(State.getEquipe(a.equipe)||{}).nome||''; vb=(State.getEquipe(b.equipe)||{}).nome||''; va=va.toLowerCase(); vb=vb.toLowerCase(); }
-      else if (sortCol==='andar') { const ia=s.andares.indexOf((dayMap[a.id]||{}).andar||''); const ib=s.andares.indexOf((dayMap[b.id]||{}).andar||''); va=ia<0?999:ia; vb=ib<0?999:ib; }
+      else if (sortCol==='andar') { const ia=State.andares().indexOf((dayMap[a.id]||{}).andar||''); const ib=State.andares().indexOf((dayMap[b.id]||{}).andar||''); va=ia<0?999:ia; vb=ib<0?999:ib; }
       else if (sortCol==='pres') { va=(dayMap[a.id]?.presente!==false)?0:1; vb=(dayMap[b.id]?.presente!==false)?0:1; }
       const r = va<vb?-1:va>vb?1:0;
       return sortDir==='asc'?r:-r;
@@ -552,7 +552,7 @@ const EfPage = (() => {
     if (!tbody) return;
     if (!ws.length) { tbody.innerHTML=`<tr><td colspan="6" style="text-align:center;padding:32px;color:var(--t3)">Nenhum funcionário.</td></tr>`; App.updateTopbar(); return; }
 
-    const andarOpts = ['',...s.andares].map(a=>`<option value="${Utils.esc(a)}">${Utils.esc(a)||'— Selecionar local —'}</option>`).join('');
+    const andarOpts = ['',...State.andares()].map(a=>`<option value="${Utils.esc(a)}">${Utils.esc(a)||'— Selecionar local —'}</option>`).join('');
 
     tbody.innerHTML = ws.map(w => {
       const dd = dayMap[w.id] || {presente:true, andar:'', tarefas:[], motivo:''};
@@ -562,8 +562,8 @@ const EfPage = (() => {
         `<span class="activity-tag">${Utils.esc(t)}<button onclick="EfPage.rmTag('${w.id}','${t.replace(/'/g,"\\'")}')">×</button></span>`
       ).join('');
       const _eqNome = eq ? eq.nome : w.equipe;
-      const _tarNomes = s.tarefas.map(t => typeof t === 'string' ? t : t.nome);
-      const _tarFiltradas = s.tarefas.filter(t => {
+      const _tarNomes = State.tarefas().map(t => typeof t === 'string' ? t : t.nome);
+      const _tarFiltradas = State.tarefas().filter(t => {
         const nome = typeof t === 'string' ? t : t.nome;
         const eqs = typeof t === 'string' ? [] : (t.equipes||[]);
         if (eqs.length === 0) return true; // global
@@ -571,7 +571,7 @@ const EfPage = (() => {
       }).map(t => typeof t === 'string' ? t : t.nome);
       const tarefaOpts = _tarFiltradas.filter(t=>!(dd.tarefas||[]).includes(t)).map(t=>`<option value="${Utils.esc(t)}">${Utils.esc(t)}</option>`).join('');
       const _curAndares = (dd.andar||'').split(',').map(s=>s.trim()).filter(Boolean);
-      const andarChips = s.andares.map(a=>{
+      const andarChips = State.andares().map(a=>{
         const sel=_curAndares.includes(a);
         return `<span data-andar-wid="${w.id}" data-andar-val="${Utils.esc(a)}" onclick="event.stopPropagation();EfPage.toggleAndar('${w.id}','${Utils.esc(a)}')" style="cursor:pointer;display:inline-block;padding:2px 8px;margin:2px;border-radius:10px;font-size:11px;border:1px solid ${sel?'var(--ac)':'var(--bd2)'};background:${sel?'var(--acd)':'transparent'};color:${sel?'var(--ac)':'var(--t3)'};white-space:nowrap">${Utils.esc(a)}</span>`;
       }).join('');

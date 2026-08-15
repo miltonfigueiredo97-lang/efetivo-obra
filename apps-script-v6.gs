@@ -20,6 +20,7 @@ var ABA_ASSID  = '👷 Assiduidade';
 var ABA_CFG    = '⚙️ Configurações';
 var ABA_PROD   = '📐 Prod. Técnica';
 var ABA_HE     = '⏰ Horas Extras';
+var ABA_CFGOB  = '⚙️ Config por Obra';
 
 function doGet(e) {
   try {
@@ -52,7 +53,7 @@ function doPost(e) {
     if (act === 'saveWorkers')   { _saveWorkers(ss, p.workers);           return _ok({msg:'Funcionários salvos'}); }
     if (act === 'saveEfetivo')   { _saveEfetivo(ss, p); _syncAssid(ss, p); return _ok({msg:'Efetivo salvo'}); }
     if (act === 'saveRelatorio') { _saveRelatorio(ss, p);                  return _ok({msg:'Relatório salvo'}); }
-    if (act === 'saveConfig')    { _saveConfig(ss, p);                     return _ok({msg:'Config salva'}); }
+    if (act === 'saveConfig')    { _saveConfig(ss, p); _saveConfigObra(ss, p);                     return _ok({msg:'Config salva'}); }
     if (act === 'saveProd')      { _saveProd(ss, p);                       return _ok({msg:'Produção salva'}); }
     if (act === 'saveHE')        { _saveHE(ss, p);                         return _ok({msg:'HE salvas'}); }
     if (act === 'deleteHE')      { _deleteHE(ss, p);                       return _ok({msg:'HE removida'}); }
@@ -64,7 +65,7 @@ function doPost(e) {
 function _buildState(ss) {
   var state = {
     workers: [], equipes: [], andares: [], tarefas: [], obras: [],
-    dailyData: {}, historico: [], horasExtras: {}, producaoGeral: {}, producaoDiaria: {},
+    dailyData: {}, historico: [], horasExtras: {}, producaoGeral: {}, producaoDiaria: {}, configPorObra: {},
     gsUrl: '', gsSheetId: '', activeObra: ''
   };
 
@@ -160,6 +161,8 @@ function _buildState(ss) {
       }
     });
   }
+
+  _lerConfigObra(ss, state);
 
   var shR = ss.getSheetByName(ABA_REL);
   if (shR && shR.getLastRow() > 3) {
@@ -278,6 +281,41 @@ function _syncAssid(ss, p) {
       sh.getRange(i+4, 8).setFontColor(r[7].includes('Regular')?'#22c55e':r[7].includes('Atenção')?'#f59e0b':'#ef4444');
     });
   }
+}
+
+function _saveConfigObra(ss, p) {
+  var cfg = p.configPorObra || {};
+  var sh = _getOrCreate(ss, ABA_CFGOB, ['Obra','Tipo','Valor'], 3);
+  var last = sh.getLastRow();
+  if (last > 3) sh.deleteRows(4, last-3);
+  var rows = [];
+  Object.keys(cfg).forEach(function(obra) {
+    var c = cfg[obra] || {};
+    (c.andares || []).forEach(function(a) { if (a) rows.push([obra, 'andar', a]); });
+    (c.tarefas || []).forEach(function(t) { var v=_tarefaStr(t); if (v) rows.push([obra, 'tarefa', v]); });
+    (c.equipes || []).forEach(function(e) { if (e && e.nome) rows.push([obra, 'equipe', e.id+'|'+e.nome+'|'+e.cor]); });
+  });
+  if (rows.length) sh.getRange(4, 1, rows.length, 3).setValues(rows);
+}
+
+function _lerConfigObra(ss, state) {
+  var sh = ss.getSheetByName(ABA_CFGOB);
+  if (!sh || sh.getLastRow() < 4) return;
+  var rows = sh.getRange(4, 1, sh.getLastRow()-3, 3).getValues();
+  rows.forEach(function(r) {
+    var obra = String(r[0]||'').trim(), tipo = String(r[1]||'').trim(), val = String(r[2]||'').trim();
+    if (!obra || !tipo || !val) return;
+    if (!state.configPorObra[obra]) state.configPorObra[obra] = {andares:[], tarefas:[], equipes:[]};
+    var c = state.configPorObra[obra];
+    if (tipo === 'andar')  c.andares.push(val);
+    if (tipo === 'tarefa') c.tarefas.push(_tarefaObj(val));
+    if (tipo === 'equipe') {
+      var p2 = val.split('|');
+      c.equipes.push(p2.length >= 3
+        ? {id:p2[0].trim(), nome:p2[1].trim(), cor:p2[2].trim()}
+        : {id:'eq'+(c.equipes.length+1), nome:p2[0].trim(), cor:p2[1]||'#8b92b0'});
+    }
+  });
 }
 
 function _saveConfig(ss, p) {
