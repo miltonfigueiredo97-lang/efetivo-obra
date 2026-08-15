@@ -751,6 +751,39 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
     } catch(e) { return null; }
   }
 
+  // Envia TUDO que existe neste aparelho para a planilha. Necessário porque
+  // as gravações são disparadas por alteração: dados já existentes antes da
+  // planilha estar pronta nunca subiam sozinhos.
+  async function enviarTudo(onProgresso) {
+    const s = State.get();
+    const passos = [
+      ['Funcionários', () => saveWorkers()],
+      ['Configuração das obras', () => saveConfig()],
+    ];
+    Object.keys(s.horasExtras || {}).forEach(function(obra) {
+      const lista = s.horasExtras[obra] || [];
+      if (lista.length) passos.push(['Horas extras – ' + obra, () => saveHE(obra, lista)]);
+    });
+    Object.keys(s.producaoGeral || {}).forEach(function(obra) {
+      passos.push(['Produção – ' + obra, () => saveProd(App.date(), obra,
+        s.producaoGeral[obra] || {}, (s.producaoDiaria||{})[obra]?.[App.date()] || {})]);
+    });
+    Object.keys(s.dailyData || {}).forEach(function(obra) {
+      Object.keys(s.dailyData[obra] || {}).forEach(function(data) {
+        passos.push(['Efetivo ' + Utils.fmtPT(data) + ' – ' + obra, () => saveEfetivo(data, obra)]);
+      });
+    });
+
+    let okCount = 0, falhas = 0;
+    for (let i = 0; i < passos.length; i++) {
+      if (onProgresso) onProgresso(i + 1, passos.length, passos[i][0]);
+      const r = await passos[i][1]();
+      if (r === false) falhas++; else okCount++;
+      await new Promise(res => setTimeout(res, 350));  // respeita a cota do Apps Script
+    }
+    return {total: passos.length, ok: okCount, falhas};
+  }
+
   async function saveWorkers() {
     return _post({action:'saveWorkers', workers: State.get().workers});
   }
@@ -807,7 +840,7 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
     } catch { return false; }
   }
 
-  return { CODE, loadState, saveWorkers, saveEfetivo, saveRelatorio, saveConfig, saveProd, saveHE, deleteHE, ping };
+  return { CODE, loadState, enviarTudo, saveWorkers, saveEfetivo, saveRelatorio, saveConfig, saveProd, saveHE, deleteHE, ping };
 })();
 
 
@@ -818,6 +851,16 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
 */
 const Versoes = (() => {
   const LISTA = [
+    {
+      v: '1.4.1',
+      data: '2026-08-15',
+      titulo: 'Botão para enviar tudo de uma vez para a planilha',
+      notas: [
+        {tipo:'novo', texto:'Botão "Enviar tudo para a planilha" em Configurações. As gravações só aconteciam quando algo era alterado, então dados cadastrados antes da planilha estar pronta nunca subiam sozinhos e não apareciam nos outros aparelhos.'},
+        {tipo:'melhoria', texto:'O envio mostra o progresso item a item e informa quantos foram gravados e quantos falharam.'},
+        {tipo:'melhoria', texto:'O teste de conexão passa a distinguir Apps Script desatualizado de configuração ainda não enviada, e avisa quantas obras existem neste aparelho aguardando envio.'},
+      ]
+    },
     {
       v: '1.4.0',
       data: '2026-08-15',
@@ -1083,13 +1126,26 @@ const Sync = (() => {
         return {ok:false, texto:'❌ A planilha respondeu com erro:\n' + e};
       }
       const st = json.state || {};
-      return {ok:true, texto:
-        '✅ Conectado.\n' +
+      const nCfg = Object.keys(st.configPorObra || {}).length;
+      // Script antigo nem cria o campo; script novo cria vazio. Isso separa
+      // "Apps Script desatualizado" de "configuração ainda não enviada".
+      const scriptAntigo = (st.configPorObra === undefined);
+      let txt = '✅ Conectado.\n' +
         'Funcionários na planilha: ' + (st.workers||[]).length + '\n' +
         'Obras: ' + (st.obras||[]).join(', ') + '\n' +
-        'Obras com configuração própria: ' + Object.keys(st.configPorObra||{}).length +
-        ((st.configPorObra && Object.keys(st.configPorObra).length) ? '' :
-          '\n\n⚠️ Nenhuma configuração por obra na planilha. Verifique se o Apps Script publicado é o que tem a aba "Config por Obra".')};
+        'Obras com configuração própria: ' + nCfg + '\n';
+      if (scriptAntigo) {
+        txt += '\n❌ O Apps Script publicado é ANTIGO: não tem a aba "Config por Obra".\n'
+             + 'Republique o script atualizado (procure por ABA_CFGOB no código).';
+      } else if (nCfg === 0) {
+        const local = Object.keys(State.get().configPorObra || {}).length;
+        txt += '\n✅ O Apps Script está atualizado.\n';
+        txt += local
+          ? '⚠️ Você tem ' + local + ' obra(s) configurada(s) neste aparelho que nunca foram enviadas.\n'
+            + 'Use o botão "Enviar tudo para a planilha" logo abaixo.'
+          : 'Nenhuma configuração cadastrada ainda.';
+      }
+      return {ok:true, texto: txt};
     } catch(e) {
       return {ok:false, texto:'❌ Não consegui falar com a planilha.\n' + e.message +
         '\n\nCausas comuns: URL de implantação errada, implantação não publicada como "Qualquer pessoa", ou sem internet.'};
@@ -1425,6 +1481,14 @@ const CfgPage = (() => {
            <button class="btn btn-accent" onclick="CfgPage.saveGS()">Salvar</button>
            <button class="btn btn-ghost" onclick="CfgPage.testGS()">Testar</button>
            <button class="btn btn-ghost" onclick="CfgPage.showScript()">Ver código Script</button>
+         </div>
+         <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--bd)">
+           <button class="btn btn-accent" style="width:100%;background:var(--gn);color:#062b12"
+             onclick="CfgPage.enviarTudo()">⬆ Enviar tudo para a planilha</button>
+           <div style="font-size:10px;color:var(--t3);margin-top:6px;line-height:1.5">
+             Envia funcionários, configuração de cada obra, efetivos, produção e horas extras
+             deste aparelho. Use ao configurar a planilha pela primeira vez ou depois de
+             atualizar o Apps Script.</div>
          </div>`,
         '')}
     `;
@@ -1492,6 +1556,25 @@ const CfgPage = (() => {
   function rmEquipe(id){State.removeEquipe(id);render();if(typeof EfPage!=='undefined')EfPage.renderFilters();}
   function addObra(){const v=document.getElementById('newObra').value.trim();if(!v)return;State.addObra(v);document.getElementById('newObra').value='';render();App.rebuildObraSelects();}
   function rmObra(n){if(n===App.obra()){Utils.toast('Não pode remover a obra ativa.','warn');return;}if(!confirm(`Remover "${n}"?`))return;State.removeObra(n);render();App.rebuildObraSelects();}
+  async function enviarTudo(){
+    if (!Sync.leituraOk()) { Utils.toast('Conecte-se à planilha antes de enviar.','error'); return; }
+    const s=State.get();
+    const nObras=Object.keys(s.configPorObra||{}).length;
+    if(!confirm('Enviar para a planilha:\n\n• '+s.workers.length+' funcionários\n• '+nObras+' obra(s) configurada(s)\n• efetivos, produção e horas extras\n\nIsto substitui o conteúdo correspondente na planilha. Continuar?')) return;
+    const t=document.getElementById('histDetailTitle');
+    const c=document.getElementById('histDetailText');
+    if(t) t.textContent='Enviando para a planilha';
+    if(c) c.textContent='Preparando…';
+    Modals.open('modalHistDetail');
+    const r=await Sheets.enviarTudo(function(i,total,nome){
+      if(c) c.textContent='['+i+'/'+total+'] '+nome;
+    });
+    if(c) c.textContent = r.falhas
+      ? '⚠️ Enviado com falhas.\n\nEnviados: '+r.ok+' de '+r.total+'\nFalharam: '+r.falhas+'\n\nTente novamente; se persistir, verifique a chave de acesso.'
+      : '✅ Tudo enviado.\n\n'+r.ok+' de '+r.total+' itens gravados na planilha.\n\nAbra o app em outro aparelho e toque em Sync para confirmar.';
+    Utils.toast(r.falhas?'Envio com falhas':'Envio concluído', r.falhas?'warn':'success');
+  }
+
   function copiarDe(){
     const de=document.getElementById('cfgCopiarDe')?.value;
     if(!de) return;
@@ -1512,7 +1595,7 @@ const CfgPage = (() => {
     Modals.open('modalHistDetail');
   }
   function showScript(){document.getElementById('scriptCode').textContent=Sheets.CODE;Modals.open('modalScript');}
-  return {render,addAndar,rmAndar,addTarefa,rmTarefa,editTarefa,setTarefaEqs,toggleTarefaEq,addEquipe,rmEquipe,addObra,rmObra,saveGS,testGS,showScript, copiarDe};
+  return {render,addAndar,rmAndar,addTarefa,rmTarefa,editTarefa,setTarefaEqs,toggleTarefaEq,addEquipe,rmEquipe,addObra,rmObra,saveGS,testGS,showScript, copiarDe, enviarTudo};
 })();
 
 /* ═══ HORAS EXTRAS PAGE ═══ */
