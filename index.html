@@ -279,9 +279,10 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
     <div class="nav-item-d" data-page="historico" onclick="App.showPage('historico',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg><span>Histórico</span></div>
     <div class="nav-item-d" data-page="horasextras" onclick="App.showPage('horasextras',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/><path d="M16 14h2"/></svg><span>Horas Extras</span></div>
     <div class="nav-section-d">SISTEMA</div>
+    <div class="nav-item-d" data-page="versoes" onclick="App.showPage('versoes',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><path d="M12 2v20M2 12h20"/></svg><span>Notas da Versão</span></div>
     <div class="nav-item-d" data-page="configuracoes" onclick="App.showPage('configuracoes',this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" width="15" height="15"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93l-1.41 1.41M4.93 4.93l1.41 1.41M12 2v2M12 20v2M2 12h2M20 12h2M19.07 19.07l-1.41-1.41M4.93 19.07l1.41-1.41"/></svg><span>Configurações</span></div>
   </nav>
-  <div class="sidebar-footer-d"><span>v3.0</span><span id="lastSaved">–</span></div>
+  <div class="sidebar-footer-d"><span data-versao>v1.0.0</span><span id="lastSaved">–</span></div>
 </aside>
 <div class="layout-right">
 <header class="topbar">
@@ -358,6 +359,11 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
   <section class="page" id="page-configuracoes">
     <div class="section-header"><div><div class="section-title">CONFIGURAÇÕES</div><div class="section-sub">Andares, tarefas, equipes e obras</div></div></div>
     <div id="cfgContent"></div>
+    <div style="height:20px"></div>
+  </section>
+  <section class="page" id="page-versoes">
+    <div class="section-header"><div><div class="section-title">NOTAS DA VERSÃO</div><div class="section-sub">Clique numa versão para ver o que mudou</div></div></div>
+    <div id="verContent"></div>
     <div style="height:20px"></div>
   </section>
   <section class="page" id="page-horasextras">

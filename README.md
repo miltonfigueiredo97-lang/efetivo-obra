@@ -31,6 +31,9 @@ para Google Sheets. Roda como site estático (GitHub Pages), sem servidor.
 A chave fica no `localStorage` daquele aparelho e **nunca** vai para o repositório.
 Sem ela, o Apps Script rejeita leitura e escrita.
 
+Já tem o Apps Script publicado? Veja `PATCH-APPS-SCRIPT.md` — são 3 edições
+pontuais, sem precisar substituir o arquivo.
+
 ## Segurança
 
 Este site é público: qualquer pessoa lê o código-fonte servido pelo GitHub Pages.

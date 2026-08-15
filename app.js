@@ -165,8 +165,8 @@ const State = (() => {
   function addWorker(w) { w.id='w'+Date.now(); d.workers.push(w); save('workers'); return w; }
   function updateWorker(id,f) { const w=d.workers.find(x=>x.id===id); if(w) Object.assign(w,f); save('workers'); }
   function removeWorker(id) { d.workers=d.workers.filter(w=>w.id!==id); save('workers'); }
-  function addObra(n) { if(!d.obras.includes(n)){d.obras.push(n);save();} }
-  function removeObra(n) { d.obras=d.obras.filter(o=>o!==n); save(); }
+  function addObra(n) { if(!d.obras.includes(n)){d.obras.push(n);save('config');} }
+  function removeObra(n) { d.obras=d.obras.filter(o=>o!==n); save('config'); }
   function addAndar(v) { d.andares.push(v); save('config'); }
   function removeAndar(i) { d.andares.splice(i,1); save('config'); }
   function addTarefa(v) { d.tarefas.push(typeof v==='string'?{nome:v,equipes:[]}:v); save('config'); }
@@ -293,7 +293,7 @@ function _buildState(ss) {
   var state = {
     workers: [], equipes: [], andares: [], tarefas: [], obras: [],
     dailyData: {}, historico: [], horasExtras: {}, producaoGeral: {}, producaoDiaria: {},
-    gsUrl: (window.EFETIVO_CONFIG||{}).gsUrl || '', gsSheetId: (window.EFETIVO_CONFIG||{}).gsSheetId || '', activeObra: ''
+    gsUrl: '', gsSheetId: '', activeObra: ''
   };
 
   var shF = ss.getSheetByName(ABA_FUNC);
@@ -314,7 +314,14 @@ function _buildState(ss) {
       if (r[2]) state.tarefas.push(String(r[2]).trim());
       if (r[4]) {
         var parts = String(r[4]).split('|');
-        state.equipes.push({id: 'eq'+(eqId++), nome: parts[0].trim(), cor: parts[1] ? parts[1].trim() : '#8b92b0'});
+        if (parts.length >= 3) {
+          // formato novo: id|nome|cor — preserva o id e nao quebra o vinculo
+          state.equipes.push({id: parts[0].trim(), nome: parts[1].trim(), cor: parts[2] ? parts[2].trim() : '#8b92b0'});
+          eqId++;
+        } else {
+          // formato antigo: nome|cor — id posicional, so ate a proxima gravacao
+          state.equipes.push({id: 'eq'+(eqId++), nome: parts[0].trim(), cor: parts[1] ? parts[1].trim() : '#8b92b0'});
+        }
       }
       if (r[6]) {
         var obra = String(r[6]).trim();
@@ -473,7 +480,7 @@ function _saveConfig(ss, p) {
   var andares = p.andares||[], tarefas = p.tarefas||[], equipes = p.equipes||[], obras = p.obras||[];
   var maxLen = Math.max(andares.length, tarefas.length, equipes.length, obras.length);
   for (var i = 0; i < maxLen; i++) {
-    sh.appendRow([andares[i]||'','',tarefas[i]||'','',equipes[i]?equipes[i].nome+'|'+equipes[i].cor:'','',obras[i]||'','']);
+    sh.appendRow([andares[i]||'','',tarefas[i]||'','',equipes[i]?(equipes[i].id+'|'+equipes[i].nome+'|'+equipes[i].cor):'','',obras[i]||'','']);
   }
 }
 
@@ -642,6 +649,100 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
   return { CODE, loadState, saveWorkers, saveEfetivo, saveRelatorio, saveConfig, saveProd, saveHE, deleteHE, ping };
 })();
 
+
+/* ═══ VERSÕES / NOTAS DA VERSÃO ═══
+   Toda atualização entra aqui no topo. Formato:
+   {v, data, titulo, notas:[{tipo, texto}]}
+   tipo: 'novo' | 'correcao' | 'melhoria' | 'seguranca'
+*/
+const Versoes = (() => {
+  const LISTA = [
+    {
+      v: '1.0.0',
+      data: '2026-08-15',
+      titulo: 'Primeira versão estável',
+      notas: [
+        {tipo:'novo', texto:'Efetivo diário: presença, andar/local, atividades e motivo de falta por funcionário.'},
+        {tipo:'novo', texto:'Cadastro de funcionários com equipes, funções e importação por lista.'},
+        {tipo:'novo', texto:'Relatório de execução: áreas, volumes de graute/argamassa/concreto, aço e concretagens programadas.'},
+        {tipo:'novo', texto:'Gerador de texto do efetivo formatado para WhatsApp, agrupado por andar.'},
+        {tipo:'novo', texto:'Horas extras em duas etapas, com tipos de 60% e 100%.'},
+        {tipo:'novo', texto:'Desempenho e assiduidade por funcionário.'},
+        {tipo:'novo', texto:'Histórico de relatórios gerados.'},
+        {tipo:'novo', texto:'Suporte a múltiplas obras com seleção de obra ativa.'},
+        {tipo:'novo', texto:'Sincronização com Google Sheets via Apps Script.'},
+        {tipo:'novo', texto:'Esta página de notas da versão.'},
+
+        {tipo:'correcao', texto:'Marcações de presença não são mais apagadas ao recarregar: a sincronização agora faz merge em vez de sobrescrever, e cada marcação sobe sozinha em 1,5s.'},
+        {tipo:'correcao', texto:'Botão "Gerar Relatório" chamava um método inexistente e falhava em silêncio — o relatório nunca chegava à planilha.'},
+        {tipo:'correcao', texto:'Novas obras não eram salvas na planilha e sumiam no recarregamento.'},
+        {tipo:'correcao', texto:'Equipes criadas pelo app perdiam o vínculo com seus funcionários após sincronizar, porque o ID não era gravado na planilha.'},
+        {tipo:'correcao', texto:'Informações Gerais de produção eram zeradas a cada sincronização: a planilha gravava a aba de produção mas nunca a lia de volta.'},
+        {tipo:'correcao', texto:'Cadastros criados offline ou logo antes de fechar o app não eram mais perdidos.'},
+        {tipo:'correcao', texto:'Falhas de gravação agora avisam na tela; antes toda gravação era reportada como sucesso.'},
+        {tipo:'correcao', texto:'Setas de ordenação das colunas no desktop não atualizavam ao clicar.'},
+        {tipo:'correcao', texto:'Itens sem estilo no mobile por classes de CSS inexistentes.'},
+
+        {tipo:'seguranca', texto:'Acesso à planilha protegido por chave, guardada apenas no aparelho e nunca no código.'},
+        {tipo:'seguranca', texto:'URL e ID da planilha movidos para config.js e removidos das respostas da API.'},
+
+        {tipo:'melhoria', texto:'Código de desktop e mobile unificado em app.js: 4.506 linhas passaram a 3.183, sem duplicação.'},
+      ]
+    },
+  ];
+
+  const ICONE = {novo:'✨', correcao:'🔧', melhoria:'⚡', seguranca:'🔒'};
+  const ROTULO = {novo:'Novo', correcao:'Correção', melhoria:'Melhoria', seguranca:'Segurança'};
+  const COR = {novo:'var(--gn)', correcao:'var(--ac)', melhoria:'var(--bl)', seguranca:'#a855f7'};
+
+  function atual() { return LISTA[0].v; }
+  function lista() { return LISTA; }
+
+  let _aberta = LISTA[0].v;
+
+  function toggle(v) {
+    _aberta = (_aberta === v) ? null : v;
+    render();
+  }
+
+  function render() {
+    const el = document.getElementById('verContent');
+    if (!el) return;
+    el.innerHTML = LISTA.map(function(rel) {
+      const aberta = _aberta === rel.v;
+      const grupos = {};
+      rel.notas.forEach(function(n) { (grupos[n.tipo] = grupos[n.tipo] || []).push(n.texto); });
+
+      const corpo = !aberta ? '' :
+        '<div style="padding:0 16px 16px">' +
+        ['novo','correcao','melhoria','seguranca'].filter(function(t){return grupos[t];}).map(function(t) {
+          return '<div style="margin-top:14px">' +
+            '<div style="font-size:11px;letter-spacing:1.2px;color:' + COR[t] + ';margin-bottom:7px;font-weight:600">' +
+              ICONE[t] + ' ' + ROTULO[t].toUpperCase() + ' · ' + grupos[t].length +
+            '</div>' +
+            grupos[t].map(function(txt) {
+              return '<div style="display:flex;gap:9px;padding:6px 0;font-size:13px;color:var(--t2);line-height:1.55">' +
+                     '<span style="color:' + COR[t] + ';flex-shrink:0">•</span><span>' + Utils.esc(txt) + '</span></div>';
+            }).join('') +
+          '</div>';
+        }).join('') + '</div>';
+
+      return '<div style="background:var(--sf);border:1px solid ' + (aberta?'var(--bd2)':'var(--bd)') + ';border-radius:var(--r);margin-bottom:12px;overflow:hidden">' +
+        '<div onclick="Versoes.toggle(\'' + rel.v + '\')" style="padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:12px">' +
+          '<div style="font-family:\'Bebas Neue\',sans-serif;font-size:22px;color:var(--ac);line-height:1;letter-spacing:1px">v' + rel.v + '</div>' +
+          '<div style="flex:1;min-width:0">' +
+            '<div style="font-size:13px;font-weight:600;color:var(--t1)">' + Utils.esc(rel.titulo) + '</div>' +
+            '<div style="font-size:11px;color:var(--t3);font-family:\'JetBrains Mono\',monospace;margin-top:2px">' +
+              Utils.fmtPT(rel.data) + ' · ' + rel.notas.length + ' alterações</div>' +
+          '</div>' +
+          '<span style="color:var(--t3);font-size:13px;transition:transform .15s;display:inline-block;transform:rotate(' + (aberta?'90':'0') + 'deg)">▸</span>' +
+        '</div>' + corpo +
+      '</div>';
+    }).join('');
+  }
+
+  return { render, toggle, atual, lista };
+})();
 
 /* ═══ MODALS ═══ */
 const Modals = (() => {
@@ -1412,6 +1513,7 @@ const App = (() => {
 
   function init() {
     State.load();
+    document.querySelectorAll('[data-versao]').forEach(function(el){ el.textContent='v'+Versoes.atual(); });
     // Garantir URL e ID do Sheets em qualquer dispositivo
     (function(){
       const s = State.get();
@@ -1462,6 +1564,45 @@ const App = (() => {
     return out;
   }
 
+  // Une listas de objetos por chave, preservando o que só existe local.
+  function _mergeLista(local, remote, chave) {
+    const out = (remote || []).slice();
+    const ids = out.map(function(x) { return x[chave]; });
+    (local || []).forEach(function(x) {
+      if (ids.indexOf(x[chave]) < 0) out.push(x);
+    });
+    return out;
+  }
+
+  // Une listas de strings sem duplicar, mantendo a ordem do remoto.
+  function _mergeSimples(local, remote) {
+    const out = (remote || []).slice();
+    (local || []).forEach(function(v) { if (out.indexOf(v) < 0) out.push(v); });
+    return out;
+  }
+
+  // Estrutura {obra: {campo: valor}} — mantém o local quando o remoto vem vazio.
+  function _mergePorObra(local, remote) {
+    const out = JSON.parse(JSON.stringify(remote || {}));
+    Object.keys(local || {}).forEach(function(obra) {
+      const rem = out[obra];
+      if (!rem || Object.keys(rem).length === 0) out[obra] = local[obra];
+    });
+    return out;
+  }
+
+  // Lista de relatórios — une por data+obra, preservando os que ainda não
+  // subiram, e mantém ordem cronológica decrescente.
+  function _mergeHistorico(local, remote) {
+    const out = (remote || []).slice();
+    const chaves = out.map(function(h) { return h.data + '|' + h.obra; });
+    (local || []).forEach(function(h) {
+      if (chaves.indexOf(h.data + '|' + h.obra) < 0) out.push(h);
+    });
+    out.sort(function(a, b) { return String(b.data||'').localeCompare(String(a.data||'')); });
+    return out.slice(0, 200);
+  }
+
   async function _loadFromSheets(force) {
     const s = State.get();
     if (!s.gsUrl || !s.gsSheetId) return;
@@ -1498,6 +1639,17 @@ const App = (() => {
       const local = State.get();
       sheetState.dailyData      = _mergeByDate(local.dailyData,      sheetState.dailyData);
       sheetState.producaoDiaria = _mergeByDate(local.producaoDiaria, sheetState.producaoDiaria);
+      // O Apps Script nunca lê a aba de Produção de volta (producaoGeral vem
+      // sempre vazio), então aqui o local é a única fonte: só aceita o remoto
+      // se ele realmente trouxer conteúdo.
+      sheetState.producaoGeral = _mergePorObra(local.producaoGeral, sheetState.producaoGeral);
+      sheetState.historico     = _mergeHistorico(local.historico, sheetState.historico);
+      // Cadastros: o remoto manda, mas itens criados aqui e ainda não
+      // enviados (offline, ou dentro da janela de 1,5s) não podem sumir.
+      sheetState.workers = _mergeLista(local.workers, sheetState.workers, 'id');
+      sheetState.equipes = _mergeLista(local.equipes, sheetState.equipes, 'id');
+      sheetState.obras   = _mergeSimples(local.obras,   sheetState.obras);
+      sheetState.andares = _mergeSimples(local.andares, sheetState.andares);
       sheetState.horasExtras    = _mergeById(local.horasExtras,      sheetState.horasExtras);
 
       localStorage.setItem('efetivo_v3', JSON.stringify(sheetState));
@@ -1531,7 +1683,7 @@ const App = (() => {
     const titles = {
       efetivo:'DO DIA', producao:'EXECUÇÃO', funcionarios:'EQUIPE',
       relatorios:'DESEMPENHO', historico:'HISTÓRICO',
-      configuracoes:'CONFIG', horasextras:'HORAS EXTRAS'
+      configuracoes:'CONFIG', horasextras:'HORAS EXTRAS', versoes:'NOTAS DA VERSÃO'
     };
     document.getElementById('topbarTitle').textContent = titles[id] || id.toUpperCase();
     if (id==='relatorios')   StatPage.render();
@@ -1539,6 +1691,7 @@ const App = (() => {
     if (id==='configuracoes') CfgPage.render();
     if (id==='funcionarios') FuncPage.render();
     if (id==='horasextras')  HEPage.render();
+    if (id==='versoes')      Versoes.render();
     if (id==='producao' && typeof ProdPage !== 'undefined') ProdPage.render();
   }
 
