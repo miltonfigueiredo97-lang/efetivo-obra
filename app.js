@@ -73,6 +73,10 @@ const State = (() => {
     // Cada obra tem seus próprios andares, tarefas e equipes.
     configPorObra: {},
     cfgMigrado: false,
+    // Fila de envio: guarda só a INTENÇÃO (ex.: 'efetivo:2026-08-15:Obra A').
+    // O payload é montado na hora do envio, a partir do estado atual, então
+    // reenviar é sempre seguro e a fila sobrevive a fechar o aplicativo.
+    filaEnvio: [],
     // dailyData[obra][date][wid] = {presente, andar, tarefas[], motivo}
     dailyData: {},
     // producao[obra] = {areaAlv, areaLaje, volGraute, volArg, volConc, acoAlv, acoLaje, mestre, engenheiro, encarregado, almoxarife, assistente, administrativo}
@@ -135,9 +139,15 @@ const State = (() => {
     _migrarConfig();
   }
 
-  function save(context) {
+  function save(context, extra) {
     try {
       localStorage.setItem(KEY, JSON.stringify(d));
+      if (context) {
+        if (context === 'efetivo') enfileirar('efetivo:' + (extra && extra.data) + ':' + (extra && extra.obra));
+        else if (context === 'prod') enfileirar('prod:' + (extra && extra.data) + ':' + (extra && extra.obra));
+        else if (context === 'he')   enfileirar('he:' + (extra && extra.obra));
+        else enfileirar(context);
+      }
       const el = document.getElementById('lastSaved');
       if (el) { const n=new Date(); el.textContent=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0'); }
       _syncToSheets(context);
@@ -145,29 +155,17 @@ const State = (() => {
   }
 
   let _syncTimer = null;
-  let _pendingCtx = {};
-  function _syncToSheets(context) {
-    if (context) _pendingCtx[context] = true;
+  function _syncToSheets() {
     clearTimeout(_syncTimer);
-    _syncTimer = setTimeout(async function() {
-      const ctx = Object.assign({}, _pendingCtx);
-      _pendingCtx = {};
-      if (!d.gsUrl || !d.gsSheetId) return;
-      if (ctx.workers) await Sheets.saveWorkers();
-      if (ctx.config)  await Sheets.saveConfig();
-      // CORREÇÃO: marcações de presença agora sobem sozinhas, sem depender
-      // de o usuário clicar em "Salvar Relatório".
-      if (ctx.efetivo && typeof App !== 'undefined') {
-        await Sheets.saveEfetivo(App.date(), App.obra());
-      }
-      _dirty = false;
-    }, 1500);
+    _syncTimer = setTimeout(function() {
+      if (typeof Fila !== 'undefined') Fila.processar();
+    }, 800);
   }
 
-  // Enquanto houver alteração local ainda não enviada, _loadFromSheets
-  // não pode sobrescrever o localStorage.
+  // Enquanto houver item na fila, _loadFromSheets não pode sobrescrever
+  // o localStorage: existe alteração local ainda não confirmada.
   let _dirty = false;
-  function isDirty() { return _dirty || Object.keys(_pendingCtx).length > 0; }
+  function isDirty() { return (d.filaEnvio || []).length > 0; }
 
   function _merge(t, s) {
     const o = Object.assign({}, t);
@@ -190,7 +188,7 @@ const State = (() => {
   function setDayField(obra, date, wid, field, val) {
     getDayData(obra, date, wid)[field] = val;
     _dirty = true;
-    save('efetivo');
+    save('efetivo', {data: date, obra: obra});
   }
 
   // ═══ CONFIG POR OBRA ═══
@@ -241,6 +239,21 @@ const State = (() => {
     save('config');
   }
 
+  // ═══ FILA DE ENVIO ═══
+  function enfileirar(chave) {
+    if (!d.filaEnvio) d.filaEnvio = [];
+    if (d.filaEnvio.indexOf(chave) < 0) d.filaEnvio.push(chave);
+    _gravarLocal();
+  }
+  function fila() { return d.filaEnvio || []; }
+  function desenfileirar(chave) {
+    d.filaEnvio = (d.filaEnvio || []).filter(function(x) { return x !== chave; });
+    _gravarLocal();
+  }
+  function _gravarLocal() {
+    try { localStorage.setItem(KEY, JSON.stringify(d)); } catch(e) {}
+  }
+
   function getEquipe(id, obra) {
     const local = _cfg(obra).equipes.find(e=>e.id===id||e.nome===id);
     if (local) return local;
@@ -261,6 +274,19 @@ const State = (() => {
   function removeObra(n) { d.obras=d.obras.filter(o=>o!==n); save('config'); }
   function addAndar(v) { andares().push(v); save('config'); }
   function removeAndar(i) { andares().splice(i,1); save('config'); }
+  // Reordena andares. A ordem manda no agrupamento do relatório do efetivo.
+  function moverAndar(i, dir) {
+    const a = andares(), j = i + dir;
+    if (j < 0 || j >= a.length) return false;
+    const tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    save('config'); return true;
+  }
+  function ordenarAndares(ordem) {
+    const a = andares();
+    const novos = ordem.map(function(n){ return a[n]; }).filter(function(x){ return x !== undefined; });
+    a.length = 0; novos.forEach(function(x){ a.push(x); });
+    save('config');
+  }
   function addTarefa(v) { tarefas().push(typeof v==='string'?{nome:v,equipes:[]}:v); save('config'); }
   function removeTarefa(i) { tarefas().splice(i,1); save('config'); }
   function addEquipe(e) { e.id='eq'+Date.now(); equipes().push(e); save('config'); return e; }
@@ -274,8 +300,9 @@ const State = (() => {
 
   return { load,save,get, isDirty, getDayData,setDayField, getEquipe,getWorker,
     andares, tarefas, equipes, cfgObra:_cfg, copiarConfig,
+    enfileirar, fila, desenfileirar,
     addWorker,updateWorker,removeWorker, addObra,removeObra,
-    addAndar,removeAndar, addTarefa,removeTarefa, addEquipe,removeEquipe,
+    addAndar,removeAndar,moverAndar,ordenarAndares, addTarefa,removeTarefa, addEquipe,removeEquipe,
     addHistorico, getHE,addHE,removeHE };
 })();
 
@@ -852,6 +879,18 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
 const Versoes = (() => {
   const LISTA = [
     {
+      v: '1.5.0',
+      data: '2026-08-15',
+      titulo: 'Tudo vai para a planilha sozinho e ordem dos andares',
+      notas: [
+        {tipo:'novo', texto:'Cada ação agora vai sozinha para a planilha assim que você salva: funcionário, configuração, efetivo, produção e horas extras. Não é mais preciso enviar nada à mão.'},
+        {tipo:'novo', texto:'Se a planilha não responder, a alteração entra numa fila e o aplicativo insiste a cada 15 segundos até conseguir. A fila fica guardada, então fechar o aplicativo no meio não perde nada.'},
+        {tipo:'novo', texto:'Indicador permanente na tela mostrando "salvo" ou quantas alterações ainda estão esperando a planilha.'},
+        {tipo:'novo', texto:'Os andares podem ser reordenados com as setas em Configurações. A ordem define como o relatório do efetivo agrupa os andares.'},
+        {tipo:'melhoria', texto:'A leitura da planilha só sobrescreve o aparelho quando a fila está vazia, garantindo que nada pendente seja perdido.'},
+      ]
+    },
+    {
       v: '1.4.1',
       data: '2026-08-15',
       titulo: 'Botão para enviar tudo de uma vez para a planilha',
@@ -1062,6 +1101,73 @@ const Versoes = (() => {
   return { render, toggle, atual, lista };
 })();
 
+/* ═══ FILA DE ENVIO ═══
+   Toda alteração entra na fila e só sai de lá quando a planilha confirma.
+   A fila fica no localStorage, então fechar o app no meio não perde nada. */
+const Fila = (() => {
+  let _rodando = false;
+  let _timerRetry = null;
+
+  async function _enviarItem(chave) {
+    const p = chave.split(':');
+    if (chave === 'workers') return Sheets.saveWorkers();
+    if (chave === 'config')  return Sheets.saveConfig();
+    if (p[0] === 'efetivo')  return Sheets.saveEfetivo(p[1], p.slice(2).join(':'));
+    if (p[0] === 'he')       { const o = p.slice(1).join(':');
+                               return Sheets.saveHE(o, (State.get().horasExtras || {})[o] || []); }
+    if (p[0] === 'prod')     { const o = p.slice(2).join(':'), dt = p[1], s = State.get();
+                               return Sheets.saveProd(dt, o, (s.producaoGeral||{})[o] || {},
+                                 ((s.producaoDiaria||{})[o] || {})[dt] || {}); }
+    return true;  // chave desconhecida: descarta
+  }
+
+  async function processar() {
+    if (_rodando) return;
+    const s = State.get();
+    if (!s.gsUrl || !s.gsSheetId) return;
+    if (!Sync.podeGravar()) { _agendarRetry(); _pintar(); return; }
+    _rodando = true;
+    try {
+      let falhou = false;
+      // Cópia: a fila pode receber itens novos durante o envio.
+      const itens = State.fila().slice();
+      for (const chave of itens) {
+        _pintar(chave);
+        let r;
+        try { r = await _enviarItem(chave); } catch(e) { r = false; }
+        if (r === false) { falhou = true; break; }   // para e tenta tudo depois
+        State.desenfileirar(chave);
+        _pintar();
+        await new Promise(res => setTimeout(res, 250));
+      }
+      if (falhou || State.fila().length) _agendarRetry();
+    } finally {
+      _rodando = false;
+      _pintar();
+    }
+  }
+
+  function _agendarRetry() {
+    clearTimeout(_timerRetry);
+    _timerRetry = setTimeout(processar, 15000);   // insiste a cada 15s
+  }
+
+  // Indicador permanente: quantos itens ainda não chegaram à planilha.
+  function _pintar(atual) {
+    const n = State.fila().length;
+    document.querySelectorAll('[data-fila]').forEach(function(el) {
+      if (!n) { el.textContent = 'salvo'; el.style.color = 'var(--gn)'; el.title = 'Tudo na planilha'; }
+      else    { el.textContent = n + ' na fila'; el.style.color = 'var(--ac)';
+                el.title = (atual ? 'Enviando: ' + atual : n + ' alteração(ões) aguardando a planilha'); }
+    });
+  }
+
+  function pendentes() { return State.fila().length; }
+  function atualizarIndicador() { _pintar(); }
+
+  return { processar, pendentes, atualizarIndicador };
+})();
+
 /* ═══ SINCRONIZAÇÃO: ESTADO E DIAGNÓSTICO ═══ */
 const Sync = (() => {
   let _leituraOk = false;      // já leu a planilha com sucesso nesta sessão?
@@ -1073,6 +1179,8 @@ const Sync = (() => {
     _leituraOk = true; _ultimoErro = ''; _ultimaLeitura = new Date();
     _avisado = false;
     _pintarBarra();
+    // Assim que a planilha responde, tudo que estava preso na fila sobe.
+    if (typeof Fila !== 'undefined') setTimeout(Fila.processar, 100);
   }
   function marcarErro(msg) {
     _leituraOk = false; _ultimoErro = String(msg || 'erro desconhecido');
@@ -1452,7 +1560,13 @@ const CfgPage = (() => {
     if(!el) return;
     el.innerHTML=`
       ${blk('🏢 Andares / Locais',
-        State.andares().map((a,i)=>itm(a,`CfgPage.rmAndar(${i})`)).join(''),
+        State.andares().map((a,i,arr)=>`<div class="settings-item">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--t3);min-width:22px">${i+1}</span>
+            <span style="flex:1">${Utils.esc(a)}</span>
+            <button class="icon-btn" title="Subir" ${i===0?'disabled style="opacity:.25"':''} onclick="CfgPage.moverAndar(${i},-1)">↑</button>
+            <button class="icon-btn" title="Descer" ${i===arr.length-1?'disabled style="opacity:.25"':''} onclick="CfgPage.moverAndar(${i},1)">↓</button>
+            <button class="icon-btn danger" title="Remover" onclick="CfgPage.rmAndar(${i})">✕</button>
+          </div>`).join(''),
         `<div class="add-item-row"><input id="newAndar" placeholder="ex: 17º Pavimento"><button class="btn btn-accent" onclick="CfgPage.addAndar()">Add</button></div>`)}
       ${blk('⚒ Atividades',
         State.tarefas().map((t,i)=>itmTarefa(t,i,State.equipes())).join(''),
@@ -1556,6 +1670,12 @@ const CfgPage = (() => {
   function rmEquipe(id){State.removeEquipe(id);render();if(typeof EfPage!=='undefined')EfPage.renderFilters();}
   function addObra(){const v=document.getElementById('newObra').value.trim();if(!v)return;State.addObra(v);document.getElementById('newObra').value='';render();App.rebuildObraSelects();}
   function rmObra(n){if(n===App.obra()){Utils.toast('Não pode remover a obra ativa.','warn');return;}if(!confirm(`Remover "${n}"?`))return;State.removeObra(n);render();App.rebuildObraSelects();}
+  function moverAndar(i,dir){
+    if(!State.moverAndar(i,dir)) return;
+    render();
+    if(typeof EfPage!=='undefined') EfPage.render();
+  }
+
   async function enviarTudo(){
     if (!Sync.leituraOk()) { Utils.toast('Conecte-se à planilha antes de enviar.','error'); return; }
     const s=State.get();
@@ -1595,7 +1715,7 @@ const CfgPage = (() => {
     Modals.open('modalHistDetail');
   }
   function showScript(){document.getElementById('scriptCode').textContent=Sheets.CODE;Modals.open('modalScript');}
-  return {render,addAndar,rmAndar,addTarefa,rmTarefa,editTarefa,setTarefaEqs,toggleTarefaEq,addEquipe,rmEquipe,addObra,rmObra,saveGS,testGS,showScript, copiarDe, enviarTudo};
+  return {render,addAndar,rmAndar,addTarefa,rmTarefa,editTarefa,setTarefaEqs,toggleTarefaEq,addEquipe,rmEquipe,addObra,rmObra,saveGS,testGS,showScript, copiarDe, enviarTudo, moverAndar};
 })();
 
 /* ═══ HORAS EXTRAS PAGE ═══ */
@@ -2093,6 +2213,7 @@ const App = (() => {
   function init() {
     State.load();
     document.querySelectorAll('[data-versao]').forEach(function(el){ el.textContent='v'+Versoes.atual(); });
+    Fila.atualizarIndicador();
     // Garantir URL e ID do Sheets em qualquer dispositivo
     (function(){
       const s = State.get();

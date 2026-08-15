@@ -320,7 +320,7 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
 <body>
 <header class="topbar">
   <div class="topbar-left"><span style="font-size:18px;line-height:1">&#9874;</span><span class="topbar-name">EFETIVO</span><span class="topbar-divider">|</span><span class="topbar-title" id="topbarTitle">DO DIA</span><span class="ver-badge" data-versao onclick="App.showPage('versoes')" title="Ver notas da versão">v1.0.1</span></div>
-  <div class="topbar-right"><div class="topbar-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><strong id="topbarPresentes">0</strong></div><button onclick="App.syncNow()" title="Sincronizar com Sheets" style="background:var(--sf2);border:1px solid var(--bd2);color:var(--t2);padding:4px 10px;border-radius:20px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px"><span id="syncStatusDot" style="width:7px;height:7px;border-radius:50%;background:var(--gn);display:inline-block"></span>Sync</button><div class="obra-pill" id="obraPill" onclick="Modals.open('modalObra')">–</div></div>
+  <div class="topbar-right"><div class="topbar-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><strong id="topbarPresentes">0</strong></div><button onclick="App.syncNow()" title="Sincronizar com Sheets" style="background:var(--sf2);border:1px solid var(--bd2);color:var(--t2);padding:4px 10px;border-radius:20px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px"><span data-fila style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--gn);margin-right:2px">salvo</span><span id="syncStatusDot" style="width:7px;height:7px;border-radius:50%;background:var(--gn);display:inline-block"></span>Sync</button><div class="obra-pill" id="obraPill" onclick="Modals.open('modalObra')">–</div></div>
 </header>
 <main class="page-area">
   <section class="page active" id="page-efetivo">
@@ -522,8 +522,8 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
   </div>
   <div class="toast-container" id="toastContainer"></div>
 <span id="lastSaved" style="display:none"></span>
-<script src="config.js?v=1.4.1"></script>
-<script src="app.js?v=1.4.1"></script>
+<script src="config.js?v=1.5.0"></script>
+<script src="app.js?v=1.5.0"></script>
 <script>
 
 /* ═══ EFETIVO PAGE — MOBILE ═══ */
@@ -752,7 +752,8 @@ const EfPage = (() => {
     if (!txt) { Utils.toast('Gere o relatório primeiro.','warn'); return; }
     const dayMap=s.dailyData?.[obra]?.[date]||{};
     const presentes=s.workers.filter(w=>w.obra===obra&&dayMap[w.id]?.presente!==false);
-    Sheets.saveEfetivo(date, obra);
+    State.enfileirar('efetivo:'+date+':'+obra);
+    Fila.processar();
     Sheets.saveRelatorio(date, obra, presentes.length, txt);
     Utils.toast('✅ Salvo no Sheets!','success');
     Modals.close('modalPreview');
@@ -767,7 +768,8 @@ const EfPage = (() => {
     const presentes = ws.filter(w=>{ const dd=dayMap[w.id]; return !dd||dd.presente; });
 
     State.addHistorico({ts:Date.now(),data:date,obra,texto:txt,total:presentes.length});
-    Sheets.saveEfetivo(date, obra);
+    State.enfileirar('efetivo:'+date+':'+obra);
+    Fila.processar();
     Sheets.saveRelatorio(date, obra, presentes.length, txt);
     document.getElementById('previewText').textContent = txt;
     Modals.open('modalPreview');
@@ -776,7 +778,8 @@ const EfPage = (() => {
     if (s.gsUrl && s.gsSheetId) {
       // CORREÇÃO: a chamada antiga apontava para um método que não existe
       // no módulo Sheets — lançava TypeError e o relatório nunca subia.
-      await Sheets.saveEfetivo(date, obra);
+      State.enfileirar('efetivo:'+date+':'+obra);
+      await Fila.processar();
       await Sheets.saveRelatorio(date, obra, presentes.length, txt);
     }
     App.updateTopbar();
