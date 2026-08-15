@@ -319,8 +319,9 @@ function _lerConfigObra(ss, state) {
 }
 
 function _saveConfig(ss, p) {
-  var sh = ss.getSheetByName(ABA_CFG);
-  if (!sh) return;
+  // Era o unico gravador que usava getSheetByName: se a aba nao existisse
+  // (renomeada ou apagada), a lista de obras deixava de ser salva em silencio.
+  var sh = _getOrCreate(ss, ABA_CFG, ['Andar / Local','','Tarefa','','Equipe','','Obra',''], 4);
   var last = sh.getLastRow();
   if (last > 4) sh.deleteRows(5, last-4);
   // Esta aba guarda apenas a lista de obras. Andares, tarefas e equipes
