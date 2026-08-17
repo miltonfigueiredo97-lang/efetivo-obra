@@ -903,6 +903,14 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
 const Versoes = (() => {
   const LISTA = [
     {
+      v: '1.6.3',
+      data: '2026-08-17',
+      titulo: 'Trocar de obra atualiza a tela onde você está',
+      notas: [
+        {tipo:'correcao', texto:'Trocar a obra no seletor só atualizava a tela do efetivo. Nas Configurações (e em Funcionários, Desempenho, Histórico, Horas Extras e Execução) a tela continuava mostrando os dados da obra anterior — parecia que a troca não funcionava ou que as obras tinham a mesma configuração. Agora a tela ativa é atualizada, seja ela qual for.'},
+      ]
+    },
+    {
       v: '1.6.2',
       data: '2026-08-17',
       titulo: 'Zerar configuração escolhendo as obras',
@@ -2658,10 +2666,26 @@ const App = (() => {
     if (nomeEl2) nomeEl2.textContent = v;
     else { const pill = document.getElementById('obraPill'); if (pill) pill.textContent = v.length > 14 ? v.slice(0,13)+'…' : v; }
     _updateTopbar();
-    if (typeof EfPage !== 'undefined') EfPage.render();
+    // Re-renderiza a página onde o usuário ESTÁ. Antes só o efetivo era
+    // atualizado: trocar de obra dentro de Configurações (ou Funcionários,
+    // Desempenho…) deixava a tela mostrando os dados da obra anterior —
+    // parecia que a troca não funcionava ou que as obras eram iguais.
+    _renderPagina(_paginaAtual);
   }
 
+  function _renderPagina(id) {
+    if (id==='efetivo'       && typeof EfPage   !== 'undefined') EfPage.render();
+    if (id==='configuracoes' && typeof CfgPage  !== 'undefined') CfgPage.render();
+    if (id==='funcionarios'  && typeof FuncPage !== 'undefined') FuncPage.render();
+    if (id==='relatorios'    && typeof StatPage !== 'undefined') StatPage.render();
+    if (id==='historico'     && typeof HistPage !== 'undefined') HistPage.render();
+    if (id==='horasextras'   && typeof HEPage   !== 'undefined') HEPage.render();
+    if (id==='producao'      && typeof ProdPage !== 'undefined') ProdPage.render();
+  }
+
+  let _paginaAtual = 'efetivo';
   function showPage(id, el) {
+    _paginaAtual = id;
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     document.querySelectorAll('[data-page]').forEach(n => n.classList.remove('active'));
     document.getElementById('page-' + id)?.classList.add('active');
