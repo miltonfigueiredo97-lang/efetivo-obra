@@ -109,7 +109,7 @@ function _buildState(ss) {
 
   var shE = ss.getSheetByName(ABA_EFET);
   if (shE && shE.getLastRow() > 3) {
-    var efRows = shE.getRange(4, 1, shE.getLastRow()-3, 9).getValues();
+    var efRows = shE.getRange(4, 1, shE.getLastRow()-3, 10).getValues();
     efRows.forEach(function(r) {
       if (!r[0] || !r[2]) return;
       var dateStr = _toISO(r[0]);
@@ -120,9 +120,11 @@ function _buildState(ss) {
       if (!state.dailyData[obra][dateStr]) state.dailyData[obra][dateStr] = {};
       state.dailyData[obra][dateStr][w.id] = {
         presente: String(r[5]) === 'SIM',
-        andar: String(r[6] || ''),
-        tarefas: r[7] ? String(r[7]).split('; ').filter(Boolean) : [],
-        motivo: ''
+        andar: (function(v){ v=String(v||''); return v==='–' ? '' : v; })(r[6]),
+        tarefas: (r[7] && String(r[7])!=='–') ? String(r[7]).split('; ').filter(Boolean) : [],
+        // Formato novo: coluna 9 é o motivo. No antigo ela era o timestamp
+        // (dd/MM/yyyy HH:mm) — se parecer timestamp, ignora.
+        motivo: (function(v){ v=String(v||''); return /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/.test(v) ? '' : v; })(r[8])
       };
     });
   }
@@ -225,7 +227,7 @@ function _saveWorkers(ss, workers) {
 }
 
 function _saveEfetivo(ss, p) {
-  var sh = _getOrCreate(ss, ABA_EFET, ['Data','Obra','Nome','Função','Equipe','Presente','Andar / Local','Atividades','Timestamp'], 3);
+  var sh = _getOrCreate(ss, ABA_EFET, ['Data','Obra','Nome','Função','Equipe','Presente','Andar / Local','Atividades','Motivo da Falta','Timestamp'], 3);
   var last = sh.getLastRow();
   if (last > 3) {
     var vals = sh.getRange(4, 1, last-3, 2).getValues();
@@ -235,11 +237,11 @@ function _saveEfetivo(ss, p) {
   }
   var ts = _ts(); var datePT = _toPT(p.data);
   var rows = (p.workers||[]).map(function(w) {
-    return [datePT, p.obra, w.nome, w.funcao, w.equipe, w.presente?'SIM':'NÃO', w.andar||'–', (w.tarefas||[]).join('; ')||'–', ts];
+    return [datePT, p.obra, w.nome, w.funcao, w.equipe, w.presente?'SIM':'NÃO', w.andar||'–', (w.tarefas||[]).join('; ')||'–', w.motivo||'', ts];
   });
   if (rows.length) {
     var startRow = sh.getLastRow()+1;
-    sh.getRange(startRow, 1, rows.length, 9).setValues(rows);
+    sh.getRange(startRow, 1, rows.length, 10).setValues(rows);
     for (var j = 0; j < rows.length; j++) {
       sh.getRange(startRow+j, 6).setFontColor(rows[j][5]==='SIM'?'#22c55e':'#ef4444').setFontWeight('bold');
     }
