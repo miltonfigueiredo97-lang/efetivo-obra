@@ -905,6 +905,15 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
 const Versoes = (() => {
   const LISTA = [
     {
+      v: '1.6.5',
+      data: '2026-08-17',
+      titulo: 'Diagnóstico claro quando a URL da implantação muda',
+      notas: [
+        {tipo:'melhoria', texto:'Quando a implantação do Apps Script é removida ou recriada com URL nova, o app agora explica exatamente isso e mostra o passo a passo para colar a URL atual — em vez do erro técnico "is not valid JSON".'},
+        {tipo:'melhoria', texto:'A faixa vermelha do topo também traduz esse erro em linguagem de gente.'},
+      ]
+    },
+    {
       v: '1.6.4',
       data: '2026-08-17',
       titulo: 'Motivo da falta não se perde mais na sincronização',
@@ -1311,7 +1320,11 @@ const Sync = (() => {
     if (typeof Fila !== 'undefined') setTimeout(Fila.processar, 100);
   }
   function marcarErro(msg) {
-    _leituraOk = false; _ultimoErro = String(msg || 'erro desconhecido');
+    msg = String(msg || 'erro desconhecido');
+    if (msg.indexOf('DOCTYPE') >= 0 || msg.indexOf('Unexpected token') >= 0) {
+      msg = 'a URL da implantação não existe mais — confira em Configurações → Testar';
+    }
+    _leituraOk = false; _ultimoErro = msg;
     _pintarBarra();
   }
   function marcarScriptAntigo(v) { _scriptAntigo = true; _scriptVersao = v; _pintarBarra(); }
@@ -1396,8 +1409,21 @@ const Sync = (() => {
       }
       return {ok:true, texto: txt};
     } catch(e) {
-      return {ok:false, texto:'❌ Não consegui falar com a planilha.\n' + e.message +
-        '\n\nCausas comuns: URL de implantação errada, implantação não publicada como "Qualquer pessoa", ou sem internet.'};
+      const msg = String(e && e.message || '');
+      if (msg.indexOf('DOCTYPE') >= 0 || msg.indexOf('Unexpected token') >= 0) {
+        return {ok:false, texto:
+          '❌ A URL configurada devolveu uma página de erro do Google, não a API.\n\n' +
+          'Isso quase sempre significa que a implantação dessa URL foi removida ou\n' +
+          'que uma NOVA implantação foi criada (URL nova) e o app ainda aponta para a antiga.\n\n' +
+          'Como resolver:\n' +
+          '1. No Apps Script: Implantar → Gerenciar implantações\n' +
+          '2. Copie a URL do App da Web ATIVO (termina em /exec)\n' +
+          '3. Cole no campo "URL do Web App" acima e toque em Salvar\n\n' +
+          'Dica: para as próximas atualizações, use "Gerenciar implantações → ✏️ →\n' +
+          'Versão: Nova versão" — assim a URL não muda.'};
+      }
+      return {ok:false, texto:'❌ Não consegui falar com a planilha.\n' + msg +
+        '\n\nCausas comuns: implantação não publicada como "Qualquer pessoa" ou sem internet.'};
     }
   }
 
