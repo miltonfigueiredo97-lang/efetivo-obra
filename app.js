@@ -476,9 +476,19 @@ function _buildState(ss) {
         presente: String(r[5]) === 'SIM',
         andar: (function(v){ v=String(v||''); return v==='–' ? '' : v; })(r[6]),
         tarefas: (r[7] && String(r[7])!=='–') ? String(r[7]).split('; ').filter(Boolean) : [],
-        // Formato novo: coluna 9 é o motivo. No antigo ela era o timestamp
-        // (dd/MM/yyyy HH:mm) — se parecer timestamp, ignora.
-        motivo: (function(v){ v=String(v||''); return /^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/.test(v) ? '' : v; })(r[8])
+        // Formato novo: coluna 9 é o motivo. No antigo ela guardava o
+        // timestamp — e o Sheets converte esse texto em célula de data
+        // sozinho, então ao ler de volta vem um objeto Date (não string),
+        // cujo String() é tipo "Sat Aug 15 2026 20:12:00 GMT-0300 (...)".
+        // A checagem por regex de texto nunca via isso: todo registro
+        // antigo ficava com esse timestamp cru poluindo o motivo.
+        motivo: (function(v){
+          if (v instanceof Date) return '';                 // era o timestamp antigo
+          v = String(v || '');
+          if (/^\d{2}\/\d{2}\/\d{4} \d{2}:\d{2}$/.test(v)) return '';   // timestamp que ficou como texto
+          if (/^\w{3} \w{3} \d{2} \d{4}/.test(v)) return '';               // Date já convertido em texto
+          return v;
+        })(r[8])
       };
     });
   }
