@@ -240,11 +240,16 @@ const State = (() => {
   }
 
   // ═══ FILA DE ENVIO ═══
+  let _geracao = {};   // chave -> contador de alterações
   function enfileirar(chave) {
     if (!d.filaEnvio) d.filaEnvio = [];
     if (d.filaEnvio.indexOf(chave) < 0) d.filaEnvio.push(chave);
+    // Mesmo com a chave já na fila, a alteração é NOVA: sobe a geração para
+    // que um lote em andamento não a descarte ao confirmar o envio antigo.
+    _geracao[chave] = (_geracao[chave] || 0) + 1;
     _gravarLocal();
   }
+  function geracaoDe(chave) { return _geracao[chave] || 0; }
   function fila() { return d.filaEnvio || []; }
   function desenfileirar(chave) {
     d.filaEnvio = (d.filaEnvio || []).filter(function(x) { return x !== chave; });
@@ -298,7 +303,7 @@ const State = (() => {
   function addHE(obra, entry) { getHE(obra).unshift(entry); save(); }
   function removeHE(obra, id) { d.horasExtras[obra]=getHE(obra).filter(e=>e.id!==id); save(); }
 
-  return { load,save,get, isDirty, getDayData,setDayField, getEquipe,getWorker,
+  return { load,save,get, isDirty, geracaoDe, getDayData,setDayField, getEquipe,getWorker,
     andares, tarefas, equipes, cfgObra:_cfg, copiarConfig,
     enfileirar, fila, desenfileirar,
     addWorker,updateWorker,removeWorker, addObra,removeObra,
@@ -727,6 +732,10 @@ function _ok(data)  { return ContentService.createTextOutput(JSON.stringify(Obje
 function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:false,error:e.toString()})).setMimeType(ContentService.MimeType.JSON); }
 `;
 
+  let _ultimoEnvio = 0;
+  function marcarEnvio() { _ultimoEnvio = Date.now(); }
+  function msDesdeEnvio() { return Date.now() - _ultimoEnvio; }
+
   async function _post(payload) {
     const s = State.get();
     if (!s.gsUrl || !s.gsSheetId) return false;
@@ -744,11 +753,13 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
     // gastava ~2s numa tentativa fadada a falhar e ainda disparava toast de
     // erro — mesmo com o dado chegando à planilha pelo fallback.
     try {
+      marcarEnvio();
       await fetch(s.gsUrl, {
         method: 'POST', mode: 'no-cors',
         headers: {'Content-Type': 'text/plain;charset=utf-8'},
         body
       });
+      marcarEnvio();
       // no-cors não deixa ler a resposta; a confirmação é feita uma única
       // vez pela Fila, no fim do lote, via _confirmar().
       return true;
@@ -760,34 +771,25 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
 
   // Confere por leitura se a última gravação surtiu efeito. GET funciona em
   // cors normalmente, então aqui dá para ler a resposta.
-  async function _confirmar(payload) {
-    payload = payload || {};
-    const s = State.get();
-    try {
-      const res = await fetch(s.gsUrl + '?sheetId=' + s.gsSheetId + '&key=' + encodeURIComponent(s.gsKey||''),
-                              {method:'GET', mode:'cors'});
-      const json = await res.json();
-      if (json.ok === false) {
-        // A planilha respondeu mas recusou (ex.: chave errada): erro real.
-        Utils.toast('Planilha recusou: ' + (json.error||'erro'), 'error');
-        return false;
-      }
-      const st = (json && json.state) || {};
-      if (payload.action === 'saveWorkers')
-        return (st.workers||[]).length === (payload.workers||[]).length;
-      if (payload.action === 'saveConfig') {
-        const remoto = Object.keys(st.configPorObra||{}).sort().join(',');
-        const local  = Object.keys(payload.configPorObra||{})
-          .filter(o => { const c=payload.configPorObra[o]||{};
-            return (c.andares||[]).length||(c.tarefas||[]).length||(c.equipes||[]).length; })
-          .sort().join(',');
-        return remoto === local || local === '';
-      }
-      return true;  // demais ações: POST sem exceção = aceito
-    } catch(e) {
-      // Sem leitura não há como confirmar; mantém na fila para reenvio.
-      return false;
+  // O Apps Script confirma o POST ANTES de terminar de gravar. Um GET
+  // imediato lê a planilha ainda velha e reprova uma gravação que deu certo.
+  // Por isso: espera inicial + até 3 leituras espaçadas.
+  async function _confirmar() {
+    for (let tentativa = 0; tentativa < 3; tentativa++) {
+      await new Promise(r => setTimeout(r, tentativa === 0 ? 2000 : 2500));
+      const s = State.get();
+      try {
+        const res = await fetch(s.gsUrl + '?sheetId=' + s.gsSheetId + '&key=' + encodeURIComponent(s.gsKey||''),
+                                {method:'GET', mode:'cors'});
+        const json = await res.json();
+        if (json.ok === false) {
+          Utils.toast('Planilha recusou: ' + (json.error||'erro'), 'error');
+          return false;   // erro real (ex.: chave): não insiste
+        }
+        return true;      // planilha acessível e aceitando: POSTs valeram
+      } catch(e) { /* rede oscilou: tenta de novo */ }
     }
+    return false;
   }
 
   async function loadState() {
@@ -889,7 +891,7 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
     } catch { return false; }
   }
 
-  return { CODE, loadState, enviarTudo, confirmar:_confirmar, saveWorkers, saveEfetivo, saveRelatorio, saveConfig, saveProd, saveHE, deleteHE, ping };
+  return { CODE, loadState, enviarTudo, confirmar:_confirmar, marcarEnvio, msDesdeEnvio, saveWorkers, saveEfetivo, saveRelatorio, saveConfig, saveProd, saveHE, deleteHE, ping };
 })();
 
 
@@ -900,6 +902,17 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
 */
 const Versoes = (() => {
   const LISTA = [
+    {
+      v: '1.5.3',
+      data: '2026-08-15',
+      titulo: 'Desktop preso no mobile e mudança que sumia ao atualizar',
+      notas: [
+        {tipo:'correcao', texto:'O computador ficava preso no modo mobile: quem clicou uma vez no link "mobile" gravava essa escolha para sempre. A escolha manual agora vale só para a sessão, e ao abrir de novo o aparelho volta ao modo certo pelo tamanho da tela.'},
+        {tipo:'correcao', texto:'Mudanças sumiam ao atualizar a página: a planilha do Google demora alguns segundos para efetivar a gravação, e uma releitura nesse intervalo trazia o estado velho por cima da mudança. A releitura agora espera a gravação assentar, e a confirmação lê com pausa e até três tentativas.'},
+        {tipo:'correcao', texto:'A releitura automática não roda mais enquanto a fila de envio está trabalhando.'},
+        {tipo:'correcao', texto:'Alterar algo enquanto um envio anterior estava em andamento fazia a nova alteração ser dada como enviada sem nunca ter ido — a causa raiz das mudanças que não chegavam ao outro aparelho. Cada alteração agora é rastreada individualmente até a planilha confirmar.'},
+      ]
+    },
     {
       v: '1.5.2',
       data: '2026-08-15',
@@ -1173,22 +1186,25 @@ const Fila = (() => {
       let falhou = false;
       // Cópia: a fila pode receber itens novos durante o envio.
       const itens = State.fila().slice();
-      const enviados = [];
+      const enviados = [];   // [chave, geração no momento do envio]
       for (const chave of itens) {
         _pintar(chave);
+        const ger = State.geracaoDe(chave);
         let r;
         try { r = await _enviarItem(chave); } catch(e) { r = false; }
         if (r === false) { falhou = true; break; }   // para e tenta tudo depois
-        enviados.push(chave);
+        enviados.push([chave, ger]);
         await new Promise(res => setTimeout(res, 250));
       }
-      // Uma única confirmação por lote: o POST em no-cors não expõe a
-      // resposta, então conferimos por GET que a planilha continua acessível
-      // e aceitando. Só então os itens saem da fila.
+      // Uma única confirmação por lote. Só sai da fila o item cuja geração
+      // NÃO mudou desde o envio: se o usuário alterou de novo no meio do
+      // lote, a chave fica para o próximo ciclo com o dado mais recente.
       if (enviados.length && !falhou) {
         _pintar('confirmando…');
         const okConf = await Sheets.confirmar();
-        if (okConf) enviados.forEach(function(c) { State.desenfileirar(c); });
+        if (okConf) enviados.forEach(function(par) {
+          if (State.geracaoDe(par[0]) === par[1]) State.desenfileirar(par[0]);
+        });
         else falhou = true;
       }
       if (falhou || State.fila().length) _agendarRetry();
@@ -1214,9 +1230,10 @@ const Fila = (() => {
   }
 
   function pendentes() { return State.fila().length; }
+  function ocupada() { return _rodando; }
   function atualizarIndicador() { _pintar(); }
 
-  return { processar, pendentes, atualizarIndicador };
+  return { processar, pendentes, ocupada, atualizarIndicador };
 })();
 
 /* ═══ SINCRONIZAÇÃO: ESTADO E DIAGNÓSTICO ═══ */
@@ -2396,6 +2413,10 @@ const App = (() => {
     if (!s.gsUrl || !s.gsSheetId) { Sync.marcarErro('planilha não configurada'); return; }
     // Não puxa por cima de alterações locais que ainda não subiram.
     if (!force && State.isDirty()) return;
+    // Nem logo depois de um envio: o Apps Script pode ainda estar gravando,
+    // e uma leitura nessa janela traz o estado velho e apaga a mudança da tela.
+    if (!force && Sheets.msDesdeEnvio() < 10000) return;
+    if (typeof Fila !== 'undefined' && Fila.ocupada && Fila.ocupada()) return;
     try {
       const res = await fetch(s.gsUrl + '?sheetId=' + s.gsSheetId + '&key=' + encodeURIComponent(s.gsKey||''), {method:'GET', mode:'cors'});
       const json = await res.json();

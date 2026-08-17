@@ -9,21 +9,24 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9874;</text></svg>">
 <script>
 /* Escolha de layout — IDÊNTICO em index.html e mobile.html.
-   Regra: preferência salva manda; sem preferência, decide por tela/toque.
-   Como o predicado é o mesmo nos dois arquivos, não existe loop. */
+   A escolha manual (?layout=...) vale só para a SESSÃO atual do navegador.
+   Antes ficava gravada para sempre no localStorage: quem clicou uma vez em
+   "mobile" prendia o desktop no modo mobile até limpar os dados do site. */
 (function(){
   try{
+    // migração: remove a preferência permanente antiga, se existir
+    try { localStorage.removeItem('efetivo_layout'); } catch(_){}
     var q = new URLSearchParams(location.search).get('layout');
-    if (q === 'desktop' || q === 'mobile') localStorage.setItem('efetivo_layout', q);
-    if (q === 'auto') localStorage.removeItem('efetivo_layout');
-    var pref = localStorage.getItem('efetivo_layout');
+    if (q === 'desktop' || q === 'mobile') sessionStorage.setItem('efetivo_layout', q);
+    if (q === 'auto') sessionStorage.removeItem('efetivo_layout');
+    var pref = sessionStorage.getItem('efetivo_layout');
     var ehMobile = (window.matchMedia && window.matchMedia('(pointer:coarse)').matches && window.innerWidth < 1024)
                    || window.innerWidth < 768;
     var destino = pref ? pref : (ehMobile ? 'mobile' : 'desktop');
     var arquivo = location.pathname.split('/').pop() || 'index.html';
     var estouNoMobile = arquivo === 'mobile.html';
-    if (destino === 'mobile' && !estouNoMobile) location.replace('mobile.html');
-    if (destino === 'desktop' && estouNoMobile) location.replace('index.html');
+    if (destino === 'mobile' && !estouNoMobile) location.replace('mobile.html' + location.search);
+    if (destino === 'desktop' && estouNoMobile) location.replace('index.html' + location.search);
   }catch(e){}
 })();
 </script>
@@ -522,8 +525,8 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
   </div>
   <div class="toast-container" id="toastContainer"></div>
 <span id="lastSaved" style="display:none"></span>
-<script src="config.js?v=1.5.2"></script>
-<script src="app.js?v=1.5.2"></script>
+<script src="config.js?v=1.5.3"></script>
+<script src="app.js?v=1.5.3"></script>
 <script>
 
 /* ═══ EFETIVO PAGE — MOBILE ═══ */
