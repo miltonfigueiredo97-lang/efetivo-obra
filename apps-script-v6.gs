@@ -21,17 +21,18 @@ var ABA_CFG    = '⚙️ Configurações';
 var ABA_PROD   = '📐 Prod. Técnica';
 var ABA_HE     = '⏰ Horas Extras';
 var ABA_CFGOB  = '⚙️ Config por Obra';
+var SCRIPT_VERSAO = 7;   // o app confere este numero ao conectar
 
 function doGet(e) {
   try {
     var key = e && e.parameter && e.parameter.key;
     if (!_auth(key)) return _err('Chave de acesso invalida.');
     var sheetId = e && e.parameter && e.parameter.sheetId;
-    if (!sheetId) return _ok({msg: 'API ativa.'});
+    if (!sheetId) return _ok({msg: 'API ativa.', versao: SCRIPT_VERSAO});
     var ss = SpreadsheetApp.openById(sheetId);
     var state = _buildState(ss);
     return ContentService
-      .createTextOutput(JSON.stringify({ok: true, state: state}))
+      .createTextOutput(JSON.stringify({ok: true, versao: SCRIPT_VERSAO, state: state}))
       .setMimeType(ContentService.MimeType.JSON);
   } catch(err) { return _err(err); }
 }

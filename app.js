@@ -370,17 +370,18 @@ var ABA_CFG    = '⚙️ Configurações';
 var ABA_PROD   = '📐 Prod. Técnica';
 var ABA_HE     = '⏰ Horas Extras';
 var ABA_CFGOB  = '⚙️ Config por Obra';
+var SCRIPT_VERSAO = 7;   // o app confere este numero ao conectar
 
 function doGet(e) {
   try {
     var key = e && e.parameter && e.parameter.key;
     if (!_auth(key)) return _err('Chave de acesso invalida.');
     var sheetId = e && e.parameter && e.parameter.sheetId;
-    if (!sheetId) return _ok({msg: 'API ativa.'});
+    if (!sheetId) return _ok({msg: 'API ativa.', versao: SCRIPT_VERSAO});
     var ss = SpreadsheetApp.openById(sheetId);
     var state = _buildState(ss);
     return ContentService
-      .createTextOutput(JSON.stringify({ok: true, state: state}))
+      .createTextOutput(JSON.stringify({ok: true, versao: SCRIPT_VERSAO, state: state}))
       .setMimeType(ContentService.MimeType.JSON);
   } catch(err) { return _err(err); }
 }
@@ -900,6 +901,16 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
 const Versoes = (() => {
   const LISTA = [
     {
+      v: '1.5.2',
+      data: '2026-08-15',
+      titulo: 'O aplicativo avisa quando o Apps Script da planilha está velho',
+      notas: [
+        {tipo:'novo', texto:'O Apps Script agora declara a própria versão, e o aplicativo confere a cada leitura. Se o script publicado no Google for mais antigo que o esperado, uma faixa laranja avisa na hora, com atalho para as Configurações.'},
+        {tipo:'melhoria', texto:'O teste de conexão informa o número exato da versão do script publicado.'},
+        {tipo:'melhoria', texto:'Verificado o circuito completo — aplicativo, Apps Script e planilha — com o cenário relatado: transferir um funcionário de obra no computador e abrir o celular limpo. Com o script atualizado, a mudança chega.'},
+      ]
+    },
+    {
       v: '1.5.1',
       data: '2026-08-15',
       titulo: 'Gravação rápida, sem falsos erros, e atualização automática',
@@ -1214,6 +1225,8 @@ const Sync = (() => {
   let _ultimoErro = '';
   let _ultimaLeitura = null;
   let _avisado = false;
+  let _scriptAntigo = false;
+  let _scriptVersao = null;
 
   function marcarLeituraOk(qtd) {
     _leituraOk = true; _ultimoErro = ''; _ultimaLeitura = new Date();
@@ -1226,6 +1239,9 @@ const Sync = (() => {
     _leituraOk = false; _ultimoErro = String(msg || 'erro desconhecido');
     _pintarBarra();
   }
+  function marcarScriptAntigo(v) { _scriptAntigo = true; _scriptVersao = v; _pintarBarra(); }
+  function marcarScriptOk() { _scriptAntigo = false; _pintarBarra(); }
+  function scriptAntigo() { return _scriptAntigo; }
   function podeGravar() { return _leituraOk; }
   function leituraOk()  { return _leituraOk; }
   function erro()       { return _ultimoErro; }
@@ -1240,7 +1256,7 @@ const Sync = (() => {
   // Faixa fixa no topo enquanto a planilha não responder.
   function _pintarBarra() {
     let el = document.getElementById('syncBanner');
-    if (_leituraOk) { if (el) el.remove(); return; }
+    if (_leituraOk && !_scriptAntigo) { if (el) el.remove(); return; }
     if (!el) {
       el = document.createElement('div');
       el.id = 'syncBanner';
@@ -1248,6 +1264,16 @@ const Sync = (() => {
         + 'font-size:12px;padding:8px 14px;display:flex;align-items:center;gap:10px;justify-content:center;'
         + 'font-family:DM Sans,sans-serif;box-shadow:0 2px 10px rgba(0,0,0,.4)';
       document.body.appendChild(el);
+    }
+    if (_scriptAntigo) {
+      el.style.background = '#7c2d12';
+      el.innerHTML = '<span>⚠️ <strong>O Apps Script da planilha está desatualizado'
+        + (_scriptVersao === undefined ? '' : ' (v' + (_scriptVersao||'?') + ')') + '.</strong> '
+        + 'Alterações feitas aqui podem não chegar aos outros aparelhos. '
+        + 'Abra Configurações → Ver código Script, copie e republique.</span>'
+        + '<button onclick="App.showPage(\'configuracoes\')" style="background:#fff;color:#7c2d12;border:none;'
+        + 'padding:4px 12px;border-radius:6px;font-weight:700;cursor:pointer;font-size:12px">Abrir Configurações</button>';
+      return;
     }
     el.innerHTML = '<span>⚠️ <strong>Sem conexão com a planilha.</strong> '
       + 'Nada será salvo e outros aparelhos não verão estas alterações.'
@@ -1277,13 +1303,13 @@ const Sync = (() => {
       const nCfg = Object.keys(st.configPorObra || {}).length;
       // Script antigo nem cria o campo; script novo cria vazio. Isso separa
       // "Apps Script desatualizado" de "configuração ainda não enviada".
-      const scriptAntigo = (st.configPorObra === undefined);
+      const scriptAntigo = (json.versao === undefined || json.versao < 7) || (st.configPorObra === undefined);
       let txt = '✅ Conectado.\n' +
         'Funcionários na planilha: ' + (st.workers||[]).length + '\n' +
         'Obras: ' + (st.obras||[]).join(', ') + '\n' +
         'Obras com configuração própria: ' + nCfg + '\n';
       if (scriptAntigo) {
-        txt += '\n❌ O Apps Script publicado é ANTIGO: não tem a aba "Config por Obra".\n'
+        txt += '\n❌ O Apps Script publicado é ANTIGO (versão ' + (json.versao===undefined?'sem número':json.versao) + ', o app precisa da 7).\n'
              + 'Republique o script atualizado (procure por ABA_CFGOB no código).';
       } else if (nCfg === 0) {
         const local = Object.keys(State.get().configPorObra || {}).length;
@@ -1300,7 +1326,7 @@ const Sync = (() => {
     }
   }
 
-  return {marcarLeituraOk, marcarErro, podeGravar, leituraOk, erro, ultimaLeitura, avisarBloqueio, diagnosticar};
+  return {marcarLeituraOk, marcarErro, marcarScriptAntigo, marcarScriptOk, scriptAntigo, podeGravar, leituraOk, erro, ultimaLeitura, avisarBloqueio, diagnosticar};
 })();
 
 /* ═══ MODALS ═══ */
@@ -2373,6 +2399,13 @@ const App = (() => {
     try {
       const res = await fetch(s.gsUrl + '?sheetId=' + s.gsSheetId + '&key=' + encodeURIComponent(s.gsKey||''), {method:'GET', mode:'cors'});
       const json = await res.json();
+      // Script sem número de versão ou com número menor = publicado é antigo.
+      const VERSAO_MINIMA = 7;
+      if (json.ok && (json.versao === undefined || json.versao < VERSAO_MINIMA)) {
+        Sync.marcarScriptAntigo(json.versao);
+      } else if (json.ok) {
+        Sync.marcarScriptOk();
+      }
       if (!json.ok || !json.state) {
         Sync.marcarErro(json.error || 'resposta inválida da planilha');
         return;
