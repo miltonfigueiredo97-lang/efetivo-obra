@@ -903,6 +903,15 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
 const Versoes = (() => {
   const LISTA = [
     {
+      v: '1.6.2',
+      data: '2026-08-17',
+      titulo: 'Zerar configuração escolhendo as obras',
+      notas: [
+        {tipo:'correcao', texto:'O aviso anterior só oferecia zerar obras com configuração exatamente igual — uma obra contaminada com qualquer diferença mínima ficava de fora, como aconteceu. Agora Configurações lista todas as obras com o resumo de cada uma (andares, tarefas, equipes) e você marca quais zerar.'},
+        {tipo:'melhoria', texto:'Funcionários e efetivos não são tocados pelo zeramento; só a configuração da obra.'},
+      ]
+    },
+    {
       v: '1.6.1',
       data: '2026-08-17',
       titulo: 'Limpeza do legado de configurações idênticas',
@@ -1779,23 +1788,34 @@ const CfgPage = (() => {
 
   // Detecta obras com configuração IDÊNTICA à obra ativa — assinatura do
   // legado em que a config era global e foi replicada igual para todas.
+  // Painel de limpeza: lista TODAS as obras com o resumo da configuração.
+  // O usuário escolhe quais zerar — sem heurística de "idêntica", que
+  // deixava passar obra contaminada com diferença mínima.
   function _avisoListasIguais(s) {
-    const atual = App.obra();
-    const minha = JSON.stringify(State.cfgObra(atual));
-    const iguais = (s.obras||[]).filter(function(o) {
-      return o !== atual && JSON.stringify(State.cfgObra(o)) === minha;
-    });
-    if (!iguais.length || minha === JSON.stringify({andares:[],tarefas:[],equipes:[]})) return '';
-    return `<div style="background:rgba(240,165,0,.08);border:1px solid rgba(240,165,0,.35);border-radius:var(--r);padding:14px 16px;margin-bottom:14px">
-      <div style="font-size:12px;font-weight:700;color:var(--ac);margin-bottom:6px">⚠️ ${iguais.length} obra(s) com configuração idêntica a esta</div>
-      <div style="font-size:11px;color:var(--t2);line-height:1.6;margin-bottom:10px">
-        ${iguais.map(Utils.esc).join(', ')} — provavelmente herança de quando a configuração era única.
-        Cada obra deveria ter a sua. Você pode zerar as outras e montar cada uma do jeito certo
-        (ou usar "Copiar configuração" abaixo como ponto de partida).</div>
-      <button class="btn btn-ghost" style="border-color:rgba(240,165,0,.4);color:var(--ac)"
-        onclick="CfgPage.zerarIguais()">Zerar a configuração das outras ${iguais.length} obra(s)</button>
+    const obras = s.obras || [];
+    if (obras.length < 2) return '';
+    const linhas = obras.map(function(o) {
+      const c = State.cfgObra(o);
+      const resumo = c.andares.length + ' andares · ' + c.tarefas.length + ' tarefas · ' + c.equipes.length + ' equipes';
+      const ativa = o === App.obra();
+      return `<label style="display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--bd);cursor:pointer">
+        <input type="checkbox" class="chk-zerar" value="${Utils.esc(o)}" style="width:16px;height:16px;accent-color:var(--ac)">
+        <span style="flex:1;font-size:12px;font-weight:600">${Utils.esc(o)}${ativa?' <span style="color:var(--ac);font-size:10px">(ativa)</span>':''}</span>
+        <span style="font-size:10px;color:var(--t3);font-family:'JetBrains Mono',monospace">${resumo}</span>
+      </label>`;
+    }).join('');
+    return `<div style="background:var(--sf);border:1px solid var(--bd);border-radius:var(--r);padding:14px 16px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:var(--t1);margin-bottom:4px">🧹 Zerar configuração de obras</div>
+      <div style="font-size:11px;color:var(--t3);line-height:1.6;margin-bottom:8px">
+        Marque as obras cuja configuração deve ser apagada (andares, tarefas e equipes).
+        Útil para limpar cópias herdadas do tempo em que a configuração era única.
+        Funcionários e efetivos não são afetados.</div>
+      ${linhas}
+      <button class="btn btn-ghost" style="margin-top:10px;border-color:var(--rd);color:var(--rd)"
+        onclick="CfgPage.zerarSelecionadas()">Zerar as obras marcadas</button>
     </div>`;
   }
+
 
   function moverAndar(i,dir){
     if(!State.moverAndar(i,dir)) return;
@@ -1820,6 +1840,18 @@ const CfgPage = (() => {
       ? '⚠️ Enviado com falhas.\n\nEnviados: '+r.ok+' de '+r.total+'\nFalharam: '+r.falhas+'\n\nTente novamente; se persistir, verifique a chave de acesso.'
       : '✅ Tudo enviado.\n\n'+r.ok+' de '+r.total+' itens gravados na planilha.\n\nAbra o app em outro aparelho e toque em Sync para confirmar.';
     Utils.toast(r.falhas?'Envio com falhas':'Envio concluído', r.falhas?'warn':'success');
+  }
+
+  function zerarSelecionadas(){
+    const marcadas=[...document.querySelectorAll('.chk-zerar:checked')].map(function(x){return x.value;});
+    if(!marcadas.length){Utils.toast('Marque ao menos uma obra.','warn');return;}
+    if(!confirm('Apagar andares, tarefas e equipes de:\n\n• '+marcadas.join('\n• ')+'\n\nFuncionários e efetivos NÃO são afetados. Continuar?')) return;
+    const s=State.get();
+    marcadas.forEach(function(o){ s.configPorObra[o]={andares:[],tarefas:[],equipes:[]}; });
+    State.save('config');
+    render();
+    if(typeof EfPage!=='undefined') EfPage.render();
+    Utils.toast(marcadas.length+' obra(s) zeradas','success');
   }
 
   function zerarIguais(){
@@ -1854,7 +1886,7 @@ const CfgPage = (() => {
     Modals.open('modalHistDetail');
   }
   function showScript(){document.getElementById('scriptCode').textContent=Sheets.CODE;Modals.open('modalScript');}
-  return {render,addAndar,rmAndar,addTarefa,rmTarefa,editTarefa,setTarefaEqs,toggleTarefaEq,addEquipe,rmEquipe,addObra,rmObra,saveGS,testGS,showScript, copiarDe, enviarTudo, moverAndar, zerarIguais};
+  return {render,addAndar,rmAndar,addTarefa,rmTarefa,editTarefa,setTarefaEqs,toggleTarefaEq,addEquipe,rmEquipe,addObra,rmObra,saveGS,testGS,showScript, copiarDe, enviarTudo, moverAndar, zerarIguais, zerarSelecionadas};
 })();
 
 /* ═══ HORAS EXTRAS PAGE ═══ */
