@@ -903,6 +903,15 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
 const Versoes = (() => {
   const LISTA = [
     {
+      v: '1.6.1',
+      data: '2026-08-17',
+      titulo: 'Limpeza do legado de configurações idênticas',
+      notas: [
+        {tipo:'correcao', texto:'As obras exibiam a mesma lista de andares porque a planilha ainda guardava, para todas, a cópia da configuração da época em que ela era única. As alterações novas já estavam isoladas por obra; o que se via era esse dado antigo replicado.'},
+        {tipo:'novo', texto:'Quando duas ou mais obras têm configuração idêntica, um aviso aparece em Configurações com um botão para zerar as outras de uma vez, mantendo a obra atual — aí cada uma pode ser montada do seu jeito, ou receber a cópia de outra como ponto de partida.'},
+      ]
+    },
+    {
       v: '1.6.0',
       data: '2026-08-17',
       titulo: 'Sincronização 100% automática — botão de enviar removido',
@@ -1680,6 +1689,7 @@ const CfgPage = (() => {
       ${blk('🏗 Obras',
         s.obras.map((o,i)=>`<div class="settings-item"><span style="flex:1">${Utils.esc(o)}</span>${i===0?'<span style="font-size:10px;color:var(--t3)">principal</span>':`<button class="icon-btn danger" onclick="CfgPage.rmObra('${Utils.esc(o)}')">✕</button>`}</div>`).join(''),
         `<div class="add-item-row"><input id="newObra" placeholder="Nova obra"><button class="btn btn-accent" onclick="CfgPage.addObra()">Add</button></div>`)}
+      ${_avisoListasIguais(s)}
       ${blk('📋 Copiar configuração de outra obra',
         s.obras.filter(o=>o!==App.obra()).length
           ? `<div style="font-size:11px;color:var(--t3);margin-bottom:8px;line-height:1.5">Traz andares, tarefas e equipes da obra escolhida para <strong>${Utils.esc(App.obra())}</strong>, substituindo o que existe aqui.</div>
@@ -1766,6 +1776,27 @@ const CfgPage = (() => {
   function rmEquipe(id){State.removeEquipe(id);render();if(typeof EfPage!=='undefined')EfPage.renderFilters();}
   function addObra(){const v=document.getElementById('newObra').value.trim();if(!v)return;State.addObra(v);document.getElementById('newObra').value='';render();App.rebuildObraSelects();}
   function rmObra(n){if(n===App.obra()){Utils.toast('Não pode remover a obra ativa.','warn');return;}if(!confirm(`Remover "${n}"?`))return;State.removeObra(n);render();App.rebuildObraSelects();}
+
+  // Detecta obras com configuração IDÊNTICA à obra ativa — assinatura do
+  // legado em que a config era global e foi replicada igual para todas.
+  function _avisoListasIguais(s) {
+    const atual = App.obra();
+    const minha = JSON.stringify(State.cfgObra(atual));
+    const iguais = (s.obras||[]).filter(function(o) {
+      return o !== atual && JSON.stringify(State.cfgObra(o)) === minha;
+    });
+    if (!iguais.length || minha === JSON.stringify({andares:[],tarefas:[],equipes:[]})) return '';
+    return `<div style="background:rgba(240,165,0,.08);border:1px solid rgba(240,165,0,.35);border-radius:var(--r);padding:14px 16px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:var(--ac);margin-bottom:6px">⚠️ ${iguais.length} obra(s) com configuração idêntica a esta</div>
+      <div style="font-size:11px;color:var(--t2);line-height:1.6;margin-bottom:10px">
+        ${iguais.map(Utils.esc).join(', ')} — provavelmente herança de quando a configuração era única.
+        Cada obra deveria ter a sua. Você pode zerar as outras e montar cada uma do jeito certo
+        (ou usar "Copiar configuração" abaixo como ponto de partida).</div>
+      <button class="btn btn-ghost" style="border-color:rgba(240,165,0,.4);color:var(--ac)"
+        onclick="CfgPage.zerarIguais()">Zerar a configuração das outras ${iguais.length} obra(s)</button>
+    </div>`;
+  }
+
   function moverAndar(i,dir){
     if(!State.moverAndar(i,dir)) return;
     render();
@@ -1791,6 +1822,18 @@ const CfgPage = (() => {
     Utils.toast(r.falhas?'Envio com falhas':'Envio concluído', r.falhas?'warn':'success');
   }
 
+  function zerarIguais(){
+    const s=State.get(), atual=App.obra();
+    const minha=JSON.stringify(State.cfgObra(atual));
+    const iguais=(s.obras||[]).filter(o=>o!==atual && JSON.stringify(State.cfgObra(o))===minha);
+    if(!iguais.length) return;
+    if(!confirm('Zerar andares, tarefas e equipes de:\n\n• '+iguais.join('\n• ')+'\n\nA obra "'+atual+'" não é alterada. Continuar?')) return;
+    iguais.forEach(function(o){ s.configPorObra[o]={andares:[],tarefas:[],equipes:[]}; });
+    State.save('config');
+    render();
+    Utils.toast(iguais.length+' obra(s) zeradas — configure cada uma do seu jeito','success');
+  }
+
   function copiarDe(){
     const de=document.getElementById('cfgCopiarDe')?.value;
     if(!de) return;
@@ -1811,7 +1854,7 @@ const CfgPage = (() => {
     Modals.open('modalHistDetail');
   }
   function showScript(){document.getElementById('scriptCode').textContent=Sheets.CODE;Modals.open('modalScript');}
-  return {render,addAndar,rmAndar,addTarefa,rmTarefa,editTarefa,setTarefaEqs,toggleTarefaEq,addEquipe,rmEquipe,addObra,rmObra,saveGS,testGS,showScript, copiarDe, enviarTudo, moverAndar};
+  return {render,addAndar,rmAndar,addTarefa,rmTarefa,editTarefa,setTarefaEqs,toggleTarefaEq,addEquipe,rmEquipe,addObra,rmObra,saveGS,testGS,showScript, copiarDe, enviarTudo, moverAndar, zerarIguais};
 })();
 
 /* ═══ HORAS EXTRAS PAGE ═══ */
