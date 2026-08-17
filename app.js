@@ -903,6 +903,16 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
 const Versoes = (() => {
   const LISTA = [
     {
+      v: '1.6.0',
+      data: '2026-08-17',
+      titulo: 'Sincronização 100% automática — botão de enviar removido',
+      notas: [
+        {tipo:'novo', texto:'O aplicativo agora garante sozinho que tudo que existe no aparelho está na planilha. Ao conectar, ele compara os dois lados e envia o que estiver faltando — inclusive dados criados por versões antigas que nunca subiram, como as 3 obras que apareciam no diagnóstico.'},
+        {tipo:'melhoria', texto:'O botão "Enviar tudo para a planilha" foi removido: enviar é responsabilidade do aplicativo, não do usuário. Salvou, está na planilha.'},
+        {tipo:'correcao', texto:'A comparação respeita quem manda: o que só existe no aparelho sobe; quando o mesmo dado difere entre aparelho e planilha, vale a planilha. Sem isso, um celular com dado velho desfazia a alteração que outro aparelho tinha acabado de fazer.'},
+      ]
+    },
+    {
       v: '1.5.4',
       data: '2026-08-17',
       titulo: 'Fila destravada e cabeçalho do celular refeito',
@@ -1342,8 +1352,8 @@ const Sync = (() => {
         const local = Object.keys(State.get().configPorObra || {}).length;
         txt += '\n✅ O Apps Script está atualizado.\n';
         txt += local
-          ? '⚠️ Você tem ' + local + ' obra(s) configurada(s) neste aparelho que nunca foram enviadas.\n'
-            + 'Use o botão "Enviar tudo para a planilha" logo abaixo.'
+          ? '⏳ ' + local + ' obra(s) deste aparelho estão subindo para a planilha automaticamente.\n'
+            + 'Aguarde alguns segundos e teste de novo — deve aparecer o número acima.'
           : 'Nenhuma configuração cadastrada ainda.';
       }
       return {ok:true, texto: txt};
@@ -1689,14 +1699,7 @@ const CfgPage = (() => {
            <button class="btn btn-ghost" onclick="CfgPage.testGS()">Testar</button>
            <button class="btn btn-ghost" onclick="CfgPage.showScript()">Ver código Script</button>
          </div>
-         <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--bd)">
-           <button class="btn btn-accent" style="width:100%;background:var(--gn);color:#062b12"
-             onclick="CfgPage.enviarTudo()">⬆ Enviar tudo para a planilha</button>
-           <div style="font-size:10px;color:var(--t3);margin-top:6px;line-height:1.5">
-             Envia funcionários, configuração de cada obra, efetivos, produção e horas extras
-             deste aparelho. Use ao configurar a planilha pela primeira vez ou depois de
-             atualizar o Apps Script.</div>
-         </div>`,
+`,
         '')}
     `;
   }
@@ -2418,6 +2421,57 @@ const App = (() => {
     return out.slice(0, 200);
   }
 
+
+  // Compara o estado local com o que a planilha devolveu e enfileira as
+  // diferenças em que o LOCAL tem algo que a planilha não tem. Cobre dados
+  // criados por versões antigas que não enfileiravam, filas perdidas e
+  // qualquer outra dessincronização passada.
+  function _reconciliar(remoto) {
+    const local = State.get();
+    // Config por obra: obra local com conteúdo que a planilha não conhece
+    const rCfg = remoto.configPorObra || {};
+    let cfgFalta = false;
+    Object.keys(local.configPorObra || {}).forEach(function(obra) {
+      const l = local.configPorObra[obra] || {};
+      const temConteudo = (l.andares||[]).length || (l.tarefas||[]).length || (l.equipes||[]).length;
+      if (!temConteudo) return;
+      // Só ausência total da obra no remoto. Diferença de quantidade é
+      // alteração normal (ex.: exclusão feita noutro aparelho) e quem manda
+      // é a planilha — o merge da aplicação traz.
+      if (!rCfg[obra]) cfgFalta = true;
+    });
+    if ((local.obras||[]).some(function(o){ return (remoto.obras||[]).indexOf(o) < 0; })) cfgFalta = true;
+    if (cfgFalta) State.enfileirar('config');
+
+    // Funcionários: só AUSÊNCIA no remoto dispara envio. Divergência de
+    // campo NÃO: nesse caso a planilha é a fonte da verdade e o merge da
+    // aplicação vai trazer o valor dela. Se este aparelho reenviasse por
+    // divergência, um celular com dado velho desfaria a alteração que outro
+    // aparelho acabou de fazer (guerra de aparelhos).
+    const rNomes = (remoto.workers||[]).map(function(w){ return w.nome; });
+    const wFalta = (local.workers||[]).some(function(w) { return rNomes.indexOf(w.nome) < 0; });
+    if (wFalta) State.enfileirar('workers');
+
+    // Horas extras: lançamento local ausente do remoto
+    Object.keys(local.horasExtras || {}).forEach(function(obra) {
+      const rIds = ((remoto.horasExtras||{})[obra]||[]).map(function(e){ return e.id; });
+      const falta = (local.horasExtras[obra]||[]).some(function(e){ return rIds.indexOf(e.id) < 0; });
+      if (falta) State.enfileirar('he:' + obra);
+    });
+
+    // Efetivo diário: dia local que a planilha não tem
+    Object.keys(local.dailyData || {}).forEach(function(obra) {
+      const rDias = Object.keys((remoto.dailyData||{})[obra]||{});
+      Object.keys(local.dailyData[obra]||{}).forEach(function(dia) {
+        if (rDias.indexOf(dia) < 0) State.enfileirar('efetivo:' + dia + ':' + obra);
+      });
+    });
+
+    if (State.fila().length && typeof Fila !== 'undefined') {
+      setTimeout(function(){ Fila.processar(); }, 300);
+    }
+  }
+
   async function _loadFromSheets(force) {
     const s = State.get();
     if (!s.gsUrl || !s.gsSheetId) { Sync.marcarErro('planilha não configurada'); return; }
@@ -2445,6 +2499,9 @@ const App = (() => {
         return;
       }
       const sheetState = json.state;
+      // Cópia crua ANTES dos merges: a reconciliação compara o local com o
+      // que a planilha realmente tem, não com o resultado combinado.
+      const remotoCru = JSON.parse(JSON.stringify(json.state));
       // Preservar gsUrl e gsSheetId locais
       sheetState.gsUrl = s.gsUrl;
       sheetState.gsSheetId = s.gsSheetId;
@@ -2497,6 +2554,12 @@ const App = (() => {
 
       // 1º: a planilha respondeu — libera a fila para gravar. SEMPRE.
       Sync.marcarLeituraOk();
+      // 2º: reconciliação — o que existe neste aparelho e falta na planilha
+      // entra na fila SOZINHO. É isto que torna qualquer botão de "enviar
+      // tudo" desnecessário: a paridade local↔planilha é responsabilidade
+      // do app, não do usuário.
+      _reconciliar(remotoCru || {});
+      if (State.isDirty()) return;   // subir local primeiro; a próxima leitura aplica
       // 2º: só aplica o estado remoto se não houver alteração local pendente.
       if (!podeAplicar) return;
       localStorage.setItem('efetivo_v3', JSON.stringify(sheetState));
