@@ -738,6 +738,33 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
   function marcarEnvio() { _ultimoEnvio = Date.now(); }
   function msDesdeEnvio() { return Date.now() - _ultimoEnvio; }
 
+  async function _tentarUrl(url, sheetId, key) {
+    // GET simples só para saber se a URL responde JSON de verdade.
+    const res = await fetch(url + '?sheetId=' + sheetId + '&key=' + encodeURIComponent(key||''), {method:'GET', mode:'cors'});
+    return await res.json();  // lança se vier HTML (DOCTYPE)
+  }
+
+  // Se a URL salva neste aparelho morreu (implantação removida/recriada) e o
+  // config.js do repositório tem uma URL diferente e funcionando, adota ela
+  // automaticamente. Sem isto, um aparelho que já salvou URL localmente nunca
+  // mais se beneficia de eu corrigir o config.js — cada aparelho fica preso
+  // para sempre na primeira URL que gravou.
+  async function _autoCorrigirUrl() {
+    const s = State.get();
+    const doRepo = (window.EFETIVO_CONFIG || {}).gsUrl;
+    if (!doRepo || doRepo === s.gsUrl) return false;
+    try {
+      const j = await _tentarUrl(doRepo, s.gsSheetId, s.gsKey);
+      if (j && j.ok !== false) {
+        s.gsUrl = doRepo;
+        State.save();
+        Utils.toast('URL da planilha atualizada automaticamente.', 'success');
+        return true;
+      }
+    } catch(e) { /* config.js também está morta: nada a fazer aqui */ }
+    return false;
+  }
+
   async function _post(payload) {
     const s = State.get();
     if (!s.gsUrl || !s.gsSheetId) return false;
@@ -770,6 +797,10 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
       return false;
     }
   }
+
+  // _loadFromSheets chama isto quando a leitura falhar com a assinatura de
+  // URL morta, ANTES de desistir — pode se autocorrigir sem intervenção.
+  const autoCorrigirUrl = _autoCorrigirUrl;
 
   // Confere por leitura se a última gravação surtiu efeito. GET funciona em
   // cors normalmente, então aqui dá para ler a resposta.
@@ -893,7 +924,7 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
     } catch { return false; }
   }
 
-  return { CODE, loadState, enviarTudo, confirmar:_confirmar, marcarEnvio, msDesdeEnvio, saveWorkers, saveEfetivo, saveRelatorio, saveConfig, saveProd, saveHE, deleteHE, ping };
+  return { CODE, loadState, enviarTudo, confirmar:_confirmar, marcarEnvio, msDesdeEnvio, autoCorrigirUrl, saveWorkers, saveEfetivo, saveRelatorio, saveConfig, saveProd, saveHE, deleteHE, ping };
 })();
 
 
@@ -904,6 +935,14 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
 */
 const Versoes = (() => {
   const LISTA = [
+    {
+      v: '1.6.6',
+      data: '2026-08-17',
+      titulo: 'Autocorreção de URL quando a implantação muda',
+      notas: [
+        {tipo:'correcao', texto:'Um aparelho que já tinha salvado a URL da planilha nunca voltava a olhar para a URL do repositório, mesmo depois dela ser corrigida — cada aparelho ficava preso para sempre na primeira URL que gravou. Agora, quando a URL salva localmente não responde mais (implantação removida ou recriada), o app testa a URL do repositório e, se ela funcionar, adota sozinha, sem precisar reconfigurar aparelho por aparelho.'},
+      ]
+    },
     {
       v: '1.6.5',
       data: '2026-08-17',
@@ -2689,7 +2728,12 @@ const App = (() => {
       if (typeof FuncPage !== 'undefined' && document.getElementById('funcList')?.offsetParent !== null) FuncPage.render();
       Utils.toast('Sincronizado: ' + (sheetState.workers||[]).length + ' funcionários', 'success');
     } catch(e) {
-      Sync.marcarErro(e && e.message ? e.message : 'sem conexão');
+      const msg = String(e && e.message || '');
+      if (msg.indexOf('DOCTYPE') >= 0 || msg.indexOf('Unexpected token') >= 0) {
+        const corrigiu = await Sheets.autoCorrigirUrl();
+        if (corrigiu) { return _loadFromSheets(force); }  // tenta de novo com a URL nova
+      }
+      Sync.marcarErro(msg || 'sem conexão');
     }
   }
 
