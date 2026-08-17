@@ -951,6 +951,7 @@ const Versoes = (() => {
       titulo: 'Autocorreção de URL quando a implantação muda',
       notas: [
         {tipo:'correcao', texto:'Um aparelho que já tinha salvado a URL da planilha nunca voltava a olhar para a URL do repositório, mesmo depois dela ser corrigida — cada aparelho ficava preso para sempre na primeira URL que gravou. Agora, quando a URL salva localmente não responde mais (implantação removida ou recriada), o app testa a URL do repositório e, se ela funcionar, adota sozinha, sem precisar reconfigurar aparelho por aparelho.'},
+        {tipo:'correcao', texto:'Quase todo o histórico de efetivo tinha o motivo da falta preenchido com um texto de data sem sentido, mesmo em dias com o funcionário presente. O Google Sheets converte automaticamente o timestamp antigo em célula de data, e a checagem que deveria descartar esse valor legado não reconhecia esse formato. Corrigido: registros antigos voltam com o motivo vazio, como deveriam, e um motivo real digitado por você continua intacto.'},
       ]
     },
     {
