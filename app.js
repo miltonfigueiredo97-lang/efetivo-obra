@@ -903,6 +903,16 @@ function _err(e)    { return ContentService.createTextOutput(JSON.stringify({ok:
 const Versoes = (() => {
   const LISTA = [
     {
+      v: '1.5.4',
+      data: '2026-08-17',
+      titulo: 'Fila destravada e cabeçalho do celular refeito',
+      notas: [
+        {tipo:'correcao', texto:'A fila de envio travava para sempre: ela esperava uma leitura da planilha para poder gravar, e a leitura esperava a fila esvaziar. Nada subia, o contador ficava preso em "1 na fila" e as configurações nunca chegavam à planilha — a causa dos outros aparelhos não verem as mudanças. A leitura agora sempre acontece; o que fica condicionado é apenas aplicar o estado remoto por cima do local.'},
+        {tipo:'correcao', texto:'O estado da planilha era aplicado por cima do aparelho antes da checagem de pendências, podendo apagar alterações locais na abertura.'},
+        {tipo:'melhoria', texto:'Cabeçalho do celular refeito em duas linhas: a obra virou um botão grande com "trocar", fácil de tocar, em vez do texto espremido no canto.'},
+      ]
+    },
+    {
       v: '1.5.3',
       data: '2026-08-15',
       titulo: 'Desktop preso no mobile e mudança que sumia ao atualizar',
@@ -2411,12 +2421,15 @@ const App = (() => {
   async function _loadFromSheets(force) {
     const s = State.get();
     if (!s.gsUrl || !s.gsSheetId) { Sync.marcarErro('planilha não configurada'); return; }
-    // Não puxa por cima de alterações locais que ainda não subiram.
-    if (!force && State.isDirty()) return;
-    // Nem logo depois de um envio: o Apps Script pode ainda estar gravando,
-    // e uma leitura nessa janela traz o estado velho e apaga a mudança da tela.
-    if (!force && Sheets.msDesdeEnvio() < 10000) return;
-    if (typeof Fila !== 'undefined' && Fila.ocupada && Fila.ocupada()) return;
+    // A leitura SEMPRE roda (é ela que habilita a fila a gravar — condicioná-la
+    // à fila vazia criava um impasse: fila esperando leitura, leitura esperando
+    // fila). O que fica condicionado é só APLICAR o estado remoto por cima do
+    // local, mais abaixo.
+    // 'force' (botão Sync) ignora as janelas de tempo, mas NUNCA a fila:
+    // alteração pendente jamais é sobrescrita, nem por sync manual.
+    const podeAplicar = !State.isDirty()
+      && (force || (Sheets.msDesdeEnvio() >= 10000
+          && !(typeof Fila !== 'undefined' && Fila.ocupada && Fila.ocupada())));
     try {
       const res = await fetch(s.gsUrl + '?sheetId=' + s.gsSheetId + '&key=' + encodeURIComponent(s.gsKey||''), {method:'GET', mode:'cors'});
       const json = await res.json();
@@ -2482,11 +2495,14 @@ const App = (() => {
       sheetState.configPorObra = _mergeCfgObra(local.configPorObra, sheetState.configPorObra);
       sheetState.horasExtras    = _mergeById(local.horasExtras,      sheetState.horasExtras);
 
+      // 1º: a planilha respondeu — libera a fila para gravar. SEMPRE.
+      Sync.marcarLeituraOk();
+      // 2º: só aplica o estado remoto se não houver alteração local pendente.
+      if (!podeAplicar) return;
       localStorage.setItem('efetivo_v3', JSON.stringify(sheetState));
       State.load();
       if (typeof EfPage !== 'undefined') EfPage.render();
       if (typeof FuncPage !== 'undefined' && document.getElementById('funcList')?.offsetParent !== null) FuncPage.render();
-      Sync.marcarLeituraOk();
       Utils.toast('Sincronizado: ' + (sheetState.workers||[]).length + ' funcionários', 'success');
     } catch(e) {
       Sync.marcarErro(e && e.message ? e.message : 'sem conexão');
@@ -2500,8 +2516,9 @@ const App = (() => {
     _obra = v; State.get().activeObra = v; State.save();
     rebuildObraSelects();
     document.getElementById('obraLabel').textContent = v;
-    const pill = document.getElementById('obraPill');
-    if (pill) pill.textContent = v.length > 14 ? v.slice(0,13)+'…' : v;
+    const nomeEl2 = document.getElementById('obraPillNome');
+    if (nomeEl2) nomeEl2.textContent = v;
+    else { const pill = document.getElementById('obraPill'); if (pill) pill.textContent = v.length > 14 ? v.slice(0,13)+'…' : v; }
     _updateTopbar();
     if (typeof EfPage !== 'undefined') EfPage.render();
   }
@@ -2549,7 +2566,11 @@ const App = (() => {
     const opts = s.obras.map(o => `<option value="${Utils.esc(o)}" ${o===_obra?'selected':''}>${Utils.esc(o)}</option>`).join('');
     ['obraSelectDesktop'].forEach(id => { const el=document.getElementById(id); if(el) el.innerHTML=opts; });
     const lbl = document.getElementById('obraLabel'); if(lbl) lbl.textContent = _obra;
-    const pill = document.getElementById('obraPill'); if(pill) pill.textContent = _obra.length>14?_obra.slice(0,13)+'…':_obra;
+    // No mobile o botão da obra tem estrutura interna: escrever no span do
+    // nome. No desktop continua o pill simples.
+    const nomeEl = document.getElementById('obraPillNome');
+    if (nomeEl) nomeEl.textContent = _obra;
+    else { const pill = document.getElementById('obraPill'); if(pill) pill.textContent = _obra.length>14?_obra.slice(0,13)+'…':_obra; }
   }
 
   function _updateTopbar() {
@@ -2579,7 +2600,11 @@ const App = (() => {
     });
   }
 
-  async function syncNow() { await _loadFromSheets(true); }
+  async function syncNow() {
+    // Primeiro empurra o que está pendente; depois lê o estado atualizado.
+    if (typeof Fila !== 'undefined' && Fila.pendentes()) await Fila.processar();
+    await _loadFromSheets(true);
+  }
 
   return { init, obra, date, setObra, showPage, openDrawer, closeDrawer,
            addObra, rebuildObraSelects, updateTopbar, updateGSIndicator, syncNow };

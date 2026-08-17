@@ -39,7 +39,7 @@
   --rd:#ef4444;--rdd:rgba(239,68,68,.12);
   --bl:#3b82f6;
   --t1:#e2e6f3;--t2:#8b93b5;--t3:#454d6a;
-  --r:12px;--rs:8px;--th:54px;--bn:62px;
+  --r:12px;--rs:8px;--th: 106px;--bn:62px;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 html{font-size:14px;-webkit-text-size-adjust:100%;}
@@ -52,7 +52,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--t1);min-h
 .report-preview,.bar-label,code,pre{font-family:'JetBrains Mono','Courier New',monospace;}
 
 /* TOPBAR */
-.topbar{position:fixed;top:0;left:0;right:0;height:var(--th);background:var(--sf);border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;padding:0 14px;gap:10px;z-index:300;}
+.topbar{position:fixed;top:0;left:0;right:0;background:var(--sf);border-bottom:1px solid var(--bd);display:flex;flex-direction:column;padding:8px 12px 10px;gap:8px;z-index:300;}
+.tb-linha1{display:flex;align-items:center;gap:8px;min-height:22px;}
+.tb-linha2{display:flex;gap:8px;}
+.obra-btn{flex:1;display:flex;align-items:center;gap:8px;background:var(--acd);border:1px solid rgba(240,165,0,.4);color:var(--ac);font-weight:700;font-size:14px;padding:11px 14px;border-radius:12px;cursor:pointer;font-family:inherit;min-height:44px;-webkit-tap-highlight-color:transparent;}
+.sync-btn{display:flex;align-items:center;gap:6px;background:var(--sf2);border:1px solid var(--bd2);color:var(--t2);padding:11px 14px;border-radius:12px;font-size:13px;cursor:pointer;min-height:44px;font-family:inherit;-webkit-tap-highlight-color:transparent;}
 .topbar-left{display:flex;align-items:center;gap:8px;}
 .topbar-name{font-size:17px;letter-spacing:2px;color:var(--ac);line-height:1;}
 .topbar-divider{color:var(--bd2);}
@@ -322,8 +326,22 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
 </head>
 <body>
 <header class="topbar">
-  <div class="topbar-left"><span style="font-size:18px;line-height:1">&#9874;</span><span class="topbar-name">EFETIVO</span><span class="topbar-divider">|</span><span class="topbar-title" id="topbarTitle">DO DIA</span><span class="ver-badge" data-versao onclick="App.showPage('versoes')" title="Ver notas da versão">v1.0.1</span></div>
-  <div class="topbar-right"><div class="topbar-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg><strong id="topbarPresentes">0</strong></div><button onclick="App.syncNow()" title="Sincronizar com Sheets" style="background:var(--sf2);border:1px solid var(--bd2);color:var(--t2);padding:4px 10px;border-radius:20px;font-size:12px;cursor:pointer;display:flex;align-items:center;gap:5px"><span data-fila style="font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--gn);margin-right:2px">salvo</span><span id="syncStatusDot" style="width:7px;height:7px;border-radius:50%;background:var(--gn);display:inline-block"></span>Sync</button><div class="obra-pill" id="obraPill" onclick="Modals.open('modalObra')">–</div></div>
+  <div class="tb-linha1">
+    <span class="topbar-name">&#9874; EFETIVO</span>
+    <span class="topbar-title" id="topbarTitle">DO DIA</span>
+    <span class="ver-badge" data-versao onclick="App.showPage('versoes')">v1.5.3</span>
+    <span data-fila style="margin-left:auto;font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--gn)">salvo</span>
+  </div>
+  <div class="tb-linha2">
+    <button class="obra-btn" id="obraPill" onclick="Modals.open('modalObra')">
+      <span style="font-size:13px">🏗</span>
+      <span id="obraPillNome" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left">–</span>
+      <span style="font-size:10px;opacity:.7">trocar ▾</span>
+    </button>
+    <button class="sync-btn" onclick="App.syncNow()" title="Sincronizar">
+      <span id="syncStatusDot" style="width:7px;height:7px;border-radius:50%;background:var(--gn);display:inline-block"></span> Sync
+    </button>
+  </div>
 </header>
 <main class="page-area">
   <section class="page active" id="page-efetivo">
@@ -525,8 +543,8 @@ code{font-family:'JetBrains Mono','Courier New',monospace;font-size:.9em;}
   </div>
   <div class="toast-container" id="toastContainer"></div>
 <span id="lastSaved" style="display:none"></span>
-<script src="config.js?v=1.5.3"></script>
-<script src="app.js?v=1.5.3"></script>
+<script src="config.js?v=1.5.4"></script>
+<script src="app.js?v=1.5.4"></script>
 <script>
 
 /* ═══ EFETIVO PAGE — MOBILE ═══ */
